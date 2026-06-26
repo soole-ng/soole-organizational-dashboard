@@ -14,7 +14,7 @@ export function TripDetailPage() {
   const pct = Math.round((trip.bookedSeats / trip.capacity) * 100)
 
   return (
-    <div className="flex flex-col min-h-screen bg-primary-75">
+    <div className="flex flex-col min-h-screen bg-white">
       <TopBar title={trip.routeName} backHref="/trips" />
 
       <div className="flex-1 p-4 space-y-4 lg:pt-8 lg:px-8 w-full">

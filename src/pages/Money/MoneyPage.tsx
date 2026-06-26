@@ -79,7 +79,7 @@ export function MoneyPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-primary-75 animate-pulse">
+      <div className="flex flex-col min-h-screen bg-white animate-pulse">
         <TopBar title="Money" />
         <div className="bg-primary-500 px-4 pt-4 pb-6 w-full h-48 rounded-b-2xl" />
         <div className="flex-1 p-4 space-y-3 lg:pt-8 lg:px-8 w-full">
@@ -90,7 +90,7 @@ export function MoneyPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-primary-75">
+    <div className="flex flex-col min-h-screen bg-white">
       <TopBar title="Money" />
 
       {/* Main Stats Banner */}

@@ -11,7 +11,7 @@ export function HomePage() {
   const { org } = useOrg()
 
   return (
-    <div className="flex flex-col min-h-screen bg-primary-75">
+    <div className="flex flex-col min-h-screen bg-white">
       <TopBar />
 
       <div className="lg:hidden">

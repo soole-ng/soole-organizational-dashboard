@@ -19,7 +19,7 @@ export function ReportsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen bg-primary-75 animate-pulse">
+      <div className="flex flex-col min-h-screen bg-white animate-pulse">
         <TopBar title="Reports" />
         <div className="flex-1 p-4 space-y-3 lg:pt-8 lg:px-8 w-full">
           <div className="h-12 bg-white rounded-2xl w-48 mb-4" />
@@ -43,7 +43,7 @@ export function ReportsPage() {
   const totalGross = weeklyRevData.reduce((a, d) => a + d.gross, 0)
 
   return (
-    <div className="flex flex-col min-h-screen bg-primary-75">
+    <div className="flex flex-col min-h-screen bg-white">
       <TopBar title="Reports" />
 
       <div className="flex-1 p-4 space-y-4 lg:pt-8 lg:px-8 w-full">

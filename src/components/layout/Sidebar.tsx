@@ -73,10 +73,10 @@ function NavItemLink({ item }: { item: NavItem }) {
           item.accent
             ? isActive
               ? 'bg-accent-100 text-accent-400'
-              : 'text-neutral-200 hover:bg-accent-50 hover:text-accent-300'
+              : 'text-gray-800 hover:bg-accent-50 hover:text-accent-300'
             : isActive
             ? 'bg-primary-75 text-primary-500 shadow-sm'
-            : 'text-neutral-300 hover:bg-primary-75 hover:text-primary-400',
+            : 'text-gray-800 hover:bg-primary-75 hover:text-primary-500',
         )
       }
     >
@@ -126,8 +126,16 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
 
       {/* ── Top header strip: Soole icon + Actions ── */}
       <div className="flex items-center justify-between px-4 py-3 bg-primary-500 border-b border-primary-400">
-        {/* Removed Soole icon mark as per user request */}
-        <div></div>
+        {/* Soole icon mark */}
+        <div className="flex items-center gap-2">
+          <img
+            src="/soole-icon.png"
+            alt="Soole"
+            className="w-8 h-8 rounded-xl object-contain bg-white/10 p-0.5"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+          <span className="text-white font-bold text-sm tracking-tight">Soole</span>
+        </div>
 
         {/* Action buttons */}
         <div className="flex items-center gap-1">

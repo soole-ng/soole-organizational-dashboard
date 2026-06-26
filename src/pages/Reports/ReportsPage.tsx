@@ -53,11 +53,10 @@ export function ReportsPage() {
           {dateRanges.map((r, i) => (
             <button
               key={r}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                i === 1
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${i === 1
                   ? 'bg-primary-500 text-white border-primary-500'
                   : 'bg-white text-neutral-200 border-neutral-50'
-              }`}
+                }`}
             >
               {r}
             </button>
@@ -81,7 +80,7 @@ export function ReportsPage() {
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-xs text-neutral-200">This week net revenue</p>
+              <p className="text-xs text-neutral-200">This week's revenue</p>
               <p className="text-3xl sm:text-4xl font-extrabold text-primary-500 stat-number">
                 NGN {totalNet.toLocaleString()}
               </p>
@@ -92,13 +91,13 @@ export function ReportsPage() {
           </div>
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={weeklyRevData} barSize={20} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#DEDBEC" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#A7C957" vertical={false} />
               <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#8896b0' }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip
                 formatter={(v: number) => [formatMoneyCompact(v), 'Net']}
                 contentStyle={{ background: '#042011', border: 'none', borderRadius: 12, fontSize: 11, color: '#fff', padding: '6px 12px' }}
-                cursor={{ fill: '#DEDBEC' }}
+                cursor={{ fill: '#A7C957' }}
               />
               <Bar dataKey="net" fill="#1D754C" radius={[4, 4, 0, 0]} />
             </BarChart>

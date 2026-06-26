@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Phone, Car, Star, Award } from 'lucide-react'
+import { Plus, Phone, Car, Star, Award, X, User } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -17,10 +17,6 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'Suspended', value: 'suspended' },
 ]
 
-const avatarColors = [
-  'bg-secondary-300', 'bg-teal-400', 'bg-info-300', 'bg-accent',
-]
-
 function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' }) {
   const filled = Math.round(rating)
   const cls = size === 'md' ? 'w-4 h-4' : 'w-3 h-3'
@@ -36,13 +32,13 @@ function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md
   )
 }
 
-function DriverAvatar({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' | 'lg' }) {
-  const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-  const color = avatarColors[name.charCodeAt(0) % avatarColors.length]
-  const sizeClass = size === 'lg' ? 'w-14 h-14 text-base' : size === 'md' ? 'w-11 h-11 text-sm' : 'w-8 h-8 text-xs'
+/** Generic avatar — placeholder until real profile images are added */
+function GenericAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+  const sizeClass = size === 'lg' ? 'w-16 h-16' : size === 'md' ? 'w-11 h-11' : 'w-8 h-8'
+  const iconClass = size === 'lg' ? 'w-9 h-9' : size === 'md' ? 'w-6 h-6' : 'w-4 h-4'
   return (
-    <div className={clsx('rounded-full flex items-center justify-center text-white font-black flex-shrink-0', sizeClass, color)}>
-      {initials}
+    <div className={clsx('rounded-full bg-neutral-100 flex items-center justify-center flex-shrink-0', sizeClass)}>
+      <User className={clsx('text-neutral-300', iconClass)} />
     </div>
   )
 }
@@ -72,7 +68,7 @@ export function DriversPage() {
       <div className="flex flex-col min-h-screen bg-white animate-pulse">
         <TopBar title="Drivers" backHref="/fleet" />
         <div className="flex-1 p-4 space-y-3 lg:pt-8 lg:px-8">
-          {[1, 2, 3].map(i => <div key={i} className="h-40 bg-white rounded-card" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-40 bg-neutral-100 rounded-card" />)}
         </div>
       </div>
     )
@@ -85,16 +81,16 @@ export function DriversPage() {
       {/* Summary strip */}
       <div className="bg-white border-b border-neutral-100 px-4 py-3 grid grid-cols-3 gap-3 lg:hidden">
         <div className="text-center">
-          <p className="text-base font-black text-secondary-300">{verified}</p>
-          <p className="text-[10px] text-neutral-200">Verified</p>
+          <p className="text-base font-black text-black">{verified}</p>
+          <p className="text-[10px] text-black">Verified</p>
         </div>
         <div className="text-center">
-          <p className="text-base font-black text-primary-500">{totalTrips}</p>
-          <p className="text-[10px] text-neutral-200">Total Trips</p>
+          <p className="text-base font-black text-black">{totalTrips}</p>
+          <p className="text-[10px] text-black">Total Trips</p>
         </div>
         <div className="text-center">
-          <p className="text-base font-black text-accent">{avgRating > 0 ? avgRating.toFixed(1) : '—'}★</p>
-          <p className="text-[10px] text-neutral-200">Avg Rating</p>
+          <p className="text-base font-black text-black">{avgRating > 0 ? avgRating.toFixed(1) : '—'}★</p>
+          <p className="text-[10px] text-black">Avg Rating</p>
         </div>
       </div>
 
@@ -109,7 +105,7 @@ export function DriversPage() {
                 'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors',
                 filter === f.value
                   ? 'bg-primary-500 text-white border-primary-500'
-                  : 'bg-white text-neutral-200 border-neutral-100 hover:border-primary-400',
+                  : 'bg-white text-black border-neutral-100 hover:border-primary-400',
               )}
             >
               {f.label}
@@ -133,87 +129,75 @@ export function DriversPage() {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.map(driver => {
-              const tripTarget = 200
-              const progress = Math.min((driver.tripsCompleted / tripTarget) * 100, 100)
-              return (
-                <div
-                  key={driver.id}
-                  onClick={() => setSelectedDriver(driver)}
-                  className="bg-white rounded-card border border-neutral-100 shadow-card hover:shadow-card-hover transition-all cursor-pointer overflow-hidden"
-                >
-                  {/* Header */}
-                  <div className="bg-primary-75 px-4 py-3 flex items-start gap-3">
-                    <DriverAvatar name={driver.name} size="md" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-1">
-                        <p className="text-sm font-bold text-primary-500 truncate">{driver.name}</p>
-                        <StatusPill status={driver.status} size="sm" />
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <StarRating rating={driver.avgRating ?? 0} />
-                        <span className="text-[10px] font-bold text-primary-400">
-                          {(driver.avgRating ?? 0) > 0 ? (driver.avgRating ?? 0).toFixed(1) : 'No rating'}
-                        </span>
-                      </div>
+            {filtered.map(driver => (
+              <div
+                key={driver.id}
+                onClick={() => setSelectedDriver(driver)}
+                className="bg-white rounded-card border border-neutral-100 shadow-card hover:shadow-card-hover transition-all cursor-pointer overflow-hidden"
+              >
+                {/* Header */}
+                <div className="bg-primary-75 px-4 py-3 flex items-start gap-3">
+                  <GenericAvatar size="md" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-1">
+                      <p className="text-sm font-bold text-black truncate">{driver.name}</p>
+                      <StatusPill status={driver.status} size="sm" />
                     </div>
-                  </div>
-
-                  {/* Body */}
-                  <div className="px-4 py-3 space-y-3">
-                    <div className="flex items-center gap-3 text-[11px] text-neutral-200">
-                      <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{driver.phone}</span>
-                      {driver.vehiclePlate && (
-                        <span className="flex items-center gap-1 ml-auto"><Car className="w-3 h-3" />{driver.vehiclePlate}</span>
-                      )}
-                    </div>
-
-                    {/* Trips progress */}
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-neutral-200">Trips completed</span>
-                        <span className="font-bold text-primary-500">{driver.tripsCompleted}</span>
-                      </div>
-                      <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
-                        <div
-                          className={clsx('h-full rounded-full', progress >= 60 ? 'bg-secondary-300' : 'bg-accent')}
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
-                      {(driver.reviews?.length ?? 0) > 0 ? (
-                        <span className="flex items-center gap-1 text-[10px] text-accent font-semibold">
-                          <Award className="w-3 h-3" />
-                          {driver.reviews!.length} review{driver.reviews!.length > 1 ? 's' : ''}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-neutral-200">No reviews yet</span>
-                      )}
-                      <div className="flex items-center gap-2">
-                        {driver.status === 'pending' && (
-                          <button
-                            onClick={e => { e.stopPropagation(); toast.success(`Invite resent to ${driver.name}`) }}
-                            className="text-[10px] text-secondary-300 font-bold border border-secondary-300 rounded-lg px-2 py-1"
-                          >
-                            Resend invite
-                          </button>
-                        )}
-                        <a
-                          href={`tel:${driver.phone}`}
-                          onClick={e => e.stopPropagation()}
-                          className="w-7 h-7 flex items-center justify-center rounded-full bg-primary-75 text-primary-400 hover:bg-primary-500 hover:text-white transition-colors"
-                        >
-                          <Phone className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <StarRating rating={driver.avgRating ?? 0} />
+                      <span className="text-[10px] font-bold text-black">
+                        {(driver.avgRating ?? 0) > 0 ? (driver.avgRating ?? 0).toFixed(1) : 'No rating'}
+                      </span>
                     </div>
                   </div>
                 </div>
-              )
-            })}
+
+                {/* Body */}
+                <div className="px-4 py-3 space-y-3">
+                  <div className="flex items-center gap-3 text-[11px] text-black">
+                    <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{driver.phone}</span>
+                    {driver.vehiclePlate && (
+                      <span className="flex items-center gap-1 ml-auto"><Car className="w-3 h-3" />{driver.vehiclePlate}</span>
+                    )}
+                  </div>
+
+                  {/* Trips completed — plain number only */}
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-black">Trips completed</span>
+                    <span className="font-bold text-black">{driver.tripsCompleted}</span>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
+                    {(driver.reviews?.length ?? 0) > 0 ? (
+                      <span className="flex items-center gap-1 text-[10px] text-black font-semibold">
+                        <Award className="w-3 h-3" />
+                        {driver.reviews!.length} review{driver.reviews!.length > 1 ? 's' : ''}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-black">No reviews yet</span>
+                    )}
+                    <div className="flex items-center gap-2">
+                      {driver.status === 'pending' && (
+                        <button
+                          onClick={e => { e.stopPropagation(); toast.success(`Invite resent to ${driver.name}`) }}
+                          className="text-[10px] text-secondary-300 font-bold border border-secondary-300 rounded-lg px-2 py-1"
+                        >
+                          Resend invite
+                        </button>
+                      )}
+                      <a
+                        href={`tel:${driver.phone}`}
+                        onClick={e => e.stopPropagation()}
+                        className="w-7 h-7 flex items-center justify-center rounded-full bg-primary-75 text-primary-400 hover:bg-primary-500 hover:text-white transition-colors"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -227,77 +211,90 @@ export function DriversPage() {
         <Plus className="w-6 h-6" />
       </button>
 
-      {/* Reviews Bottom Sheet */}
-      <BottomSheet open={!!selectedDriver} onClose={() => setSelectedDriver(null)} title={`${selectedDriver?.name ?? ''} — Reviews`}>
-        {selectedDriver && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+      {/* ── Driver Detail Modal (full-page overlay) ── */}
+      {selectedDriver && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-float flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="flex items-center gap-4 px-6 py-5 border-b border-neutral-100 flex-shrink-0">
+              <GenericAvatar size="lg" />
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl font-black text-black truncate">{selectedDriver.name}</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <StarRating rating={selectedDriver.avgRating} size="md" />
+                  <span className="text-sm font-bold text-black">
+                    {selectedDriver.avgRating > 0 ? `${selectedDriver.avgRating.toFixed(1)} / 5.0` : 'No rating yet'}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedDriver(null)}
+                className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-black hover:bg-neutral-200 transition-colors flex-shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Stats row */}
+            <div className="px-6 py-4 grid grid-cols-3 gap-3 border-b border-neutral-100 flex-shrink-0">
               {[
-                { label: 'Avg Rating', value: selectedDriver.avgRating > 0 ? selectedDriver.avgRating.toFixed(1) : '—', color: 'text-accent' },
-                { label: 'Trips Done', value: selectedDriver.tripsCompleted, color: 'text-primary-500' },
-                { label: 'Reviews', value: selectedDriver.reviews?.length ?? 0, color: 'text-secondary-300' },
+                { label: 'Avg Rating', value: selectedDriver.avgRating > 0 ? selectedDriver.avgRating.toFixed(1) : '—' },
+                { label: 'Trips Done', value: selectedDriver.tripsCompleted },
+                { label: 'Reviews', value: selectedDriver.reviews?.length ?? 0 },
               ].map(s => (
-                <div key={s.label} className="bg-primary-75 rounded-2xl p-3 text-center border border-neutral-100">
-                  <p className={clsx('text-2xl font-black stat-number', s.color)}>{s.value}</p>
-                  <p className="text-[10px] text-neutral-200 mt-0.5">{s.label}</p>
+                <div key={s.label} className="bg-primary-75 rounded-2xl p-4 text-center border border-neutral-100">
+                  <p className="text-3xl font-black text-black stat-number">{s.value}</p>
+                  <p className="text-xs text-black mt-1">{s.label}</p>
                 </div>
               ))}
             </div>
 
-            {selectedDriver.avgRating > 0 && (
-              <div className="flex items-center gap-2 justify-center py-1">
-                <StarRating rating={selectedDriver.avgRating} size="md" />
-                <span className="text-sm font-bold text-primary-500">{selectedDriver.avgRating.toFixed(1)} / 5.0</span>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-primary-400 uppercase tracking-wider">Passenger Comments</p>
+            {/* Scrollable comments */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+              <p className="text-sm font-bold text-black uppercase tracking-wider mb-3">Passenger Comments</p>
               {!selectedDriver.reviews || selectedDriver.reviews.length === 0 ? (
-                <div className="text-center py-8 bg-primary-75 rounded-2xl border border-neutral-100">
-                  <Star className="w-7 h-7 text-neutral-100 mx-auto mb-2" />
-                  <p className="text-xs font-semibold text-neutral-200">No comments yet</p>
-                  <p className="text-[10px] text-neutral-200 mt-0.5">Reviews appear after completed trips.</p>
+                <div className="text-center py-16 bg-primary-75 rounded-2xl border border-neutral-100">
+                  <Star className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-black">No comments yet</p>
+                  <p className="text-xs text-black mt-1">Reviews appear after completed trips.</p>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-80 overflow-y-auto scrollbar-thin pr-1">
-                  {selectedDriver.reviews.map((rev: any) => (
-                    <div key={rev.id} className="bg-primary-75 rounded-2xl p-3.5 border border-neutral-100">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-secondary-300 flex items-center justify-center text-white text-[10px] font-black">
-                            {rev.passengerName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                          </div>
-                          <p className="text-xs font-bold text-primary-500">{rev.passengerName}</p>
+                selectedDriver.reviews.map((rev: any) => (
+                  <div key={rev.id} className="bg-primary-75 rounded-2xl p-4 border border-neutral-100">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
+                          <User className="w-5 h-5 text-neutral-400" />
                         </div>
-                        <div className="flex items-center gap-1">
-                          <StarRating rating={rev.rating} />
-                          <span className="text-[10px] font-bold text-accent">{rev.rating}</span>
-                        </div>
+                        <p className="text-sm font-bold text-black">{rev.passengerName}</p>
                       </div>
-                      <p className="text-xs text-neutral-200 leading-relaxed italic">"{rev.comment}"</p>
-                      <p className="text-[9px] text-neutral-200 text-right mt-1">{rev.date}</p>
+                      <div className="flex items-center gap-1">
+                        <StarRating rating={rev.rating} size="md" />
+                        <span className="text-sm font-bold text-black">{rev.rating}</span>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                    <p className="text-sm text-black leading-relaxed">"{rev.comment}"</p>
+                    <p className="text-xs text-black text-right mt-2">{rev.date}</p>
+                  </div>
+                ))
               )}
             </div>
           </div>
-        )}
-      </BottomSheet>
+        </div>
+      )}
 
       {/* Invite Sheet */}
       <BottomSheet open={showAddSheet} onClose={() => setShowAddSheet(false)} title="Invite a Driver">
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-primary-400 mb-1.5">Driver's Name</label>
+            <label className="block text-xs font-semibold text-black mb-1.5">Driver's Name</label>
             <input className="input-field" placeholder="e.g. Akin Bello" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-primary-400 mb-1.5">Phone Number</label>
+            <label className="block text-xs font-semibold text-black mb-1.5">Phone Number</label>
             <input className="input-field" type="tel" placeholder="+234 803 123 4567" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
           </div>
-          <p className="text-xs text-neutral-200 bg-primary-75 rounded-xl p-3 leading-relaxed border border-neutral-100">
+          <p className="text-xs text-black bg-primary-75 rounded-xl p-3 leading-relaxed border border-neutral-100">
             {form.name || 'The driver'} will receive an SMS to download the Soole driver app and complete verification.
           </p>
           <button onClick={handleInvite} disabled={!form.name || !form.phone} className="btn-primary w-full">Send Invite</button>

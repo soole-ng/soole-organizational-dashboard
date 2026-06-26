@@ -3,7 +3,7 @@
  * • Soole icon mark (Logo 2 / soole-icon.png) at the top
  * • Organization's own logo + name displayed prominently
  * • Sign-out + notification bell moved to the top header strip
- * • All brand colours only (#042011, #254832, #1D754C, #095B4F, #A7C957, #DEDBEC)
+ * • All brand colours only (#042011, #254832, #1D754C, #095B4F, #A7C957, #A7C957)
  * • "Soole Organization Dashboard" branding hidden (shown in Settings/Help instead)
  * ≤ 400 lines
  */
@@ -33,23 +33,23 @@ interface NavGroup {
 const navGroups: NavGroup[] = [
   {
     items: [
-      { to: '/',         label: 'Home',     icon: Home },
-      { to: '/trips',    label: 'Trips',    icon: Route },
+      { to: '/', label: 'Home', icon: Home },
+      { to: '/trips', label: 'Trips', icon: Route },
       { to: '/live-map', label: 'Live Map', icon: Map },
-      { to: '/ai',       label: 'AI Assistant',  icon: Sparkles, accent: true },
+      { to: '/ai', label: 'AI Assistant', icon: Sparkles, accent: true },
     ],
   },
   {
     label: 'Fleet',
     items: [
-      { to: '/fleet/drivers',  label: 'Drivers',  icon: Users },
+      { to: '/fleet/drivers', label: 'Drivers', icon: Users },
       { to: '/fleet/vehicles', label: 'Vehicles', icon: Car },
     ],
   },
   {
     label: 'Operations',
     items: [
-      { to: '/money',   label: 'Money',   icon: Wallet },
+      { to: '/money', label: 'Money', icon: Wallet },
       { to: '/reports', label: 'Reports', icon: BarChart2 },
     ],
   },
@@ -57,7 +57,7 @@ const navGroups: NavGroup[] = [
     label: 'Account',
     items: [
       { to: '/settings', label: 'Settings', icon: Settings },
-      { to: '/help',     label: 'Help',     icon: HelpCircle },
+      { to: '/help', label: 'Help', icon: HelpCircle },
     ],
   },
 ]
@@ -75,8 +75,8 @@ function NavItemLink({ item }: { item: NavItem }) {
               ? 'bg-accent-100 text-accent-400'
               : 'text-gray-800 hover:bg-accent-50 hover:text-accent-300'
             : isActive
-            ? 'bg-primary-75 text-primary-500 shadow-sm'
-            : 'text-gray-800 hover:bg-primary-75 hover:text-primary-500',
+              ? 'bg-primary-75 text-primary-500 shadow-sm'
+              : 'text-gray-800 hover:bg-primary-75 hover:text-primary-500',
         )
       }
     >
@@ -92,7 +92,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) {
-  const navigate    = useNavigate()
+  const navigate = useNavigate()
   const { org, updateOrg } = useOrg()
   const [signingOut, setSigningOut] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)

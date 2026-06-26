@@ -183,7 +183,7 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
               )}
               style={{
                 background: markerColor(vehicle.status),
-                borderColor: selectedDriver?.id === vehicle.id ? '#A7C957' : '#DEDBEC',
+                borderColor: selectedDriver?.id === vehicle.id ? '#A7C957' : '#A7C957',
               }}
               title={vehicle.plate}
             >

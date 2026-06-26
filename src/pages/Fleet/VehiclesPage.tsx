@@ -29,27 +29,17 @@ function docStatusIcon(status: string) {
   return <XCircle className="w-3 h-3 text-warning" />
 }
 
-function FuelBar({ level }: { level: number }) {
+/** Plain fuel level display — no bar */
+function FuelLevel({ level }: { level: number }) {
   const pct = Math.round(level * 100)
   const isLow = pct <= 25
-  const isMid = pct > 25 && pct <= 60
-  const barColor = isLow ? 'bg-warning' : isMid ? 'bg-accent' : 'bg-secondary-300'
-  const textColor = isLow ? 'text-warning' : isMid ? 'text-warning' : 'text-secondary-300'
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-[10px]">
-        <div className="flex items-center gap-1">
-          <Fuel className={clsx('w-3 h-3', textColor)} />
-          <span className="text-neutral-200">Estimated fuel</span>
-        </div>
-        <span className={clsx('font-bold', textColor)}>{pct}%</span>
+    <div className="flex items-center justify-between text-[10px]">
+      <div className="flex items-center gap-1">
+        <Fuel className={clsx('w-3 h-3', isLow ? 'text-warning' : 'text-secondary-300')} />
+        <span className="text-black">Estimated fuel</span>
       </div>
-      <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
-        <div
-          className={clsx('h-full rounded-full transition-all', barColor)}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      <span className={clsx('font-bold', isLow ? 'text-warning' : 'text-black')}>{pct}%</span>
     </div>
   )
 }
@@ -80,16 +70,16 @@ export function VehiclesPage() {
       {/* Summary strip */}
       <div className="bg-white border-b border-neutral-100 px-4 py-3 grid grid-cols-3 gap-3 lg:hidden">
         <div className="text-center">
-          <p className="text-base font-black text-secondary-300">{verified}</p>
-          <p className="text-[10px] text-neutral-200">Verified</p>
+          <p className="text-base font-black text-black">{verified}</p>
+          <p className="text-[10px] text-black">Verified</p>
         </div>
         <div className="text-center">
-          <p className="text-base font-black text-primary-500">{data.vehicles.length}</p>
-          <p className="text-[10px] text-neutral-200">Total</p>
+          <p className="text-base font-black text-black">{data.vehicles.length}</p>
+          <p className="text-[10px] text-black">Total</p>
         </div>
         <div className="text-center">
-          <p className="text-base font-black text-primary-500">{totalSeats}</p>
-          <p className="text-[10px] text-neutral-200">Seats</p>
+          <p className="text-base font-black text-black">{totalSeats}</p>
+          <p className="text-[10px] text-black">Seats</p>
         </div>
       </div>
 
@@ -152,13 +142,13 @@ export function VehiclesPage() {
                       <span className="text-neutral-200 font-mono text-[11px]">{vehicle.totalKm.toLocaleString()} km</span>
                     </div>
 
-                    {/* Fuel */}
-                    <FuelBar level={vehicle.fuelLevel} />
+                    {/* Fuel — plain number */}
+                    <FuelLevel level={vehicle.fuelLevel} />
 
                     {/* Documents */}
                     <div className="space-y-1.5 pt-2 border-t border-neutral-100">
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-neutral-200 font-medium">Documents</span>
+                        <span className="text-black font-medium">Documents</span>
                         <span className={clsx('font-bold', approvedDocs === totalDocs ? 'text-secondary-300' : 'text-warning')}>
                           {approvedDocs}/{totalDocs} approved
                         </span>

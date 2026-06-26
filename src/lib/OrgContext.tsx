@@ -12,6 +12,8 @@ interface OrgProfile {
   commissionPct: number
   email?: string
   phone?: string
+  securityQuestion?: string
+  securityAnswer?: string
 }
 
 interface OrgContextValue {
@@ -24,6 +26,8 @@ const DEFAULT_ORG: OrgProfile = {
   logoUrl: null,
   role: 'Owner',
   commissionPct: 8,
+  securityQuestion: '',
+  securityAnswer: '',
 }
 
 const OrgContext = createContext<OrgContextValue>({

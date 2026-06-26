@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Shield, ChevronDown, Phone, Car, MapPin, CreditCard, Sparkles } from 'lucide-react'
+import { Eye, EyeOff, Shield, ChevronDown, Phone, Car, MapPin, CreditCard, Sparkles, HelpCircle } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
+import { useOrg } from '../../lib/OrgContext'
 
-type Step = 'login' | 'otp'
+type Step = 'login' | 'otp' | 'security_question'
 
 const COUNTRY_CODES = [
   { code: '+234', flag: 'https://flagcdn.com/w40/ng.png', name: 'Nigeria' },
@@ -18,11 +19,13 @@ const COUNTRY_CODES = [
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const { org } = useOrg()
   const [step, setStep]         = useState<Step>('login')
   const [country, setCountry]   = useState(COUNTRY_CODES[0])
   const [phone, setPhone]       = useState('')
   const [password, setPassword] = useState('')
   const [otp, setOtp]           = useState('')
+  const [secAnswer, setSecAnswer] = useState('')
   const [showPw, setShowPw]     = useState(false)
   const [showCC, setShowCC]     = useState(false)
   const [loading, setLoading]   = useState(false)
@@ -43,8 +46,27 @@ export function LoginPage() {
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
-      toast.success('Welcome back to Mobiliti!')
-      navigate('/')
+      // Check if security question and answer are setup
+      if (org.securityQuestion && org.securityAnswer) {
+        setStep('security_question')
+      } else {
+        toast.success('Welcome back to Mobiliti!')
+        navigate('/')
+      }
+    }, 800)
+  }
+
+  const handleSecurityQuestion = () => {
+    if (!secAnswer) return
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+      if (secAnswer.toLowerCase().trim() === (org.securityAnswer || '').toLowerCase().trim()) {
+        toast.success('Welcome back to Mobiliti!')
+        navigate('/')
+      } else {
+        toast.error('Incorrect answer to security question!')
+      }
     }, 800)
   }
 
@@ -123,8 +145,8 @@ export function LoginPage() {
                 <>
                   {/* Phone field */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-primary-400 flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5" />
+                    <label className="block text-xs font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-black" />
                       Phone Number
                     </label>
                     <div className="flex gap-3">
@@ -133,11 +155,11 @@ export function LoginPage() {
                         <button
                           type="button"
                           onClick={() => setShowCC(!showCC)}
-                          className="flex items-center gap-2 h-[56px] px-4 bg-primary-75 border border-neutral-100 rounded-2xl text-sm font-semibold text-primary-500 hover:border-primary-200 transition-colors"
+                          className="flex items-center gap-2 h-[56px] px-4 bg-primary-75 border border-neutral-100 rounded-2xl text-sm font-black text-black hover:border-primary-200 transition-colors"
                         >
                           <img src={country.flag} alt={country.name} className="w-6 h-4 object-cover rounded-sm" />
-                          <span className="text-sm font-bold">{country.code}</span>
-                          <ChevronDown className={clsx('w-4 h-4 text-neutral-200 transition-transform', showCC && 'rotate-180')} />
+                          <span className="text-sm font-black text-black">{country.code}</span>
+                          <ChevronDown className={clsx('w-4 h-4 text-black transition-transform', showCC && 'rotate-180')} />
                         </button>
 
                         {showCC && (
@@ -149,12 +171,12 @@ export function LoginPage() {
                                 onClick={() => { setCountry(c); setShowCC(false) }}
                                 className={clsx(
                                   'w-full flex items-center gap-2.5 px-4 py-3 text-sm transition-colors hover:bg-primary-75 text-left',
-                                  country.code === c.code ? 'bg-primary-75 font-bold text-primary-500' : 'text-neutral-400',
+                                  country.code === c.code ? 'bg-primary-75 font-black text-black' : 'text-neutral-400',
                                 )}
                               >
                                 <img src={c.flag} alt={c.name} className="w-6 h-4 object-cover rounded-sm flex-shrink-0" />
-                                <span className="font-bold text-xs">{c.code}</span>
-                                <span className="flex-1 text-xs font-medium">{c.name}</span>
+                                <span className="font-black text-xs text-black">{c.code}</span>
+                                <span className="flex-1 text-xs font-black text-black">{c.name}</span>
                               </button>
                             ))}
                           </div>
@@ -165,7 +187,7 @@ export function LoginPage() {
                         type="tel"
                         value={phone}
                         onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-                        className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-base text-primary-500 placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+                        className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-base text-black font-black placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
                         placeholder="08031234567"
                         autoComplete="tel"
                         inputMode="tel"
@@ -173,8 +195,8 @@ export function LoginPage() {
                       />
                     </div>
                     {phone && (
-                      <p className="text-xs text-neutral-200 mt-1">
-                        Full number: <span className="font-semibold text-primary-400">{fullPhone}</span>
+                      <p className="text-xs text-black mt-1 font-black">
+                        Full number: <span className="font-black text-black">{fullPhone}</span>
                       </p>
                     )}
                   </div>
@@ -182,8 +204,8 @@ export function LoginPage() {
                   {/* Password field */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold uppercase tracking-wider text-primary-400">Password</label>
-                      <button type="button" className="text-xs text-secondary-300 font-bold hover:text-secondary-400 transition-colors">
+                      <label className="text-xs font-black uppercase tracking-wider text-black">Password</label>
+                      <button type="button" className="text-xs text-black font-black hover:text-neutral-700 transition-colors">
                         Forgot password?
                       </button>
                     </div>
@@ -192,7 +214,7 @@ export function LoginPage() {
                         type={showPw ? 'text' : 'password'}
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 pr-12 text-base text-primary-500 placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+                        className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 pr-12 text-base text-black font-black placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
                         placeholder="••••••••••••"
                         autoComplete="current-password"
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
@@ -200,7 +222,7 @@ export function LoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowPw(!showPw)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-200 hover:text-neutral-400 transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-neutral-700 transition-colors"
                         aria-label={showPw ? 'Hide password' : 'Show password'}
                       >
                         {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -211,7 +233,7 @@ export function LoginPage() {
                   <button
                     onClick={handleLogin}
                     disabled={!phone || !password || loading}
-                    className={clsx('w-full bg-primary-500 text-white font-bold rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-sm', loading && 'opacity-70')}
+                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-sm', loading && 'opacity-70')}
                   >
                     {loading
                       ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Signing in…</>
@@ -221,35 +243,35 @@ export function LoginPage() {
 
                   {/* Not registered notice */}
                   <div className="rounded-2xl bg-primary-75 p-4 border border-primary-100">
-                    <p className="text-xs text-neutral-300 text-center leading-relaxed font-medium">
+                    <p className="text-xs text-black text-center leading-relaxed font-black">
                       Don't have an account?{' '}
                       <a
                         href="mailto:hello@soole.ng?subject=Organization Dashboard Access Request"
-                        className="text-secondary-300 font-bold hover:text-secondary-400 transition-colors"
+                        className="text-black font-black underline hover:text-neutral-700 transition-colors"
                       >
                         Contact Soole to register your organization
                       </a>
                     </p>
                   </div>
                 </>
-              ) : (
+              ) : step === 'otp' ? (
                 <>
                   <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
-                    <Shield className="w-5 h-5 text-secondary-300 flex-shrink-0" />
-                    <p className="text-xs text-primary-400 leading-relaxed font-semibold">
+                    <Shield className="w-5 h-5 text-black flex-shrink-0" />
+                    <p className="text-xs text-black leading-relaxed font-black">
                       Open your authenticator app and enter the 6-digit code for <strong>Soole</strong>.
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-primary-400">6-digit code</label>
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">6-digit code</label>
                     <input
                       type="text"
                       inputMode="numeric"
                       maxLength={6}
                       value={otp}
                       onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-                      className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-center text-3xl tracking-[0.5em] font-bold text-primary-500 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all stat-number"
+                      className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-center text-3xl tracking-[0.5em] font-black text-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all stat-number"
                       placeholder="000000"
                       onKeyDown={e => e.key === 'Enter' && handleOtp()}
                       autoFocus
@@ -271,7 +293,7 @@ export function LoginPage() {
                   <button
                     onClick={handleOtp}
                     disabled={otp.length !== 6 || loading}
-                    className={clsx('w-full bg-primary-500 text-white font-bold rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-sm', loading && 'opacity-70')}
+                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-sm', loading && 'opacity-70')}
                   >
                     {loading
                       ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying…</>
@@ -281,9 +303,51 @@ export function LoginPage() {
 
                   <button
                     onClick={() => { setStep('login'); setOtp('') }}
-                    className="w-full text-primary-400 font-semibold rounded-2xl px-4 py-2 hover:bg-primary-75 active:scale-95 transition-all text-sm"
+                    className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 active:scale-95 transition-all text-sm"
                   >
                     ← Back to login
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
+                    <HelpCircle className="w-5 h-5 text-black flex-shrink-0" />
+                    <p className="text-xs text-black leading-relaxed font-black">
+                      Please answer your backup security question to complete signing in.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="block text-sm font-black text-black">
+                      Question: <span className="font-extrabold text-primary-500">{org.securityQuestion}</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={secAnswer}
+                      onChange={e => setSecAnswer(e.target.value)}
+                      className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-base font-black text-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+                      placeholder="Enter your secret answer"
+                      onKeyDown={e => e.key === 'Enter' && handleSecurityQuestion()}
+                      autoFocus
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSecurityQuestion}
+                    disabled={!secAnswer || loading}
+                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-sm', loading && 'opacity-70')}
+                  >
+                    {loading
+                      ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying…</>
+                      : 'Verify Answer'
+                    }
+                  </button>
+
+                  <button
+                    onClick={() => { setStep('otp'); setSecAnswer('') }}
+                    className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 active:scale-95 transition-all text-sm"
+                  >
+                    ← Back to 2FA PIN
                   </button>
                 </>
               )}

@@ -182,9 +182,10 @@ export function SettingsPage() {
                     )}
 
                     {label === 'Security' && (
-                      <div className="space-y-4 max-w-2xl bg-white p-4 rounded-2xl border border-primary-100">
+                      <div className="space-y-6 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
+                        {/* Speed Limit */}
                         <div>
-                          <label className="text-xs font-semibold text-primary-400 block mb-1.5">Maximum Fleet Speed Limit (km/h)</label>
+                          <label className="text-xs font-bold text-black block mb-1.5 uppercase tracking-wider">Maximum Fleet Speed Limit (km/h)</label>
                           <div className="flex items-center gap-3">
                             <input
                               type="range"
@@ -193,9 +194,41 @@ export function SettingsPage() {
                               onChange={e => setSpeedLimit(Number(e.target.value))}
                               className="flex-1 accent-primary-500 h-1.5 bg-primary-100 rounded-lg appearance-none cursor-pointer"
                             />
-                            <span className="text-sm font-bold text-primary-500 stat-number w-16 text-right">{speedLimit} <span className="text-[10px] text-neutral-200 font-semibold">km/h</span></span>
+                            <span className="text-sm font-black text-black stat-number w-16 text-right">{speedLimit} <span className="text-[10px] text-black font-bold">km/h</span></span>
                           </div>
-                          <p className="text-[11px] text-neutral-200 mt-2">Nigeria federal highway limit is 100 km/h. Alerts will be generated if vehicles exceed this limit.</p>
+                          <p className="text-[11px] text-black mt-2">Nigeria federal highway limit is 100 km/h. Alerts will be generated if vehicles exceed this limit.</p>
+                        </div>
+
+                        <hr className="border-neutral-100" />
+
+                        {/* Secret Question & Answer setup */}
+                        <div className="space-y-4">
+                          <h4 className="text-sm font-black text-black">2FA Secret Security Question</h4>
+                          <p className="text-xs text-black leading-relaxed">
+                            Set up a backup security question. Once configured, you will be prompted to answer this question after entering your 2FA OTP code during sign-in.
+                          </p>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wider">Secret Question</label>
+                              <input
+                                type="text"
+                                className="input-field bg-white text-black font-medium border border-neutral-200 focus:border-primary-500"
+                                placeholder="e.g. What was the name of your first school?"
+                                value={org.securityQuestion || ''}
+                                onChange={e => updateOrg({ securityQuestion: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wider">Secret Answer</label>
+                              <input
+                                type="password"
+                                className="input-field bg-white text-black font-medium border border-neutral-200 focus:border-primary-500"
+                                placeholder="Enter secret answer"
+                                value={org.securityAnswer || ''}
+                                onChange={e => updateOrg({ securityAnswer: e.target.value })}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}

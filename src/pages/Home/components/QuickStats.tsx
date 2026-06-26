@@ -32,17 +32,17 @@ export function QuickStats() {
             <AreaChart data={weeklyRevenue} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#1D754C" stopOpacity={0.2} />
+                  <stop offset="5%" stopColor="#1D754C" stopOpacity={0.2} />
                   <stop offset="95%" stopColor="#1D754C" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#DEDBEC' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#A7C957' }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip
                 formatter={(v: number) => [formatMoneyCompact(v), 'Net']}
                 contentStyle={{ background: '#042011', border: 'none', borderRadius: 12, fontSize: 11, color: '#fff', padding: '6px 12px' }}
                 itemStyle={{ color: '#fff' }}
-                cursor={{ stroke: '#DEDBEC', strokeWidth: 1 }}
+                cursor={{ stroke: '#A7C957', strokeWidth: 1 }}
               />
               <Area type="monotone" dataKey="net" stroke="#1D754C" strokeWidth={2} fill="url(#netGrad)" dot={false} />
             </AreaChart>

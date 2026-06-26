@@ -8,7 +8,9 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  * { box-sizing: border-box; }
+  * {
+    box-sizing: border-box;
+  }
 
   html {
     font-family: 'Geist', system-ui, sans-serif;
@@ -19,7 +21,7 @@
   body {
     margin: 0;
     background: #ffffff;
-    color: #042011;
+    color: #000000;
     overscroll-behavior: none;
   }
 
@@ -31,12 +33,27 @@
 }
 
 @layer components {
-  .safe-top    { padding-top: var(--safe-top); }
-  .safe-bottom { padding-bottom: var(--safe-bottom); }
+  .safe-top {
+    padding-top: var(--safe-top);
+  }
 
-  .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
-  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-  .scrollbar-thin::-webkit-scrollbar-thumb { background: #DEDBEC; border-radius: 999px; }
+  .safe-bottom {
+    padding-bottom: var(--safe-bottom);
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #A7C957;
+    border-radius: 999px;
+  }
 
   .tab-active {
     @apply text-primary-500 font-semibold;
@@ -52,26 +69,19 @@
   }
 
   .btn-primary {
-    @apply bg-primary-500 text-white font-semibold rounded-btn px-6 py-3.5
-           active:scale-95 transition-all duration-150 select-none
-           disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-primary-500 text-white font-semibold rounded-btn px-6 py-3.5 active:scale-95 transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-secondary {
-    @apply bg-primary-75 text-primary-500 font-semibold rounded-btn px-6 py-3.5
-           active:scale-95 transition-all duration-150 select-none
-           border border-primary-100;
+    @apply bg-primary-75 text-primary-500 font-semibold rounded-btn px-6 py-3.5 active:scale-95 transition-all duration-150 select-none border border-primary-100;
   }
 
   .btn-accent {
-    @apply bg-accent-300 text-primary-500 font-semibold rounded-btn px-6 py-3.5
-           hover:bg-accent-400 active:scale-95 transition-all duration-150 select-none
-           disabled:opacity-50 disabled:pointer-events-none;
+    @apply bg-accent-300 text-primary-500 font-semibold rounded-btn px-6 py-3.5 hover:bg-accent-400 active:scale-95 transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-ghost {
-    @apply text-primary-400 font-medium rounded-btn px-4 py-2.5
-           hover:bg-primary-75 active:scale-95 transition-all duration-150 select-none;
+    @apply text-primary-400 font-medium rounded-btn px-4 py-2.5 hover:bg-primary-75 active:scale-95 transition-all duration-150 select-none;
   }
 
   .accent-highlight {
@@ -83,10 +93,7 @@
   }
 
   .input-field {
-    @apply w-full bg-white border border-neutral-50 rounded-form px-4 py-3.5
-           text-sm text-primary-500 placeholder:text-neutral-100
-           focus:outline-none focus:border-secondary-300 focus:ring-2 focus:ring-secondary-300/20
-           transition-colors duration-150;
+    @apply w-full bg-white border border-neutral-50 rounded-form px-4 py-3.5 text-sm text-primary-500 placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-2 focus:ring-secondary-300/20 transition-colors duration-150;
   }
 
   .card {
@@ -99,13 +106,20 @@
 }
 
 @layer utilities {
-  .text-balance { text-wrap: balance; }
-  .min-h-screen { min-height: 100dvh; }
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .min-h-screen {
+    min-height: 100dvh;
+  }
 }
 
 /* Mapbox overrides */
 .mapboxgl-ctrl-logo,
-.mapboxgl-ctrl-attrib { display: none !important; }
+.mapboxgl-ctrl-attrib {
+  display: none !important;
+}
 
 /* Bottom nav safe area */
 .bottom-nav {

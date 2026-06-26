@@ -72,7 +72,7 @@ export function LiveMapPage() {
   const markerColor = (status: string) => {
     if (status === 'on_trip') return '#1D754C'
     if (status === 'overspeed') return '#A7C957'
-    return '#DEDBEC'
+    return '#A7C957'
   }
 
   const onTripCount = vehicleLocations.filter(v => v.status === 'on_trip').length

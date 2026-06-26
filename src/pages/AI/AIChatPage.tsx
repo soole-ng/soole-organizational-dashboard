@@ -64,7 +64,7 @@ export function AIChatPage() {
   const verifiedDrivers = data.drivers.filter(d => d.status === 'verified').length
 
   return (
-    <div className="flex flex-col h-screen bg-primary-75">
+    <div className="flex flex-col h-screen bg-white">
       <TopBar title="AI Assistant" backHref="/" />
 
       <div className="flex-1 flex flex-col overflow-hidden max-w-3xl mx-auto w-full">

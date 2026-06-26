@@ -1,7 +1,7 @@
 // Soole Mobiliti Dashboard — Service Worker
-// Strategy: Cache-first for static assets, network-first for API/data calls
+// Strategy: SPA-first for navigation, cache-first for static assets, network-first for API
 
-const CACHE_NAME = 'mobiliti-v1'
+const CACHE_NAME = 'mobiliti-v2'
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -29,7 +29,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-// Fetch: cache-first for static, network-first for everything else
+// Fetch: SPA navigation-first, then cache-first for assets, network-first for API
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
@@ -47,6 +47,23 @@ self.addEventListener('fetch', (event) => {
           return response
         })
         .catch(() => caches.match(request))
+    )
+    return
+  }
+
+  // For HTML navigation requests (page-level navigation like /help, /settings, etc.)
+  // Always serve index.html so React Router can handle client-side routing.
+  // This is the critical fix for SPA routing in a PWA.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/index.html').then(cached => {
+        if (cached) return cached
+        return fetch('/index.html').then(response => {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then(cache => cache.put('/index.html', clone))
+          return response
+        })
+      })
     )
     return
   }

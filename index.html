@@ -19,11 +19,20 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
+      // Only register the service worker in production (not in Vite dev server)
+      // to prevent the SW from intercepting dev-mode routing and causing redirect issues.
+      if ('serviceWorker' in navigator && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js');
         });
+      } else if ('serviceWorker' in navigator) {
+        // In dev mode: unregister any previously installed service workers
+        // so stale SWs don't intercept navigation and cause redirect bugs (e.g. /help → /)
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(reg => reg.unregister());
+        });
       }
     </script>
+
   </body>
 </html>

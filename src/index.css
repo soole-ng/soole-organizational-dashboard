@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    font-family: 'Geist', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
+    background: #DEDBEC;
+    color: #042011;
+    overscroll-behavior: none;
+  }
+
+  #root {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@layer components {
+  .safe-top    { padding-top: var(--safe-top); }
+  .safe-bottom { padding-bottom: var(--safe-bottom); }
+
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #DEDBEC; border-radius: 999px; }
+
+  .tab-active {
+    @apply text-primary-500 font-semibold;
+  }
+
+  .stat-number {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  .skeleton {
+    @apply animate-pulse bg-neutral-50 rounded-lg;
+  }
+
+  .btn-primary {
+    @apply bg-primary-500 text-white font-semibold rounded-btn px-6 py-3.5
+           active:scale-95 transition-all duration-150 select-none
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply bg-primary-75 text-primary-500 font-semibold rounded-btn px-6 py-3.5
+           active:scale-95 transition-all duration-150 select-none
+           border border-primary-100;
+  }
+
+  .btn-accent {
+    @apply bg-accent-300 text-primary-500 font-semibold rounded-btn px-6 py-3.5
+           hover:bg-accent-400 active:scale-95 transition-all duration-150 select-none
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-ghost {
+    @apply text-primary-400 font-medium rounded-btn px-4 py-2.5
+           hover:bg-primary-75 active:scale-95 transition-all duration-150 select-none;
+  }
+
+  .accent-highlight {
+    @apply text-accent-400 font-semibold;
+  }
+
+  .accent-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-50 text-accent-500 text-xs font-semibold border border-accent-100;
+  }
+
+  .input-field {
+    @apply w-full bg-white border border-neutral-50 rounded-form px-4 py-3.5
+           text-sm text-primary-500 placeholder:text-neutral-100
+           focus:outline-none focus:border-secondary-300 focus:ring-2 focus:ring-secondary-300/20
+           transition-colors duration-150;
+  }
+
+  .card {
+    @apply bg-white rounded-card shadow-card p-4;
+  }
+
+  .page-header {
+    @apply bg-white border-b border-neutral-50 px-4 py-3 flex items-center gap-3;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .min-h-screen { min-height: 100dvh; }
+}
+
+/* Mapbox overrides */
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib { display: none !important; }
+
+/* Bottom nav safe area */
+.bottom-nav {
+  padding-bottom: calc(0.75rem + var(--safe-bottom));
+}

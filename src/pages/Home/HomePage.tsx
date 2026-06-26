@@ -31,10 +31,10 @@ export function HomePage() {
         </div>
         <div className="grid grid-cols-4 gap-4">
           {[
-            { label: 'Trips Today',    value: '3',         sub: '+1 vs yesterday' },
-            { label: 'Bookings Today', value: '34',        sub: '10 seats remaining' },
-            { label: "Today's Revenue",value: 'NGN 269K',  sub: '+18% vs last week' },
-            { label: 'Wallet Balance', value: 'NGN 47.3K', sub: 'Payout due 1 Jul' },
+            { label: 'Trips Today', value: '3', sub: '+1 vs yesterday' },
+            { label: 'Bookings Today', value: '34', sub: '10 seats remaining' },
+            { label: "Today's Revenue", value: 'NGN 269K', sub: '+18% vs last week' },
+            { label: 'Wallet Balance', value: 'NGN 47.3K', sub: 'Total Amount' },
           ].map(s => (
             <div key={s.label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
               <p className="text-primary-100 text-xs mb-2">{s.label}</p>

@@ -75,11 +75,7 @@ export function FleetPage() {
               </div>
               <p className="text-2xl font-black text-primary-500 stat-number">{value}</p>
               <p className="text-[10px] text-neutral-200 mt-0.5">{label}</p>
-              {progress !== null && (
-                <div className="h-1 bg-neutral-50 rounded-full overflow-hidden mt-2">
-                  <div className="h-full bg-current rounded-full opacity-40" style={{ width: `${progress}%` }} />
-                </div>
-              )}
+
             </div>
           ))}
         </div>

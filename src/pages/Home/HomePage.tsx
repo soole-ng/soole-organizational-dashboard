@@ -36,7 +36,7 @@ export function HomePage() {
             { label: "Today's Revenue", value: 'NGN 269K', sub: '+18% vs last week' },
             { label: 'Wallet Balance', value: 'NGN 47.3K', sub: 'Total Amount' },
           ].map(s => (
-            <div key={s.label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+            <div key={s.label} className="bg-primary-400 rounded-2xl p-4">
               <p className="text-primary-100 text-xs mb-2">{s.label}</p>
               <p className="text-3xl sm:text-4xl font-black text-white stat-number">{s.value}</p>
               <p className="text-primary-200 text-[11px] mt-1">{s.sub}</p>

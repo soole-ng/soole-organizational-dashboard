@@ -75,9 +75,9 @@ export function AIAssistant({ suggestions = [] }: AIAssistantProps) {
   return (
     <div className="fixed inset-0 lg:bottom-8 lg:right-8 lg:w-96 lg:h-[600px] lg:top-auto lg:inset-auto bg-black/50 lg:bg-transparent z-50 flex items-end lg:items-stretch">
       <div className="w-full lg:rounded-2xl bg-white lg:shadow-float flex flex-col h-full lg:h-auto">
-        <div className="bg-gradient-to-r from-primary-500 to-secondary-400 px-4 py-4 flex items-center justify-between rounded-t-2xl lg:rounded-t-2xl">
+        <div className="bg-primary-500 px-4 py-4 flex items-center justify-between rounded-t-2xl lg:rounded-t-2xl">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary-400 rounded-full flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -85,7 +85,7 @@ export function AIAssistant({ suggestions = [] }: AIAssistantProps) {
               <p className="text-primary-100 text-xs">Ask about your fleet</p>
             </div>
           </div>
-          <button onClick={() => setIsOpen(false)} className="text-white hover:bg-white/10 p-2 rounded-lg transition-colors">
+          <button onClick={() => setIsOpen(false)} className="text-white hover:bg-primary-400 p-2 rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>

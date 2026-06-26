@@ -100,12 +100,12 @@ export function MoneyPage() {
             <p className="text-primary-200 text-xs mb-1">Available balance</p>
             <MoneyDisplay amount={balance} size="2xl" className="text-white text-3xl sm:text-5xl font-black" />
           </div>
-          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10" aria-label="Payout settings">
+          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-primary-400" aria-label="Payout settings">
             <Settings className="w-4 h-4 text-white" />
           </button>
         </div>
 
-        <div className="bg-white/10 rounded-2xl p-4 mb-4">
+        <div className="bg-primary-400 rounded-2xl p-4 mb-4">
           <div className="flex items-center justify-between mb-1.5">
             <p className="text-xs text-primary-200 font-medium">Instant payout eligible</p>
             <div className="flex items-center gap-1 text-xs text-accent-300">
@@ -117,7 +117,7 @@ export function MoneyPage() {
           <p className="text-[11px] text-primary-200 mt-1">Ready for withdrawal · GTBank ****4521</p>
         </div>
 
-        <div className="bg-white/10 rounded-2xl p-4">
+        <div className="bg-primary-400 rounded-2xl p-4">
           <p className="text-xs text-primary-200 mb-3 font-semibold">This week so far</p>
           <div className="grid grid-cols-3 gap-4 text-center">
             {[

@@ -131,7 +131,7 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
           <img
             src="/soole-icon.png"
             alt="Soole"
-            className="w-8 h-8 rounded-xl object-contain bg-white/10 p-0.5"
+            className="w-8 h-8 rounded-xl object-contain bg-primary-400 p-0.5"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
           <span className="text-white font-bold text-sm tracking-tight">Soole</span>

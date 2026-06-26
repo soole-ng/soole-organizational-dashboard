@@ -29,9 +29,9 @@ export function HeroBand() {
 
       <div className="grid grid-cols-2 gap-3">
         {stats.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5">
+          <div key={label} className="bg-primary-400 rounded-2xl p-3.5">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-primary-300 flex items-center justify-center">
                 <Icon className={`w-3.5 h-3.5 ${color}`} />
               </div>
               <p className="text-[11px] text-primary-100 font-medium leading-tight">{label}</p>
@@ -41,7 +41,7 @@ export function HeroBand() {
         ))}
       </div>
 
-      <div className="mt-3 flex items-center gap-2 bg-white/10 rounded-xl px-3.5 py-2.5">
+      <div className="mt-3 flex items-center gap-2 bg-primary-400 rounded-xl px-3.5 py-2.5">
         <TrendingUp className="w-3.5 h-3.5 text-accent-300 flex-shrink-0" />
         <p className="text-xs text-primary-100">
           <span className="text-accent-300 font-semibold">+18% </span>

@@ -66,7 +66,7 @@ export function HelpPage() {
         />
 
         {/* Search & Hero Banner */}
-        <div className="bg-gradient-to-br from-primary-500 to-primary-400 rounded-3xl p-6 lg:p-8 text-white relative overflow-hidden shadow-sm">
+        <div className="bg-primary-500 rounded-3xl p-6 lg:p-8 text-white relative overflow-hidden shadow-sm">
           <div className="relative z-10 max-w-xl">
             <h2 className="text-xl lg:text-2xl font-bold mb-2">How can we help you today?</h2>
             <p className="text-primary-100 text-xs lg:text-sm mb-6">Search our knowledge base or get in touch with Soole support representative.</p>

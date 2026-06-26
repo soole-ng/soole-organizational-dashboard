@@ -163,12 +163,7 @@ export function VehiclesPage() {
                           {approvedDocs}/{totalDocs} approved
                         </span>
                       </div>
-                      <div className="h-1 bg-neutral-100 rounded-full overflow-hidden">
-                        <div
-                          className={clsx('h-full rounded-full', approvedDocs === totalDocs ? 'bg-secondary-300' : 'bg-warning')}
-                          style={{ width: `${docsPct}%` }}
-                        />
-                      </div>
+
                       <div className="flex flex-wrap gap-1.5 pt-0.5">
                         {vehicle.documents.map(doc => (
                           <div key={doc.type} className="flex items-center gap-1 text-[9px] text-neutral-200 bg-primary-75 rounded-lg px-2 py-0.5">

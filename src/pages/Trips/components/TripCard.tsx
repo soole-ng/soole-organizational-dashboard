@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Clock, Users, ChevronRight, ArrowRight, MapPin, TrendingUp } from 'lucide-react'
+import { Clock, Users, ArrowRight, MapPin } from 'lucide-react'
 import { clsx } from 'clsx'
 import { StatusPill } from '../../../components/ui/StatusPill'
 import type { Trip } from '../../../types'
@@ -8,20 +8,6 @@ import { formatTime, formatMoney } from '../../../lib/formatters'
 interface TripCardProps {
   trip: Trip
   compact?: boolean
-}
-
-const statusColors: Record<string, string> = {
-  boarding:    'from-accent-400/20 to-accent-400/5',
-  in_progress: 'from-secondary-300/20 to-secondary-300/5',
-  scheduled:   'from-info-300/20 to-info-300/5',
-  completed:   'from-neutral-50 to-transparent',
-  cancelled:   'from-danger-50 to-transparent',
-}
-
-const vehicleTypeEmoji: Record<string, string> = {
-  Sienna:  '🚐',
-  Hiace:   '🚌',
-  Coaster: '🚎',
 }
 
 function DriverAvatar({ name }: { name: string }) {
@@ -41,22 +27,15 @@ function DriverAvatar({ name }: { name: string }) {
 }
 
 export function TripCard({ trip, compact }: TripCardProps) {
-  const pct = Math.round((trip.bookedSeats / trip.capacity) * 100)
-  const gradientClass = statusColors[trip.status] ?? 'from-neutral-50 to-transparent'
   const seatsLeft = trip.capacity - trip.bookedSeats
-
-  // Parse vehicle type from plate or model hint
-  const vehicleEmoji = Object.keys(vehicleTypeEmoji).find(k =>
-    trip.vehiclePlate?.includes(k) || trip.routeName?.includes(k)
-  )
 
   return (
     <Link
       to={`/trips/${trip.id}`}
       className="card hover:shadow-card-hover transition-all duration-200 block hover:-translate-y-0.5 overflow-hidden p-0"
     >
-      {/* Gradient Header */}
-      <div className={clsx('bg-gradient-to-r p-4 pb-3', gradientClass)}>
+      {/* Flat Header */}
+      <div className="p-4 pb-3 bg-white border-b border-neutral-50">
         <div className="flex items-start justify-between gap-2 mb-2">
           {/* Route */}
           <div className="flex-1 min-w-0">
@@ -90,7 +69,7 @@ export function TripCard({ trip, compact }: TripCardProps) {
 
       {/* Body */}
       {!compact && (
-        <div className="px-4 pb-4 pt-3 space-y-3 bg-white">
+        <div className="px-4 pb-4 pt-3 space-y-2 bg-white">
           {/* Driver + Revenue row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -102,30 +81,18 @@ export function TripCard({ trip, compact }: TripCardProps) {
             </div>
             <div className="text-right">
               <p className="text-[11px] font-black text-secondary-300">{formatMoney(trip.netRevenue)}</p>
-              <p className="text-[9px] text-neutral-200">net revenue</p>
+              <p className="text-[9px] text-neutral-200">revenue</p>
             </div>
           </div>
 
-          {/* Occupancy bar */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="text-neutral-200 font-medium">{pct}% full</span>
-              <span className={clsx(
-                'font-bold',
-                seatsLeft === 0 ? 'text-secondary-300' : seatsLeft <= 2 ? 'text-warning' : 'text-neutral-200'
-              )}>
-                {seatsLeft === 0 ? 'Fully booked' : `${seatsLeft} seats left`}
-              </span>
-            </div>
-            <div className="h-2 bg-neutral-50 rounded-full overflow-hidden">
-              <div
-                className={clsx(
-                  'h-full rounded-full transition-all duration-500',
-                  pct >= 90 ? 'bg-secondary-300' : pct >= 60 ? 'bg-accent-400' : 'bg-info-300',
-                )}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
+          {/* Seats left — plain figure only */}
+          <div className="flex items-center justify-end">
+            <span className={clsx(
+              'text-[10px] font-bold',
+              seatsLeft === 0 ? 'text-secondary-300' : seatsLeft <= 2 ? 'text-warning' : 'text-neutral-200'
+            )}>
+              {seatsLeft === 0 ? 'Fully booked' : `${seatsLeft} seats left`}
+            </span>
           </div>
         </div>
       )}

@@ -99,22 +99,10 @@ export function UpcomingTrips() {
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[10px] text-neutral-200">
-                    <span>{pct}% full</span>
-                    <span className="font-semibold text-secondary-300">
-                      {trip.capacity - trip.bookedSeats} seats left
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
-                    <div
-                      className={clsx(
-                        'h-full rounded-full transition-all',
-                        pct >= 90 ? 'bg-secondary-300' : pct >= 60 ? 'bg-warning' : 'bg-secondary-100',
-                      )}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
+                <div className="flex items-center justify-end text-[10px] text-neutral-200">
+                  <span className="font-semibold text-secondary-300">
+                    {trip.capacity - trip.bookedSeats} seats left
+                  </span>
                 </div>
               </Link>
             )

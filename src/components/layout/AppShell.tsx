@@ -87,8 +87,8 @@ export function AppShell() {
             <Outlet />
           </div>
         ) : (
-          // All other pages: centered with max-width
-          <div className="flex-1 pb-24 lg:pb-0 w-full flex justify-center">
+          // All other pages: centered with max-width + 10% left/right padding on desktop
+          <div className="flex-1 pb-24 lg:pb-0 w-full flex justify-center lg:px-[10%]">
             <div className="w-full max-w-3xl">
               <Outlet />
             </div>

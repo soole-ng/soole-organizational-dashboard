@@ -118,14 +118,14 @@ export function VehiclesPage() {
               return (
                 <div key={vehicle.id} className="bg-white rounded-card border border-neutral-100 shadow-card overflow-hidden hover:shadow-card-hover transition-shadow">
                   {/* Card header */}
-                  <div className="bg-primary-75 px-4 py-3 flex items-center justify-between">
+                  <div className="bg-[#042011] px-4 py-3 flex items-center justify-between text-white">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-white border border-neutral-100 flex items-center justify-center flex-shrink-0">
-                        <VehicleIcon type={vehicle.type} className="w-5 h-5 text-primary-500" />
+                        <VehicleIcon type={vehicle.type} className="w-5 h-5 text-[#042011]" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-primary-500">{vehicle.plate}</p>
-                        <p className="text-[10px] text-neutral-200">{vehicle.model} · {vehicle.year} · {vehicle.capacity} seats</p>
+                        <p className="text-sm font-bold !text-white">{vehicle.plate}</p>
+                        <p className="text-[10px] !text-white/90">{vehicle.model} · {vehicle.year} · {vehicle.capacity} seats</p>
                       </div>
                     </div>
                     <StatusPill status={vehicle.status} size="sm" />
@@ -156,9 +156,9 @@ export function VehiclesPage() {
 
                       <div className="flex flex-wrap gap-1.5 pt-0.5">
                         {vehicle.documents.map(doc => (
-                          <div key={doc.type} className="flex items-center gap-1 text-[9px] text-neutral-200 bg-primary-75 rounded-lg px-2 py-0.5">
+                          <div key={doc.type} className="flex items-center gap-1 text-[9px] !text-white bg-[#042011] rounded-lg px-2 py-0.5">
                             {docStatusIcon(doc.status)}
-                            <span>{doc.label.split(' ').slice(0, 2).join(' ')}</span>
+                            <span className="!text-white">{doc.label.split(' ').slice(0, 2).join(' ')}</span>
                           </div>
                         ))}
                       </div>

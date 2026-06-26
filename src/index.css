@@ -8,7 +8,7 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  * {
+  *:not(svg):not(path) {
     box-sizing: border-box;
     color: #000000 !important;
   }
@@ -114,7 +114,7 @@
   .rounded-full,
   [class*="btn-"],
   .accent-badge {
-    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #ffffff !important;
   }
 
   /* Faint black boundaries/borders on all boxes, cards, inputs, textareas, and form fields */
@@ -124,7 +124,7 @@
   .input-field,
   .card,
   [class*="card"] {
-    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid #ffffff !important;
   }
 }
 

@@ -104,7 +104,7 @@ export function DriversPage() {
               className={clsx(
                 'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors',
                 filter === f.value
-                  ? 'bg-primary-500 text-white border-primary-500'
+                  ? 'bg-[#042011] text-white border-[#042011]'
                   : 'bg-white text-black border-neutral-100 hover:border-primary-400',
               )}
             >
@@ -136,7 +136,7 @@ export function DriversPage() {
                 className="bg-white rounded-card border border-neutral-100 shadow-card hover:shadow-card-hover transition-all cursor-pointer overflow-hidden"
               >
                 {/* Header */}
-                <div className="bg-primary-75 px-4 py-3 flex items-start gap-3">
+                <div className="bg-white border-b border-neutral-100 px-4 py-3 flex items-start gap-3">
                   <GenericAvatar size="md" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-1">
@@ -168,7 +168,7 @@ export function DriversPage() {
                   </div>
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
+                  <div className="flex items-center justify-between pt-1 border-t border-black">
                     {(driver.reviews?.length ?? 0) > 0 ? (
                       <span className="flex items-center gap-1 text-[10px] text-black font-semibold">
                         <Award className="w-3 h-3" />

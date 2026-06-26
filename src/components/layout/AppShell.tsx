@@ -3,7 +3,7 @@
  * Manages notification drawer state globally.
  * ≤ 400 lines
  */
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { useState, useCallback } from 'react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
@@ -64,23 +64,36 @@ export function AppShell() {
     setDrawerOpen(true)
   }, [])
 
+  const { pathname } = useLocation()
+  const isFullscreen = pathname === '/live-map'
+
   return (
     <OrgProvider>
     <div className="min-h-screen w-screen flex overflow-hidden">
       <Sidebar unreadCount={unreadCount} onOpenNotifications={handleOpenDrawer} />
 
-      <main className="flex-1 lg:ml-64 flex flex-col min-h-screen w-full overflow-y-auto overflow-x-hidden">
+      <main className={`flex-1 lg:ml-64 flex flex-col w-full ${
+        isFullscreen ? 'overflow-hidden h-screen' : 'min-h-screen overflow-y-auto overflow-x-hidden'
+      }`}>
         {/* Mobile TopBar — hidden on desktop */}
         <TopBar
           unreadCount={unreadCount}
           onOpenNotifications={handleOpenDrawer}
         />
 
-        <div className="flex-1 pb-24 lg:pb-0 w-full flex justify-center">
-          <div className="w-full max-w-3xl">
+        {isFullscreen ? (
+          // Live Map: full-bleed, no padding, no max-width constraint
+          <div className="flex-1 w-full overflow-hidden">
             <Outlet />
           </div>
-        </div>
+        ) : (
+          // All other pages: centered with max-width
+          <div className="flex-1 pb-24 lg:pb-0 w-full flex justify-center">
+            <div className="w-full max-w-3xl">
+              <Outlet />
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Mobile bottom navigation */}

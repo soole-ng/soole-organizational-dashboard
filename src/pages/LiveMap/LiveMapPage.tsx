@@ -79,7 +79,7 @@ export function LiveMapPage() {
   const idleCount = vehicleLocations.filter(v => v.status === 'idle').length
 
   return (
-    <div className="flex flex-col h-screen bg-primary-500">
+    <div className="flex flex-col h-full bg-primary-500">
       <TopBar title="Live Map" transparent />
 
       <div className="flex-1 relative overflow-hidden flex">

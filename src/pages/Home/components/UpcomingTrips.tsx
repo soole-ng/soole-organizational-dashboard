@@ -1,0 +1,126 @@
+/**
+ * UpcomingTrips — fixed to use useMockData hook.
+ * Shows today's departing trips as rich cards.
+ * ≤ 400 lines
+ */
+import { ChevronRight, Clock, Users, MapPin, ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { StatusPill } from '../../../components/ui/StatusPill'
+import { useMockData } from '../../../lib/useMockData'
+import { formatTime, formatOccupancy } from '../../../lib/formatters'
+import { clsx } from 'clsx'
+
+function TripSkeleton() {
+  return (
+    <div className="card animate-pulse space-y-3">
+      <div className="flex justify-between">
+        <div className="h-4 bg-neutral-100 rounded w-32" />
+        <div className="h-5 bg-neutral-100 rounded-full w-16" />
+      </div>
+      <div className="h-3 bg-neutral-100 rounded w-24" />
+      <div className="h-1.5 bg-neutral-100 rounded-full" />
+    </div>
+  )
+}
+
+export function UpcomingTrips() {
+  const { data, loading } = useMockData()
+
+  if (loading) {
+    return (
+      <div className="px-4 space-y-3">
+        <div className="flex items-center justify-between mb-3">
+          <div className="h-4 bg-neutral-100 rounded w-28 animate-pulse" />
+        </div>
+        <TripSkeleton />
+        <TripSkeleton />
+      </div>
+    )
+  }
+
+  const upcoming = data.trips
+    .filter(t => t.status !== 'completed' && t.status !== 'cancelled')
+    .slice(0, 3)
+
+  return (
+    <div className="px-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-primary-500">Departing Today</h3>
+        <Link
+          to="/trips"
+          className="text-xs text-secondary-300 font-semibold flex items-center gap-0.5 hover:text-secondary-400 transition-colors"
+        >
+          See all <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
+      {upcoming.length === 0 ? (
+        <div className="card text-center py-8">
+          <div className="w-12 h-12 rounded-2xl bg-primary-75 flex items-center justify-center mx-auto mb-3">
+            <MapPin className="w-6 h-6 text-primary-300" />
+          </div>
+          <p className="text-sm font-semibold text-primary-500 mb-1">No trips today</p>
+          <p className="text-xs text-neutral-200 mb-4">Create a trip to get started.</p>
+          <Link to="/trips/new" className="btn-accent text-sm">
+            + New Trip
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {upcoming.map(trip => {
+            const pct = Math.round((trip.bookedSeats / trip.capacity) * 100)
+            return (
+              <Link
+                key={trip.id}
+                to={`/trips/${trip.id}`}
+                className="card hover:shadow-card-hover transition-all duration-200 block hover:-translate-y-0.5"
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0 flex-1">
+                    {/* Route with arrow */}
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <p className="text-sm font-semibold text-primary-500 truncate">{trip.origin}</p>
+                      <ArrowRight className="w-3.5 h-3.5 text-neutral-200 flex-shrink-0" />
+                      <p className="text-sm font-semibold text-primary-500 truncate">{trip.destination}</p>
+                    </div>
+                    <p className="text-xs text-neutral-200 truncate">{trip.vehiclePlate} · {trip.driverName}</p>
+                  </div>
+                  <StatusPill status={trip.status} size="sm" />
+                </div>
+
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-200">
+                    <Clock className="w-3.5 h-3.5" />
+                    {formatTime(trip.departureAt)}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-200">
+                    <Users className="w-3.5 h-3.5" />
+                    {formatOccupancy(trip.bookedSeats, trip.capacity)} seats
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[10px] text-neutral-200">
+                    <span>{pct}% full</span>
+                    <span className="font-semibold text-secondary-300">
+                      {trip.capacity - trip.bookedSeats} seats left
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
+                    <div
+                      className={clsx(
+                        'h-full rounded-full transition-all',
+                        pct >= 90 ? 'bg-secondary-300' : pct >= 60 ? 'bg-warning' : 'bg-secondary-100',
+                      )}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}

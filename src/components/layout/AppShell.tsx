@@ -76,7 +76,7 @@ export function AppShell() {
     <div className="min-h-screen w-screen flex overflow-hidden">
       <Sidebar unreadCount={unreadCount} onOpenNotifications={handleOpenDrawer} />
 
-      <main className={`flex-1 lg:ml-64 flex flex-col w-full ${
+      <main className={`flex-1 lg:ml-52 flex flex-col w-full ${
         isFullscreen ? 'overflow-hidden h-screen' : 'min-h-screen overflow-y-auto overflow-x-hidden'
       }`}>
         {/* Mobile TopBar — hidden on desktop */}

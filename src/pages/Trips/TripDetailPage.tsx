@@ -271,7 +271,7 @@ export function TripDetailPage() {
                   <p className="text-xs font-bold text-black uppercase tracking-wider mb-3">Trip Summary</p>
                   <div className="grid grid-cols-2 gap-2">
                     {completedStats.map(({ icon: Icon, label, value, color }) => (
-                      <div key={label} className="flex flex-col items-center text-center gap-1 bg-neutral-50 rounded-xl p-3">
+                      <div key={label} className="flex flex-col items-center text-center gap-1 bg-white border border-neutral-100 rounded-xl p-3">
                         <Icon className={`w-4 h-4 ${color}`} />
                         <p className="text-sm font-black text-black stat-number leading-tight">{value}</p>
                         <p className="text-[10px] text-neutral-200 leading-none">{label}</p>

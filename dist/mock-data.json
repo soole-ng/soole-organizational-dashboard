@@ -112,6 +112,24 @@
           "date": "2026-06-15",
           "tripId": "T-013",
           "tripRoute": "Lagos (Ojota) to Ibadan (Challenge)"
+        },
+        {
+          "id": "rev11",
+          "passengerName": "Yinka Shonibare",
+          "rating": 5,
+          "comment": "Outstanding passenger coordination. Best trip experience so far!",
+          "date": "2026-06-25",
+          "tripId": "t4",
+          "tripRoute": "Lagos (Ojota) to Ibadan (Challenge)"
+        },
+        {
+          "id": "rev12",
+          "passengerName": "Chioma Nze",
+          "rating": 4.8,
+          "comment": "Comfortable seating and smooth driving. Reached Challenge terminal right on time.",
+          "date": "2026-06-25",
+          "tripId": "t4",
+          "tripRoute": "Lagos (Ojota) to Ibadan (Challenge)"
         }
       ]
     },

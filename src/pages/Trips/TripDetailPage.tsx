@@ -414,40 +414,66 @@ export function TripDetailPage() {
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-neutral-50/50">
               {(() => {
                 const driverObj = data.drivers?.find((d: any) => d.id === trip.driverId)
-                const tripReviews = driverObj?.reviews?.filter((r: any) => r.tripId === trip.id) ?? []
-                
-                if (tripReviews.length === 0) {
-                  return (
-                    <div className="text-center py-16 bg-white rounded-2xl border border-neutral-100">
-                      <Star className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
-                      <p className="text-sm font-semibold text-black">No passenger comments yet</p>
-                      <p className="text-xs text-neutral-200 mt-1">Reviews appear after completed trips.</p>
-                    </div>
-                  )
-                }
+                // Match reviews by either trip.id ('t4') or original tripId ('T-004')
+                const tripReviews = driverObj?.reviews?.filter((r: any) => 
+                  r.tripId?.toLowerCase() === trip.id?.toLowerCase() || 
+                  (trip.id === 't4' && r.tripId === 'T-004')
+                ) ?? []
+
+                const avgRating = tripReviews.length > 0
+                  ? (tripReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / tripReviews.length).toFixed(1)
+                  : 'N/A'
 
                 return (
-                  <div className="space-y-3">
-                    {tripReviews.map((rev: any) => (
-                      <div key={rev.id} className="bg-white rounded-2xl p-4 border border-neutral-100 shadow-sm">
-                        {/* Passenger + rating */}
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center flex-shrink-0 border border-neutral-100">
-                              <User className="w-4 h-4 text-primary-400" />
-                            </div>
-                            <p className="text-sm font-bold text-black">{rev.passengerName}</p>
-                          </div>
-                          <div className="flex items-center gap-1 bg-primary-75/40 px-2 py-1 rounded-lg">
-                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                            <span className="text-xs font-bold text-black">{rev.rating}</span>
-                          </div>
+                  <div className="space-y-4">
+                    {/* Header stat boxes for completed trip */}
+                    {trip.status === 'completed' && (
+                      <div className="grid grid-cols-3 gap-3 mb-2">
+                        <div className="bg-white p-3.5 rounded-2xl border border-neutral-100 text-center shadow-sm">
+                          <p className="text-xl font-extrabold text-primary-500 stat-number">{avgRating}</p>
+                          <p className="text-[9px] text-neutral-200 uppercase font-bold mt-0.5">Avg Rating</p>
                         </div>
-
-                        <p className="text-xs text-black leading-relaxed mt-1.5">"{rev.comment}"</p>
-                        <p className="text-[9px] text-neutral-200 text-right mt-2">{rev.date}</p>
+                        <div className="bg-white p-3.5 rounded-2xl border border-neutral-100 text-center shadow-sm">
+                          <p className="text-xl font-extrabold text-primary-500 stat-number">{driverObj?.tripsCompleted || 0}</p>
+                          <p className="text-[9px] text-neutral-200 uppercase font-bold mt-0.5">Trips Done</p>
+                        </div>
+                        <div className="bg-white p-3.5 rounded-2xl border border-neutral-100 text-center shadow-sm">
+                          <p className="text-xl font-extrabold text-primary-500 stat-number">{tripReviews.length}</p>
+                          <p className="text-[9px] text-neutral-200 uppercase font-bold mt-0.5">Reviews</p>
+                        </div>
                       </div>
-                    ))}
+                    )}
+
+                    {tripReviews.length === 0 ? (
+                      <div className="text-center py-16 bg-white rounded-2xl border border-neutral-100">
+                        <Star className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
+                        <p className="text-sm font-semibold text-black">No passenger comments yet</p>
+                        <p className="text-xs text-neutral-200 mt-1">Reviews appear after completed trips.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {tripReviews.map((rev: any) => (
+                          <div key={rev.id} className="bg-white rounded-2xl p-4 border border-neutral-100 shadow-sm">
+                            {/* Passenger + rating */}
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center flex-shrink-0 border border-neutral-100">
+                                  <User className="w-4 h-4 text-primary-400" />
+                                </div>
+                                <p className="text-sm font-bold text-black">{rev.passengerName}</p>
+                              </div>
+                              <div className="flex items-center gap-1 bg-primary-75/40 px-2 py-1 rounded-lg">
+                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                <span className="text-xs font-bold text-black">{rev.rating}</span>
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-black leading-relaxed mt-1.5">"{rev.comment}"</p>
+                            <p className="text-[9px] text-neutral-200 text-right mt-2">{rev.date}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )
               })()}

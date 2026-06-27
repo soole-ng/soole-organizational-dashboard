@@ -32,14 +32,24 @@ function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md
   )
 }
 
-/** Generic avatar — placeholder until real profile images are added */
-function GenericAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const sizeClass = size === 'lg' ? 'w-16 h-16' : size === 'md' ? 'w-11 h-11' : 'w-8 h-8'
-  const iconClass = size === 'lg' ? 'w-9 h-9' : size === 'md' ? 'w-6 h-6' : 'w-4 h-4'
+const getDriverAvatar = (driverId: string) => {
+  const avatars: Record<string, string> = {
+    'd1': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80',
+    'd2': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80',
+    'd3': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&h=150&q=80',
+    'd4': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80',
+  }
+  return avatars[driverId] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'
+}
+
+export function DriverAvatar({ driverId, name, size = 'md' }: { driverId: string; name: string; size?: 'sm' | 'md' | 'lg' }) {
+  const sizeClass = size === 'lg' ? 'w-16 h-16' : size === 'md' ? 'w-10 h-10' : 'w-8 h-8'
   return (
-    <div className={clsx('rounded-full bg-white flex items-center justify-center flex-shrink-0', sizeClass)}>
-      <User className={clsx('text-primary-400', iconClass)} />
-    </div>
+    <img
+      src={getDriverAvatar(driverId)}
+      alt={name}
+      className={clsx('rounded-full object-cover flex-shrink-0 border border-neutral-100/50', sizeClass)}
+    />
   )
 }
 
@@ -139,9 +149,11 @@ export function DriversPage() {
                 {/* Header — dark green, 40% transparent */}
                 <div className="bg-[#042011]/60 px-4 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
-                      <User className="w-5 h-5 text-[#042011]" />
-                    </div>
+                    <img
+                      src={getDriverAvatar(driver.id)}
+                      alt={driver.name}
+                      className="w-10 h-10 rounded-xl object-cover flex-shrink-0 border border-white/20"
+                    />
                     <div>
                       <p className="text-sm font-bold !text-white truncate">{driver.name}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
@@ -166,28 +178,25 @@ export function DriversPage() {
 
                 {/* Body */}
                 <div className="px-4 py-3 space-y-3">
-                  <div className="flex items-center gap-3 text-[11px] text-black">
-                    <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{driver.phone}</span>
-                    {driver.vehiclePlate && (
-                      <span className="flex items-center gap-1 ml-auto"><Car className="w-3 h-3" />{driver.vehiclePlate}</span>
-                    )}
+                  <div className="flex items-center gap-3 text-xs text-black">
+                    <span className="flex items-center gap-1 font-semibold"><Phone className="w-3.5 h-3.5" />{driver.phone}</span>
                   </div>
 
                   {/* Trips completed — plain number only */}
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-black">Trips completed</span>
-                    <span className="font-bold text-black">{driver.tripsCompleted}</span>
+                  <div className="flex justify-between text-sm font-bold">
+                    <span className="text-black font-semibold">Trips completed</span>
+                    <span className="text-black">{driver.tripsCompleted}</span>
                   </div>
 
                   {/* Footer */}
                   <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
                     {(driver.reviews?.length ?? 0) > 0 ? (
-                      <span className="flex items-center gap-1 text-[10px] text-black font-semibold">
-                        <Award className="w-3 h-3" />
+                      <span className="flex items-center gap-1 text-sm text-black font-bold">
+                        <Award className="w-3.5 h-3.5 text-accent-500" />
                         {driver.reviews!.length} review{driver.reviews!.length > 1 ? 's' : ''}
                       </span>
                     ) : (
-                      <span className="text-[10px] text-black">No reviews yet</span>
+                      <span className="text-sm text-black font-bold">No reviews yet</span>
                     )}
                     <div className="flex items-center gap-2">
                       {driver.status === 'pending' && (
@@ -229,7 +238,7 @@ export function DriversPage() {
           <div className="bg-white w-full max-w-2xl rounded-3xl shadow-float flex flex-col max-h-[90vh]">
             {/* Modal Header */}
             <div className="flex items-center gap-4 px-6 py-5 border-b border-neutral-100 flex-shrink-0">
-              <GenericAvatar size="lg" />
+              <DriverAvatar driverId={selectedDriver.id} name={selectedDriver.name} size="lg" />
               <div className="flex-1 min-w-0">
                 <h2 className="text-xl font-black text-black truncate">{selectedDriver.name}</h2>
                 <div className="flex items-center gap-2 mt-1">

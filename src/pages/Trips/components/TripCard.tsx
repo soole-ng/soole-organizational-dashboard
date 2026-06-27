@@ -10,19 +10,23 @@ interface TripCardProps {
   compact?: boolean
 }
 
+const getDriverAvatar = (name: string) => {
+  const avatars: Record<string, string> = {
+    'Akin Bello': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80',
+    'Chidi Okafor': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80',
+    'Ibrahim Musa': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&h=150&q=80',
+    'Funke Adeleke': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80',
+  }
+  return avatars[name] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'
+}
+
 function DriverAvatar({ name }: { name: string }) {
-  const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-  const colors = [
-    'bg-secondary-300 text-white',
-    'bg-teal-400 text-white',
-    'bg-accent-400 text-primary-500',
-    'bg-info-300 text-white',
-  ]
-  const color = colors[name.charCodeAt(0) % colors.length]
   return (
-    <span className={clsx('w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black flex-shrink-0', color)}>
-      {initials}
-    </span>
+    <img
+      src={getDriverAvatar(name)}
+      alt={name}
+      className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-neutral-100/50"
+    />
   )
 }
 

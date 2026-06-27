@@ -27,6 +27,16 @@ function docStatusIcon(status: string) {
   return <XCircle className="w-3 h-3 text-warning" />
 }
 
+const getDriverAvatar = (driverId: string) => {
+  const avatars: Record<string, string> = {
+    'd1': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80',
+    'd2': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80',
+    'd3': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&h=150&q=80',
+    'd4': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80',
+  }
+  return avatars[driverId] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'
+}
+
 export function VehiclesPage() {
   const { data, loading } = useMockData()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
@@ -130,24 +140,32 @@ export function VehiclesPage() {
                   {/* Card body */}
                   <div className="px-4 py-3 space-y-3">
                     {/* Driver row */}
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-neutral-200" />
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        {vehicle.assignedDriverId ? (
+                          <img
+                            src={getDriverAvatar(vehicle.assignedDriverId)}
+                            alt={vehicle.assignedDriverName || 'Driver'}
+                            className="w-6 h-6 rounded-full object-cover border border-neutral-100"
+                          />
+                        ) : (
+                          <Users className="w-3.5 h-3.5 text-neutral-200" />
+                        )}
                         {vehicle.assignedDriverName ? (
-                          <span className="text-black font-medium">{vehicle.assignedDriverName}</span>
+                          <span className="text-black font-bold">{vehicle.assignedDriverName}</span>
                         ) : (
                           <button
                             onClick={() => toast('Assign driver — coming soon!')}
-                            className="flex items-center gap-1 text-secondary-300 font-semibold hover:text-secondary-400 transition-colors"
+                            className="flex items-center gap-1 text-secondary-300 font-bold hover:text-secondary-400 transition-colors"
                           >
-                            <UserPlus className="w-3 h-3" /> Assign Driver
+                            <UserPlus className="w-3.5 h-3.5" /> Assign Driver
                           </button>
                         )}
                       </div>
                       {vehicle.assignedDriverName && (
                         <button
                           onClick={() => toast('Change driver — coming soon!')}
-                          className="text-[10px] text-neutral-200 hover:text-primary-400 transition-colors"
+                          className="text-xs text-neutral-200 hover:text-primary-400 transition-colors font-bold"
                         >
                           Change →
                         </button>
@@ -156,26 +174,25 @@ export function VehiclesPage() {
 
                     {/* Documents */}
                     <div className="space-y-1.5 pt-2 border-t border-neutral-100">
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-black font-medium">Documents</span>
-                        <span className={clsx('font-bold', approvedDocs === totalDocs ? 'text-secondary-300' : 'text-warning')}>
+                      <div className="flex items-center justify-between text-xs font-bold text-black">
+                        <span className="text-black font-semibold">Documents</span>
+                        <span className={clsx('font-black', approvedDocs === totalDocs ? 'text-[#00C853]' : 'text-[#FF5500]')}>
                           {approvedDocs}/{totalDocs} approved
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-1.5 pt-0.5">
                         {vehicle.documents.map((doc: any) => (
-                          <div key={doc.type} className="flex items-center gap-1 text-[9px] bg-[#042011]/60 rounded-lg px-2 py-0.5">
+                          <div key={doc.type} className="flex items-center gap-1 text-[11px] bg-[#042011]/60 rounded-lg px-2 py-0.5">
                             {docStatusIcon(doc.status)}
-                            <span className="!text-white">{doc.label.split(' ').slice(0, 2).join(' ')}</span>
+                            <span className="!text-white font-medium">{doc.label.split(' ').slice(0, 2).join(' ')}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* View history button */}
                     <button
                       onClick={() => setHistoryVehicle(vehicle)}
-                      className="w-full text-[11px] text-primary-400 font-semibold flex items-center justify-center gap-1.5 py-2 rounded-xl border border-neutral-100 hover:bg-primary-75 transition-colors"
+                      className="w-full text-xs text-primary-400 font-bold flex items-center justify-center gap-1.5 py-2 rounded-xl border border-neutral-100 hover:bg-primary-75 transition-colors"
                     >
                       <History className="w-3.5 h-3.5" /> View Trip History
                     </button>

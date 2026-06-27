@@ -44,6 +44,12 @@
     padding-top: var(--safe-top);
   }
 
+  @media (min-width: 1024px) {
+    .lg-ml-76 {
+      margin-left: 19rem !important;
+    }
+  }
+
   .safe-bottom {
     padding-bottom: var(--safe-bottom);
   }

@@ -77,7 +77,7 @@ export function AppShell() {
       <Sidebar unreadCount={unreadCount} onOpenNotifications={handleOpenDrawer} />
 
       <main
-        className={`flex-1 flex flex-col w-full lg:ml-76 ${
+        className={`flex-1 flex flex-col w-full lg-ml-76 ${
           isFullscreen ? 'overflow-hidden h-screen' : 'min-h-screen overflow-y-auto overflow-x-hidden'
         }`}
       >

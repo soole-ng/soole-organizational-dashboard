@@ -56,8 +56,8 @@ export function UpcomingTrips() {
 
       {upcoming.length === 0 ? (
         <div className="card text-center py-8">
-          <div className="w-12 h-12 rounded-2xl bg-primary-75 flex items-center justify-center mx-auto mb-3">
-            <MapPin className="w-6 h-6 text-primary-300" />
+          <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mx-auto mb-3">
+            <MapPin className="w-6 h-6 text-primary-400" />
           </div>
           <p className="text-sm font-semibold text-primary-500 mb-1">No trips today</p>
           <p className="text-xs text-neutral-200 mb-4">Create a trip to get started.</p>

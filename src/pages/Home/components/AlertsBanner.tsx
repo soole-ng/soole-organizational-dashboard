@@ -25,7 +25,7 @@ function AlertItem({ alert, onDismiss }: { alert: Alert; onDismiss: () => void }
     ? 'bg-danger-50 border-danger-100'
     : 'bg-teal-50 border-teal-100'
 
-  const iconBg = isWarning ? 'bg-accent-300/15' : isDanger ? 'bg-danger-300/15' : 'bg-teal-400/15'
+  const iconBg = 'bg-white'
   const textCls = isWarning ? 'text-accent-400' : isDanger ? 'text-danger-400' : 'text-teal-400'
 
   return (

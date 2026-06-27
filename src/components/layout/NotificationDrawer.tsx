@@ -37,10 +37,10 @@ function timeAgo(dateStr: string): string {
 }
 
 const typeConfig = {
-  warning: { icon: AlertTriangle, bg: 'bg-accent-50',  border: 'border-accent-100', iconCls: 'text-accent-400', dot: 'bg-accent-300' },
-  danger:  { icon: XCircle,       bg: 'bg-danger-50',   border: 'border-danger-100',  iconCls: 'text-danger-300',  dot: 'bg-danger-300' },
-  info:    { icon: Info,          bg: 'bg-teal-50',     border: 'border-teal-100',    iconCls: 'text-teal-400',    dot: 'bg-teal-400' },
-  success: { icon: CheckCircle2,  bg: 'bg-success-light', border: 'border-secondary-100', iconCls: 'text-secondary-300', dot: 'bg-secondary-300' },
+  warning: { icon: AlertTriangle, bg: 'bg-white', border: 'border-neutral-100', iconCls: 'text-accent-400',    dot: 'bg-accent-300' },
+  danger:  { icon: XCircle,       bg: 'bg-white', border: 'border-neutral-100', iconCls: 'text-danger-300',   dot: 'bg-danger-300' },
+  info:    { icon: Info,          bg: 'bg-white', border: 'border-neutral-100', iconCls: 'text-teal-400',     dot: 'bg-teal-400' },
+  success: { icon: CheckCircle2,  bg: 'bg-white', border: 'border-neutral-100', iconCls: 'text-secondary-300', dot: 'bg-secondary-300' },
 }
 
 function NotifItem({ n, onDismiss, onMarkRead }: { n: Notification; onDismiss: () => void; onMarkRead: () => void }) {
@@ -172,7 +172,7 @@ export function NotificationDrawer({
         <div className="flex-1 overflow-y-auto scrollbar-thin">
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full py-16 px-6 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-primary-75 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-8 h-8 text-secondary-300" />
               </div>
               <p className="text-sm font-semibold text-primary-500 mb-1">You're all caught up!</p>

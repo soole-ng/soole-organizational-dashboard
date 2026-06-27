@@ -52,14 +52,18 @@ export function TripCard({ trip, compact }: TripCardProps) {
             </div>
           </div>
           <span
-            className={clsx(
-              "font-black uppercase tracking-wider font-sans",
-              trip.status === 'completed' && 'text-emerald-500',
-              trip.status === 'boarding' && 'text-amber-500',
-              trip.status === 'scheduled' && 'text-blue-500',
-              !['completed', 'boarding', 'scheduled'].includes(trip.status) && 'text-neutral-400'
-            )}
-            style={{ fontSize: '12px', lineHeight: '1.2' }}
+            className="font-black uppercase tracking-wider font-sans"
+            style={{
+              fontSize: '12px',
+              lineHeight: '1.2',
+              color: trip.status === 'completed' 
+                ? '#00C853' 
+                : trip.status === 'boarding' 
+                ? '#FF5500' 
+                : trip.status === 'scheduled' 
+                ? '#0070FF' 
+                : '#9CA3AF'
+            }}
           >
             {trip.status === 'in_progress' ? 'In Progress' : trip.status}
           </span>

@@ -1,22 +1,22 @@
 import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 
-const config: Record<StatusVariant, { label: string; className: string }> = {
-  verified:    { label: 'Verified',    className: 'text-secondary-300' },
-  active:      { label: 'Active',      className: 'text-secondary-300' },
-  completed:   { label: 'Completed',   className: 'text-secondary-300' },
-  received:    { label: 'Received',    className: 'text-secondary-300' },
-  pending:     { label: 'Pending',     className: 'text-warning' },
-  scheduled:   { label: 'Scheduled',  className: 'text-info-400' },
-  sent:        { label: 'Sent',        className: 'text-info-400' },
-  boarding:    { label: 'Boarding',    className: 'text-teal-300' },
-  in_progress: { label: 'In Progress', className: 'text-teal-300' },
-  rejected:    { label: 'Rejected',   className: 'text-warning' },
-  failed:      { label: 'Failed',     className: 'text-warning' },
-  cancelled:   { label: 'Cancelled',  className: 'text-primary-400' },
-  suspended:   { label: 'Suspended',  className: 'text-neutral-300' },
-  inactive:    { label: 'Inactive',   className: 'text-neutral-300' },
-  draft:       { label: 'Draft',      className: 'text-neutral-300' },
+const config: Record<StatusVariant, { label: string; color: string }> = {
+  verified:    { label: 'Verified',    color: '#00C853' },
+  active:      { label: 'Active',      color: '#00C853' },
+  completed:   { label: 'Completed',   color: '#00C853' },
+  received:    { label: 'Received',    color: '#00C853' },
+  pending:     { label: 'Pending',     color: '#FF5500' },
+  scheduled:   { label: 'Scheduled',   color: '#0070FF' },
+  sent:        { label: 'Sent',        color: '#0070FF' },
+  boarding:    { label: 'Boarding',    color: '#FF5500' },
+  in_progress: { label: 'In Progress', color: '#FF5500' },
+  rejected:    { label: 'Rejected',    color: '#FF5500' },
+  failed:      { label: 'Failed',      color: '#FF5500' },
+  cancelled:   { label: 'Cancelled',   color: '#9CA3AF' },
+  suspended:   { label: 'Suspended',   color: '#9CA3AF' },
+  inactive:    { label: 'Inactive',    color: '#9CA3AF' },
+  draft:       { label: 'Draft',       color: '#9CA3AF' },
 }
 
 interface Props {
@@ -26,16 +26,16 @@ interface Props {
 }
 
 export function StatusPill({ status, size = 'md', className }: Props) {
-  const { label, className: statusClass } = config[status] ?? config.inactive
+  const { label, color } = config[status] ?? config.inactive
 
   return (
     <span
       className={clsx(
-        'inline-flex items-center font-bold',
+        'inline-flex items-center font-black uppercase tracking-wider',
         size === 'sm' ? 'text-[10px]' : 'text-xs',
-        statusClass,
         className,
       )}
+      style={{ color }}
       aria-label={`Status: ${label}`}
     >
       {label}

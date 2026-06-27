@@ -153,11 +153,12 @@ export function DriversPage() {
                     </div>
                   </div>
                   <span
-                    className={clsx(
-                      "font-black uppercase tracking-wider font-sans",
-                      driver.status === 'verified' ? 'text-emerald-400' : driver.status === 'pending' ? 'text-amber-400' : 'text-neutral-300'
-                    )}
-                    style={{ fontSize: '12px', lineHeight: '1.2' }}
+                    className="font-black uppercase tracking-wider font-sans"
+                    style={{
+                      fontSize: '12px',
+                      lineHeight: '1.2',
+                      color: driver.status === 'verified' ? '#00C853' : driver.status === 'pending' ? '#FF5500' : '#9CA3AF'
+                    }}
                   >
                     {driver.status}
                   </span>

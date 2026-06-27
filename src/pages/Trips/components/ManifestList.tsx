@@ -173,8 +173,8 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
 
                 {/* Status / action */}
                 {isBoarded ? (
-                  <div className="w-9 h-9 flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-secondary-300" />
+                  <div className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50 border border-emerald-200">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" strokeWidth={1.8} />
                   </div>
                 ) : canRefund ? (
                   <button
@@ -192,10 +192,10 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
                 ) : isBoarding ? (
                   <button
                     onClick={() => markBoarded(pass.id)}
-                    className="w-9 h-9 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:border-secondary-200 hover:bg-secondary-50 transition-colors active:scale-95"
+                    className="w-9 h-9 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:border-secondary-300 hover:bg-secondary-50 transition-colors active:scale-95"
                     aria-label={`Mark ${pass.name} as boarded`}
                   >
-                    <CheckCircle2 className="w-5 h-5 text-neutral-200" />
+                    <CheckCircle2 className="w-5 h-5 text-neutral-300" strokeWidth={1.2} />
                   </button>
                 ) : (
                   // Scheduled or in_progress — no action available

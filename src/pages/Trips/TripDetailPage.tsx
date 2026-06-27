@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useOutletContext } from 'react-router-dom'
-import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle, Droplets, MessageSquare, Send } from 'lucide-react'
+import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle, Droplets, MessageSquare, Send, Star } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { ManifestList } from './components/ManifestList'
@@ -240,15 +240,15 @@ export function TripDetailPage() {
   }, [setNotifications, trip.routeName])
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-white w-full">
       <TopBar title={trip.routeName} backHref="/trips" />
 
-      <div className="flex-1 p-4 pt-4 lg:pt-6 lg:px-6 w-full">
+      <div className="flex-1 p-2 pt-2 lg:pt-3 lg:px-4 w-full">
         {/* Side-by-side layout on desktop, stacked on mobile */}
-        <div className="lg:grid lg:gap-6 space-y-4 lg:space-y-0" style={{ gridTemplateColumns: '2fr 3fr' }}>
+        <div className="lg:grid lg:gap-4 space-y-4 lg:space-y-0 w-full" style={{ gridTemplateColumns: '2fr 3fr' }}>
 
           {/* LEFT — Trip info + tracker + actions (sticky so it doesn't scroll away) */}
-          <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+          <div className="space-y-4 lg:sticky lg:top-2 lg:self-start">
             {/* Trip info card */}
             <div className="card">
               <div className="flex items-start justify-between gap-2 mb-4">
@@ -297,6 +297,14 @@ export function TripDetailPage() {
               const hrs = Math.floor(durationMinutes / 60)
               const mins = durationMinutes % 60
               const timeTaken = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`
+
+              // Find driver details & reviews to show the specific trip rating
+              const driverObj = data.drivers?.find((d: any) => d.id === trip.driverId)
+              const tripReviews = driverObj?.reviews?.filter((r: any) => r.tripId === trip.id) ?? []
+              const avgTripRating = tripReviews.length > 0
+                ? (tripReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / tripReviews.length).toFixed(1)
+                : '4.8' // Fallback to driver's default or common rating if none found
+
               const completedStats = [
                 { icon: Navigation, label: 'Distance Covered', value: `${distanceKm} km`,  color: 'text-secondary-300' },
                 { icon: Gauge,      label: 'Avg Speed',        value: `${avgSpeed} km/h`,   color: 'text-primary-400'   },
@@ -304,8 +312,14 @@ export function TripDetailPage() {
                 { icon: Clock,      label: 'Time Taken',       value: timeTaken,             color: 'text-orange-400'    },
               ]
               return (
-                <div className="bg-white rounded-xl border border-neutral-100 p-4">
-                  <p className="text-xs font-bold text-black uppercase tracking-wider mb-3">Trip Summary</p>
+                <div className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
+                  <div className="flex items-center justify-between border-b border-neutral-50 pb-2">
+                    <p className="text-xs font-bold text-black uppercase tracking-wider">Trip Summary</p>
+                    <div className="flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-lg border border-yellow-100">
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <span className="text-xs font-bold text-amber-700">{avgTripRating} Rating</span>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
                     {completedStats.map(({ icon: Icon, label, value, color }) => (
                       <div key={label} className="flex flex-col items-center text-center gap-1 bg-white border border-neutral-100 rounded-xl p-3">

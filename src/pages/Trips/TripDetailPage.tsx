@@ -205,12 +205,12 @@ export function TripDetailPage() {
     <div className="flex flex-col min-h-screen bg-white">
       <TopBar title={trip.routeName} backHref="/trips" />
 
-      <div className="flex-1 p-4 space-y-4 lg:pt-8 lg:px-8 w-full">
+      <div className="flex-1 p-4 pt-4 lg:pt-6 lg:px-6 w-full">
         {/* Side-by-side layout on desktop, stacked on mobile */}
-        <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-4 lg:space-y-0">
+        <div className="lg:grid lg:gap-6 space-y-4 lg:space-y-0" style={{ gridTemplateColumns: '2fr 3fr' }}>
 
-          {/* LEFT — Trip info + tracker + actions */}
-          <div className="space-y-4">
+          {/* LEFT — Trip info + tracker + actions (sticky so it doesn't scroll away) */}
+          <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
             {/* Trip info card */}
             <div className="card">
               <div className="flex items-start justify-between gap-2 mb-4">
@@ -286,8 +286,8 @@ export function TripDetailPage() {
             )}
           </div>
 
-          {/* RIGHT — Passengers manifest */}
-          <div className="card h-fit">
+          {/* RIGHT — Passengers manifest (scrollable) */}
+          <div className="card lg:overflow-y-auto lg:max-h-[calc(100vh-90px)]">
             <ManifestList passengers={passengers} tripStatus={trip.status} tripId={trip.id} />
           </div>
 

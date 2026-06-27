@@ -116,8 +116,8 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
         </p>
       )}
 
-      {/* 2-column grid, each card is vertical */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* 3-column grid — more passengers visible at once */}
+      <div className="grid grid-cols-3 gap-2">
         {passengers.map((pass, idx) => {
           const isPaid = pass.paymentStatus === 'paid'
           const isRefunded = pass.paymentStatus === 'refunded'
@@ -132,7 +132,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
               className="flex flex-col items-center gap-3 p-4 rounded-2xl border border-neutral-100 bg-white text-center transition-colors"
             >
               {/* AI portrait photo */}
-              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-neutral-100 flex-shrink-0">
+              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-neutral-100 flex-shrink-0">
                 <img
                   src={portrait}
                   alt={pass.name}
@@ -143,7 +143,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
 
               {/* Name + status */}
               <div className="w-full min-w-0">
-                <p className="text-base font-semibold text-primary-500 truncate">{pass.name}</p>
+                <p className="text-base font-semibold text-primary-500 leading-tight">{pass.name}</p>
                 <p className={clsx(
                   'text-sm font-medium mt-0.5',
                   isRefunded ? 'text-neutral-300' : 'text-secondary-300',

@@ -5,11 +5,11 @@ import { useMockData } from '../../lib/useMockData'
 import { formatMoneyCompact } from '../../lib/formatters'
 
 const reportTypes = [
-  { icon: Bus, label: 'Trip Report', desc: 'All trips with revenue, occupancy and status', color: 'bg-secondary-50 text-secondary-300' },
-  { icon: Users, label: 'Driver Report', desc: 'Per-driver performance and earnings', color: 'bg-teal-50 text-teal-400' },
-  { icon: Car, label: 'Vehicle Report', desc: 'Mileage, fuel usage and downtime', color: 'bg-accent-50 text-accent-400' },
-  { icon: TrendingUp, label: 'Revenue Report', desc: 'Earnings by route, week and month', color: 'bg-success-light text-secondary-300' },
-  { icon: Navigation, label: 'Route Report', desc: 'Top routes by occupancy and revenue', color: 'bg-primary-75 text-primary-400' },
+  { icon: Bus, label: 'Trip Report', desc: 'All trips with revenue, occupancy and status', color: 'bg-white text-secondary-300' },
+  { icon: Users, label: 'Driver Report', desc: 'Per-driver performance and earnings', color: 'bg-white text-teal-400' },
+  { icon: Car, label: 'Vehicle Report', desc: 'Mileage, fuel usage and downtime', color: 'bg-white text-accent-400' },
+  { icon: TrendingUp, label: 'Revenue Report', desc: 'Earnings by route, week and month', color: 'bg-white text-secondary-300' },
+  { icon: Navigation, label: 'Route Report', desc: 'Top routes by occupancy and revenue', color: 'bg-white text-primary-400' },
 ]
 
 const dateRanges = ['Today', 'This Week', 'This Month', 'Custom']

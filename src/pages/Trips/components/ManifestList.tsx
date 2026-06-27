@@ -47,7 +47,7 @@ export function ManifestList({ passengers: initial }: ManifestListProps) {
           >
             <div className={clsx(
               'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0',
-              pass.boardingStatus === 'boarded' ? 'bg-secondary-300 text-white' : 'bg-primary-75 text-primary-400',
+              pass.boardingStatus === 'boarded' ? 'bg-secondary-300 text-white' : 'bg-white text-primary-400',
             )}>
               {pass.seatNumber}
             </div>
@@ -71,7 +71,7 @@ export function ManifestList({ passengers: initial }: ManifestListProps) {
 
             <a
               href={`tel:${pass.phone}`}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-primary-75 text-primary-400 hover:bg-primary-100 transition-colors flex-shrink-0"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-white text-primary-400 hover:bg-primary-100 transition-colors flex-shrink-0"
               aria-label={`Call ${pass.name}`}
             >
               <Phone className="w-3.5 h-3.5" />

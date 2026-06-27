@@ -95,6 +95,7 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
   const navigate = useNavigate()
   const { org, updateOrg } = useOrg()
   const [signingOut, setSigningOut] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
 
   const userRole = org.role ? org.role.toLowerCase() : 'owner'
@@ -112,6 +113,11 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
   }).filter(group => group.items.length > 0)
 
   const handleSignOut = () => {
+    setConfirmLogout(true)
+  }
+
+  const confirmDoSignOut = () => {
+    setConfirmLogout(false)
     setSigningOut(true)
     setTimeout(() => {
       setSigningOut(false)
@@ -136,6 +142,7 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
   }
 
   return (
+    <>
     <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-neutral-50 min-h-screen fixed left-0 top-0 z-40">
 
       {/* ── Top header strip: Soole icon + Actions ── */}
@@ -260,5 +267,46 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
         <p className="text-[10px] text-neutral-300 font-medium">Powered by Mobiliti</p>
       </div>
     </aside>
+
+    {/* ── Logout Confirmation Modal ── */}
+    {confirmLogout && (
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        onClick={() => setConfirmLogout(false)}
+      >
+        <div
+          className="bg-white rounded-3xl shadow-float w-full max-w-sm mx-4 p-6 flex flex-col items-center gap-4"
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Icon */}
+          <div className="w-14 h-14 rounded-2xl bg-danger-50 flex items-center justify-center">
+            <Power className="w-6 h-6 text-danger-300" />
+          </div>
+
+          <div className="text-center">
+            <h2 className="text-base font-bold text-primary-500 mb-1">Sign out?</h2>
+            <p className="text-sm text-neutral-200 leading-relaxed">
+              You will be signed out of your Soole dashboard. Any unsaved changes will be lost.
+            </p>
+          </div>
+
+          <div className="flex gap-3 w-full">
+            <button
+              onClick={() => setConfirmLogout(false)}
+              className="flex-1 py-3 rounded-2xl border border-neutral-100 text-sm font-semibold text-primary-400 hover:bg-primary-75 transition-colors"
+            >
+              Stay
+            </button>
+            <button
+              onClick={confirmDoSignOut}
+              className="flex-1 py-3 rounded-2xl bg-danger-300 text-sm font-semibold text-white hover:bg-danger-400 transition-colors"
+            >
+              {signingOut ? 'Signing out…' : 'Sign out'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   )
 }

@@ -78,9 +78,12 @@ export function ManifestList({ passengers: initial, tripStatus }: ManifestListPr
     <div>
       <div className="flex items-center justify-between mb-1">
         <h3 className="text-base font-semibold text-primary-500">Passengers</h3>
-        <span className="text-sm text-neutral-200">
-          <span className="text-secondary-300 font-semibold">{boarded}</span>/{passengers.length} boarded
-        </span>
+        {/* Boarded count only relevant once boarding has started or is done */}
+        {(isBoarding || isCompleted) && (
+          <span className="text-sm text-neutral-200">
+            <span className="text-secondary-300 font-semibold">{boarded}</span>/{passengers.length} boarded
+          </span>
+        )}
       </div>
 
       {/* Contextual status note */}
@@ -129,7 +132,7 @@ export function ManifestList({ passengers: initial, tripStatus }: ManifestListPr
                 )}>
                   {isRefunded ? 'Refunded' : 'Paid'}
                 </p>
-                {isBoarded && pass.boardedAt && (
+                {isBoarded && pass.boardedAt && (isBoarding || isCompleted) && (
                   <p className="text-sm text-neutral-200 mt-0.5">Boarded {formatTime(pass.boardedAt)}</p>
                 )}
                 {isCompleted && isPaid && !isBoarded && !isRefunded && (
@@ -172,12 +175,9 @@ export function ManifestList({ passengers: initial, tripStatus }: ManifestListPr
                   >
                     <CheckCircle2 className="w-5 h-5 text-white" />
                   </button>
-                ) : isScheduled ? (
-                  <span className="text-xs text-neutral-200 font-medium text-center leading-tight">Awaiting<br/>boarding</span>
                 ) : (
-                  <div className="w-9 h-9 flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 rounded-full bg-neutral-100" />
-                  </div>
+                  // Scheduled or in_progress — no action available
+                  <div className="w-9 h-9" />
                 )}
               </div>
             </div>

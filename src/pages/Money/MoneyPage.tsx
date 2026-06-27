@@ -167,10 +167,7 @@ export function MoneyPage() {
                 <div key={tx.id} className="card">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className={clsx(
-                        'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
-                        tx.type === 'payout' ? 'bg-primary-75' : tx.type === 'refund' ? 'bg-danger-light' : 'bg-success-light',
-                      )}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-white">
                         {tx.type === 'payout'
                           ? <ArrowUpRight className="w-5 h-5 text-primary-400" />
                           : tx.type === 'refund'
@@ -234,7 +231,7 @@ export function MoneyPage() {
             </button>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-accent-100 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6 text-accent-400" />
               </div>
               <div>

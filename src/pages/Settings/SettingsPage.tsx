@@ -51,7 +51,7 @@ export function SettingsPage() {
                   onClick={() => to ? navigate(to) : setActiveSection(isOpen ? null : label)}
                   className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-primary-75 transition-colors text-left focus:outline-none"
                 >
-                  <div className={clsx("w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors", isOpen ? "bg-primary-500 text-white" : "bg-primary-75 text-primary-400")}>
+                  <div className={clsx("w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors", isOpen ? "bg-primary-500 text-white" : "bg-white text-primary-400")}>
                     <Icon className="w-4.5 h-4.5" strokeWidth={1.8} />
                   </div>
                   <div className="flex-1 min-w-0">

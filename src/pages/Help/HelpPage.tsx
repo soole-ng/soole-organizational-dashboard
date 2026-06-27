@@ -96,7 +96,7 @@ export function HelpPage() {
             rel="noopener noreferrer"
             className="card hover:border-accent-300 transition-all hover:shadow-md flex items-start gap-4 p-5"
           >
-            <div className="w-10 h-10 rounded-2xl bg-accent-50 flex items-center justify-center text-accent-400 flex-shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-accent-400 flex-shrink-0">
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
@@ -112,7 +112,7 @@ export function HelpPage() {
             href="mailto:support@soole.ng"
             className="card hover:border-primary-200 transition-all hover:shadow-md flex items-start gap-4 p-5"
           >
-            <div className="w-10 h-10 rounded-2xl bg-primary-75 flex items-center justify-center text-primary-400 flex-shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-primary-400 flex-shrink-0">
               <Mail className="w-5 h-5" />
             </div>
             <div>
@@ -126,7 +126,7 @@ export function HelpPage() {
             href="tel:+2341000000"
             className="card hover:border-teal-200 transition-all hover:shadow-md flex items-start gap-4 p-5"
           >
-            <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-400 flex-shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-teal-400 flex-shrink-0">
               <Phone className="w-5 h-5" />
             </div>
             <div>

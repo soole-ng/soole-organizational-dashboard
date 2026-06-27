@@ -16,17 +16,21 @@ function AlertItem({ alert, onDismiss }: { alert: Alert; onDismiss: () => void }
   const iconEl = isWarning
     ? <AlertTriangle className="w-4 h-4 text-accent-400" />
     : isDanger
-    ? <XCircle className="w-4 h-4 text-danger-300" />
+    ? <XCircle className="w-4 h-4 text-[#FF0000] !text-[#FF0000]" />
     : <Info className="w-4 h-4 text-teal-400" />
 
   const containerCls = isWarning
     ? 'bg-accent-50 border-accent-100'
     : isDanger
-    ? 'bg-danger-50 border-danger-100'
+    ? 'bg-[#042011] border-[#042011]'
     : 'bg-teal-50 border-teal-100'
 
   const iconBg = 'bg-white'
-  const textCls = isWarning ? 'text-accent-400' : isDanger ? 'text-danger-400' : 'text-teal-400'
+  const textCls = isWarning 
+    ? 'text-accent-400' 
+    : isDanger 
+    ? 'text-[#FF0000] !text-[#FF0000] font-black' 
+    : 'text-teal-400'
 
   return (
     <div className={clsx('rounded-2xl p-3.5 flex gap-3 border', containerCls)}>
@@ -35,14 +39,16 @@ function AlertItem({ alert, onDismiss }: { alert: Alert; onDismiss: () => void }
       </div>
       <div className="flex-1 min-w-0">
         <p className={clsx('text-xs font-semibold mb-0.5', textCls)}>{alert.title}</p>
-        <p className="text-xs text-neutral-300 leading-relaxed">{alert.message}</p>
+        <p className={clsx('text-xs leading-relaxed', isDanger ? 'text-white/95 font-medium' : 'text-neutral-300')}>
+          {alert.message}
+        </p>
         {alert.action && (
           <Link
             to={alert.action.href}
             className={clsx('inline-flex items-center gap-1 text-xs font-semibold mt-1.5 hover:underline', textCls)}
           >
             {alert.action.label}
-            <ChevronRight className="w-3 h-3" />
+            <ChevronRight className="w-3 h-3 text-[#FF0000]" />
           </Link>
         )}
       </div>
@@ -51,7 +57,7 @@ function AlertItem({ alert, onDismiss }: { alert: Alert; onDismiss: () => void }
         className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-black/10 flex-shrink-0 transition-colors"
         aria-label="Dismiss alert"
       >
-        <X className="w-3.5 h-3.5 text-neutral-300" />
+        <X className={clsx('w-3.5 h-3.5', isDanger ? 'text-white/70' : 'text-neutral-300')} />
       </button>
     </div>
   )

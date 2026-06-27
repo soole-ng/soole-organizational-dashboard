@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Users, Wallet, Bell, Shield, RefreshCw, HelpCircle, ChevronRight, ChevronDown, Upload, Mail, Phone } from 'lucide-react'
+import { Building2, Users, Wallet, Bell, Shield, RefreshCw, HelpCircle, ChevronRight, ChevronDown, Upload, Mail, Phone, AlertTriangle } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { useMockData } from '../../lib/useMockData'
 import { clsx } from 'clsx'
@@ -36,6 +36,7 @@ export function SettingsPage() {
     { icon: Users, label: 'Organization Team', desc: `${members.length} members`, badge: members.length },
     { icon: Wallet, label: 'Payout Settings', desc: 'Bank account and payout schedule' },
     { icon: Bell, label: 'Notifications', desc: 'Alerts and notification channels' },
+    { icon: AlertTriangle, label: 'Alert Settings', desc: 'Speed limits and custom fleet safety alerts' },
     { icon: Shield, label: 'Security', desc: 'Password, 2FA and active sessions' },
     { icon: RefreshCw, label: 'Refund Policy', desc: 'Set your cancellation and refund rules' },
     { icon: HelpCircle, label: 'Help & Support', desc: 'FAQs, chat and contact Soole', to: '/help' },
@@ -291,24 +292,6 @@ export function SettingsPage() {
 
                     {label === 'Security' && (
                       <div className="space-y-6 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
-                        {/* Speed Limit */}
-                        <div>
-                          <label className="text-xs font-bold text-black block mb-1.5 uppercase tracking-wider">Fleet Speed Limit (km/h)</label>
-                          <div className="flex items-center gap-3">
-                            <input
-                              type="number"
-                              className="input-field bg-white text-black font-semibold border border-neutral-200 focus:border-primary-500 w-32"
-                              value={speedLimit}
-                              onChange={e => setSpeedLimit(Number(e.target.value))}
-                              placeholder="e.g. 100"
-                            />
-                            <span className="text-sm font-black text-black">km/h</span>
-                          </div>
-                          <p className="text-[11px] text-black mt-2">Set your custom speed limit for the fleet. Alerts will be generated if vehicles exceed this limit.</p>
-                        </div>
-
-                        <hr className="border-neutral-100" />
-
                         {/* Secret Question & Answer setup */}
                         <div className="space-y-4">
                           <h4 className="text-sm font-black text-black">2FA Secret Security Question</h4>
@@ -337,6 +320,25 @@ export function SettingsPage() {
                               />
                             </div>
                           </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {label === 'Alert Settings' && (
+                      <div className="space-y-4 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
+                        <div>
+                          <label className="text-xs font-bold text-black block mb-1.5 uppercase tracking-wider">Fleet Speed Limit (km/h)</label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="number"
+                              className="input-field bg-white text-black font-semibold border border-neutral-200 focus:border-primary-500 w-32"
+                              value={speedLimit}
+                              onChange={e => setSpeedLimit(Number(e.target.value))}
+                              placeholder="e.g. 100"
+                            />
+                            <span className="text-sm font-black text-black">km/h</span>
+                          </div>
+                          <p className="text-[11px] text-black mt-2 font-medium">Set your custom speed limit for the fleet. Alerts will be generated if vehicles exceed this limit.</p>
                         </div>
                       </div>
                     )}

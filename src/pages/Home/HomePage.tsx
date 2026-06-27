@@ -2,7 +2,6 @@ import { Plus } from 'lucide-react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { TopBar } from '../../components/layout/TopBar'
 import { HeroBand } from './components/HeroBand'
-import { AlertsBanner } from './components/AlertsBanner'
 import { UpcomingTrips } from './components/UpcomingTrips'
 import { QuickStats } from './components/QuickStats'
 import { useOrg } from '../../lib/OrgContext'
@@ -49,9 +48,6 @@ export function HomePage() {
       <div className="flex-1 lg:px-8 w-full">
         <div className="space-y-4 py-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 lg:py-8">
           <div className="lg:col-span-2 space-y-4">
-            <div id="tour-alerts">
-              <AlertsBanner notifications={notifications} setNotifications={setNotifications} />
-            </div>
             <UpcomingTrips />
           </div>
           <div className="space-y-4">

@@ -16,15 +16,11 @@ export function QuickStats() {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-[#042011] p-3 rounded-xl border border-neutral-100/20 text-xs space-y-1.5 shadow-lg">
+        <div className="bg-[#042011] p-3 rounded-xl border border-neutral-100/20 text-xs shadow-lg">
           <p className="font-bold text-white mb-1 uppercase tracking-wider text-[10px]">Revenue Trend</p>
           <div className="flex items-center gap-4 justify-between">
-            <span className="text-neutral-200">Gross Revenue:</span>
-            <span className="font-bold text-[#A7C957]">{formatMoneyCompact(data.gross)}</span>
-          </div>
-          <div className="flex items-center gap-4 justify-between">
-            <span className="text-neutral-200">Net (Settled):</span>
-            <span className="font-bold text-[#1D754C]">{formatMoneyCompact(data.net)}</span>
+            <span className="text-neutral-200">{data.day}day:</span>
+            <span className="font-bold text-[#A7C957]">{formatMoneyCompact(data.net)}</span>
           </div>
         </div>
       );
@@ -51,10 +47,6 @@ export function QuickStats() {
           <ResponsiveContainer width="100%" height={120}>
             <AreaChart data={weeklyRevenue} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="grossGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#095B4F" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#095B4F" stopOpacity={0.0} />
-                </linearGradient>
                 <linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#1D754C" stopOpacity={0.35} />
                   <stop offset="95%" stopColor="#1D754C" stopOpacity={0.0} />
@@ -63,26 +55,10 @@ export function QuickStats() {
               <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#8aad96', fontWeight: 'bold' }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#A7C957', strokeWidth: 1, strokeDasharray: '3 3' }} />
-              <Area type="monotone" dataKey="gross" stroke="#095B4F" strokeWidth={1.8} fill="url(#grossGrad)" dot={false} />
               <Area type="monotone" dataKey="net" stroke="#1D754C" strokeWidth={2.5} fill="url(#netGrad)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         )}
-
-        <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-neutral-50 text-center text-xs">
-          <div>
-            <p className="text-neutral-200 font-medium">Trips</p>
-            <p className="font-black text-primary-500 text-sm mt-0.5">21</p>
-          </div>
-          <div className="border-x border-neutral-50">
-            <p className="text-neutral-200 font-medium">Bookings</p>
-            <p className="font-black text-[#FF5500] text-sm mt-0.5">187</p>
-          </div>
-          <div>
-            <p className="text-neutral-200 font-medium">Avg occupancy</p>
-            <p className="font-black text-secondary-300 text-sm mt-0.5">84%</p>
-          </div>
-        </div>
       </div>
     </div>
   )

@@ -10,13 +10,19 @@
 
   *:not(svg):not(path) {
     box-sizing: border-box;
-    color: #000000 !important;
+    color: #000000;
+  }
+
+  /* All borders and divider lines are black */
+  *, *::before, *::after {
+    border-color: #000000 !important;
   }
 
   html {
     font-family: 'Geist', system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
+    font-size: 18px;
   }
 
   body {
@@ -106,7 +112,7 @@
     @apply bg-white border-b border-neutral-50 px-4 py-3 flex items-center gap-3;
   }
 
-  /* Faint black boundaries/borders on all oval buttons, tags, pills, and badges */
+  /* Black borders on all oval buttons, tags, pills, and badges */
   button.rounded-full,
   a.rounded-full,
   span.rounded-full,
@@ -114,17 +120,17 @@
   .rounded-full,
   [class*="btn-"],
   .accent-badge {
-    border: 1px solid #ffffff !important;
+    border: 1px solid #000000 !important;
   }
 
-  /* Faint black boundaries/borders on all boxes, cards, inputs, textareas, and form fields */
+  /* Black borders on all boxes, cards, inputs, textareas, and form fields */
   input,
   textarea,
   select,
   .input-field,
   .card,
   [class*="card"] {
-    border: 1px solid #ffffff !important;
+    border: 1px solid #000000 !important;
   }
 }
 

@@ -4,103 +4,103 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ── SOOLE BRAND PALETTE (8 official colors only) ──────────────────────
-        // #042011  dark green    → primary background / text
-        // #254832  forest green  → primary-400
-        // #1D754C  emerald green → secondary / success
-        // #095B4F  teal green    → teal / accent dark
-        // #A7C957  light green   → accent highlight
-        // #A7C957  light gray    → backgrounds / borders / neutral
-        // #7A95D8  cornflower    → info / secondary text
-        // #BB7832  golden brown  → warning / alert
+        // ── SOOLE BRAND PALETTE ───────────────────────────────────────────────
+        // #254832  Forest Green  → primary brand (primary-400)
+        // #042011  Dark Green    → headers, dark surfaces (primary-500)
+        // #1D754C  Emerald Green → secondary buttons, success (secondary-300)
+        // #095B4F  Teal Green    → accents, links (teal-300)
+        // #A7C957  Light Green   → highlights, accent (accent-400)
+        // #DEDBEC  Light Gray    → borders, subtle backgrounds (neutral-100)
+        // #FFFFFF  White         → backgrounds, text on dark
+        // #BB7832  Golden Brown  → warnings, alerts (warning/danger)
 
         primary: {
-          '50': '#A7C957',
-          '75': '#A7C957',
-          '100': '#A7C957',
-          '200': '#7A95D8',
-          '300': '#254832',
-          '400': '#254832',
-          '500': '#042011',
-          DEFAULT: '#042011',
+          '50': '#eef4f0',   // very light forest green tint — hover states
+          '75': '#dce9df',   // light tint — active nav bg, card accents
+          '100': '#c3d9c9',  // medium-light tint — borders on primary elements
+          '200': '#8aad96',  // medium — muted text on dark backgrounds
+          '300': '#4d7a5e',  // medium-dark — secondary elements
+          '400': '#254832',  // Forest Green — main brand color
+          '500': '#042011',  // Dark Green — headers, primary surfaces
+          DEFAULT: '#254832',
         },
         secondary: {
-          '50': '#A7C957',
-          '100': '#A7C957',
-          '200': '#254832',
-          '300': '#1D754C',
-          '400': '#095B4F',
-          '500': '#042011',
+          '50': '#ebf5ef',
+          '100': '#c8e5d4',
+          '200': '#8ec8a7',
+          '300': '#1D754C',  // Emerald Green — success, secondary actions
+          '400': '#16593a',
+          '500': '#0f3d28',
           DEFAULT: '#1D754C',
         },
         accent: {
-          '50': '#A7C957',
-          '100': '#A7C957',
-          '200': '#A7C957',
-          '300': '#A7C957',
-          '400': '#A7C957',
-          '500': '#A7C957',
+          '50': '#f8fcf0',
+          '100': '#edf7d5',
+          '200': '#d4ea99',
+          '300': '#bfdf6a',
+          '400': '#A7C957',  // Light Green — highlights, badges, growth
+          '500': '#8aaa3a',
           DEFAULT: '#A7C957',
         },
         teal: {
-          '50': '#A7C957',
-          '100': '#A7C957',
-          '200': '#095B4F',
-          '300': '#095B4F',
-          '400': '#095B4F',
+          '50': '#eaf3f2',
+          '100': '#bde0dc',
+          '200': '#6bb8af',
+          '300': '#095B4F',  // Teal Green — accents, links
+          '400': '#074841',
           '500': '#042011',
           DEFAULT: '#095B4F',
         },
         // Golden brown → warning / alert colour
         warning: {
-          '50': '#A7C957',
-          '100': '#A7C957',
-          '200': '#BB7832',
-          '300': '#BB7832',
+          '50': '#fdf3e8',
+          '100': '#f9ddb4',
+          '200': '#f2b96c',
+          '300': '#e89640',
           '400': '#BB7832',
-          '500': '#BB7832',
+          '500': '#8a5623',
           DEFAULT: '#BB7832',
-          light: '#A7C957',
-          dark: '#BB7832',
+          light: '#f2b96c',
+          dark: '#8a5623',
         },
         // Danger uses golden brown (no red in brand palette)
         danger: {
-          '50': '#A7C957',
-          '100': '#A7C957',
-          '200': '#BB7832',
-          '300': '#BB7832',
+          '50': '#fdf3e8',
+          '100': '#f9ddb4',
+          '200': '#f2b96c',
+          '300': '#e89640',
           '400': '#BB7832',
-          '500': '#BB7832',
+          '500': '#8a5623',
           DEFAULT: '#BB7832',
-          light: '#A7C957',
-          dark: '#BB7832',
+          light: '#f2b96c',
+          dark: '#8a5623',
         },
         success: {
-          '50': '#A7C957',
-          '100': '#A7C957',
-          '200': '#1D754C',
+          '50': '#ebf5ef',
+          '100': '#c8e5d4',
+          '200': '#8ec8a7',
           '300': '#1D754C',
-          '400': '#1D754C',
-          '500': '#1D754C',
+          '400': '#16593a',
+          '500': '#0f3d28',
           DEFAULT: '#1D754C',
-          light: '#A7C957',
+          light: '#c8e5d4',
         },
         neutral: {
-          '50': '#A7C957',
-          '100': '#A7C957',
-          '200': '#7A95D8',
-          '300': '#7A95D8',
-          '400': '#095B4F',
-          '500': '#042011',
-          DEFAULT: '#A7C957',
+          '50': '#f5f4fa',   // very subtle — used for hover states, skeletons
+          '100': '#DEDBEC',  // Light Gray brand — borders, dividers
+          '200': '#b8b4d0',  // medium — muted / secondary text
+          '300': '#9491b4',  // darker muted text
+          '400': '#6a6898',
+          '500': '#42415f',
+          DEFAULT: '#DEDBEC',
         },
         info: {
-          '50': '#A7C957',
-          '100': '#A7C957',
-          '200': '#7A95D8',
+          '50': '#eef1fb',
+          '100': '#c8d3f0',
+          '200': '#9aaee2',
           '300': '#7A95D8',
-          '400': '#7A95D8',
-          '500': '#7A95D8',
+          '400': '#5c7bc9',
+          '500': '#3d5ea8',
           DEFAULT: '#7A95D8',
         },
       },

@@ -21,7 +21,13 @@
     font-family: 'Geist', system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
-    font-size: 20px;
+    font-size: 16px;
+  }
+
+  @media (max-width: 640px) {
+    html {
+      font-size: 14px;
+    }
   }
 
   body {

@@ -173,9 +173,10 @@ export function LiveMapPage() {
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className={clsx(
-            'absolute left-4 top-20 z-30 lg:hidden',
-            'w-10 h-10 bg-white rounded-lg shadow-float flex items-center justify-center text-primary-500 transition-all'
+            'absolute right-4 bottom-20 z-30 lg:hidden',
+            'w-10 h-10 bg-white rounded-full shadow-float flex items-center justify-center text-primary-500 transition-all border border-neutral-100/50'
           )}
+          title={sidebarOpen ? "Close Driver List" : "Open Driver List"}
         >
           {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
         </button>

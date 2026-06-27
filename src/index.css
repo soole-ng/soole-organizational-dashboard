@@ -10,7 +10,6 @@
 
   *:not(svg):not(path) {
     box-sizing: border-box;
-    color: #000000;
   }
 
   /* All borders and divider lines — 50% transparent black */

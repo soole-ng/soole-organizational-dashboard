@@ -10,6 +10,7 @@ import { BottomNav } from './BottomNav'
 import { TopBar } from './TopBar'
 import { OrgProvider } from '../../lib/OrgContext'
 import { NotificationDrawer, type Notification } from './NotificationDrawer'
+import { TourGuide } from './TourGuide'
 
 // Mock notification data — will be replaced by API calls
 const MOCK_NOTIFICATIONS: Notification[] = [
@@ -107,6 +108,7 @@ export function AppShell() {
         onMarkRead={handleMarkRead}
         onClearAll={handleClearAll}
       />
+      <TourGuide />
     </div>
     </OrgProvider>
   )

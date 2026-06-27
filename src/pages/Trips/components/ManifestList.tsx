@@ -46,7 +46,8 @@ export function ManifestList({ passengers: initial, tripStatus }: ManifestListPr
     initial.filter(p => p.paymentStatus !== 'pending')
   )
 
-  const isBoarding = tripStatus === 'boarding'
+  // boarding and in_progress are the same — driver has started the trip
+  const isBoarding = tripStatus === 'boarding' || tripStatus === 'in_progress'
   const isCompleted = tripStatus === 'completed'
   const isScheduled = tripStatus === 'scheduled'
 
@@ -89,12 +90,12 @@ export function ManifestList({ passengers: initial, tripStatus }: ManifestListPr
       {/* Contextual status note */}
       {isScheduled && (
         <p className="text-sm text-neutral-200 mb-3 px-0.5">
-          Passengers on a scheduled trip can only pay. Boarding opens when the trip status changes to <span className="font-semibold text-primary-400">Boarding</span>.
+          Passengers on a scheduled trip can only pay. Boarding opens when the trip status changes to <span className="font-semibold text-primary-400">In Progress</span>.
         </p>
       )}
       {isBoarding && (
         <p className="text-sm text-secondary-300 font-medium mb-3 px-0.5">
-          Boarding is open — tap the circle to mark a passenger as boarded.
+          The trip is in progress — tap the circle to mark a passenger as boarded.
         </p>
       )}
 

@@ -60,16 +60,16 @@ export function TripCard({ trip, compact }: TripCardProps) {
             style={{
               fontSize: '12px',
               lineHeight: '1.2',
-              color: trip.status === 'completed' 
-                ? '#00C853' 
-                : trip.status === 'boarding' 
-                ? '#FF5500' 
-                : trip.status === 'scheduled' 
-                ? '#0070FF' 
+              color: trip.status === 'completed'
+                ? '#00C853'
+                : (trip.status === 'boarding' || trip.status === 'in_progress')
+                ? '#FF5500'
+                : trip.status === 'scheduled'
+                ? '#0070FF'
                 : '#9CA3AF'
             }}
           >
-            {trip.status === 'in_progress' ? 'In Progress' : trip.status}
+            {(trip.status === 'in_progress' || trip.status === 'boarding') ? 'In Progress' : trip.status}
           </span>
         </div>
 

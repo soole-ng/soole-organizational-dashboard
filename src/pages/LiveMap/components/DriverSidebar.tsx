@@ -46,7 +46,7 @@ export function DriverSidebar({
         <div className="flex gap-2">
           {[
             { value: 'all' as const, label: `All (${allCount})` },
-            { value: 'on_trip' as const, label: `On Trip (${onTripCount})` },
+            { value: 'on_trip' as const, label: `On Going (${onTripCount})` },
             { value: 'idle' as const, label: `Last Known (${idleCount})` },
           ].map(tab => (
             <button
@@ -70,7 +70,7 @@ export function DriverSidebar({
         {drivers.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full p-4 text-center">
             <AlertCircle className="w-8 h-8 text-neutral-200 mb-2" />
-            <p className="text-sm font-semibold text-neutral-400">No drivers {filter !== 'all' ? `${filter === 'on_trip' ? 'on trip' : 'with last known location'}` : ''}</p>
+            <p className="text-sm font-semibold text-neutral-400">No drivers {filter !== 'all' ? `${filter === 'on_trip' ? 'ongoing' : 'with last known location'}` : ''}</p>
           </div>
         ) : (
           <div className="space-y-2 p-3">

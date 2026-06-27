@@ -30,6 +30,7 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
     const popupRef = useRef<any>(null)
     const navigate = useNavigate()
     const { data } = useMockData()
+    const trailsRef = useRef<Record<string, [number, number][]>>({})
 
     useEffect(() => {
       // Load MapLibre GL JS
@@ -90,6 +91,72 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
         const isSelected = selectedDriver?.id === vehicle.id
         let marker = markersRef.current[vehicle.id]
 
+        // Update trail path for active vehicles
+        if (vehicle.status === 'on_trip') {
+          if (!trailsRef.current[vehicle.id]) {
+            const startLng = 3.3792
+            const startLat = 6.5244
+            const endLng = vehicle.lng
+            const endLat = vehicle.lat
+            const pts: [number, number][] = []
+            for (let i = 0; i <= 6; i++) {
+              const t = i / 6
+              pts.push([
+                startLng + (endLng - startLng) * t,
+                startLat + (endLat - startLat) * t,
+              ])
+            }
+            trailsRef.current[vehicle.id] = pts
+          } else {
+            const path = trailsRef.current[vehicle.id]
+            const last = path[path.length - 1]
+            if (last && (Math.abs(last[0] - vehicle.lng) > 0.0001 || Math.abs(last[1] - vehicle.lat) > 0.0001)) {
+              path.push([vehicle.lng, vehicle.lat])
+            }
+          }
+
+          const sourceId = `trail-source-${vehicle.id}`
+          const layerId = `trail-layer-${vehicle.id}`
+          const currentPath = trailsRef.current[vehicle.id]
+
+          if (map.getSource(sourceId)) {
+            (map.getSource(sourceId) as any).setData({
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: currentPath,
+              },
+            })
+          } else {
+            map.addSource(sourceId, {
+              type: 'geojson',
+              data: {
+                type: 'Feature',
+                properties: {},
+                geometry: {
+                  type: 'LineString',
+                  coordinates: currentPath,
+                },
+              },
+            })
+            map.addLayer({
+              id: layerId,
+              type: 'line',
+              source: sourceId,
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round',
+              },
+              paint: {
+                'line-color': '#1D754C',
+                'line-width': 4,
+                'line-opacity': 0.6,
+              },
+            })
+          }
+        }
+
         if (!marker) {
           const el = document.createElement('div')
           el.className = 'custom-map-marker cursor-pointer'
@@ -137,7 +204,7 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
         popupDiv.innerHTML = `
           <div class="flex items-center justify-between">
             <p class="text-sm font-bold text-black">${vehicle.plate}</p>
-            ${activeTrip ? `<span class="text-[9px] bg-secondary-50 text-secondary-300 font-bold px-1.5 py-0.5 rounded-full border border-secondary-100/50">ON TRIP</span>` : ''}
+            ${activeTrip ? `<span class="text-[9px] bg-secondary-50 text-secondary-300 font-bold px-1.5 py-0.5 rounded-full border border-secondary-100/50">ON GOING</span>` : ''}
           </div>
           <p class="text-xs text-neutral-400 font-medium">${vehicle.driver}</p>
           <div class="mt-2 pt-2 border-t border-neutral-100 text-xs space-y-1">
@@ -174,6 +241,18 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
       return () => {
         Object.values(markersRef.current).forEach(m => m.remove())
         if (popupRef.current) popupRef.current.remove()
+
+        const map = (ref as any)?.current
+        if (map && map.getStyle()) {
+          Object.keys(trailsRef.current).forEach(id => {
+            try {
+              if (map.getLayer(`trail-layer-${id}`)) map.removeLayer(`trail-layer-${id}`)
+              if (map.getSource(`trail-source-${id}`)) map.removeSource(`trail-source-${id}`)
+            } catch (e) {
+              // ignore
+            }
+          })
+        }
       }
     }, [])
 

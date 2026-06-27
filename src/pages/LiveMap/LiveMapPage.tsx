@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { MapPin, Navigation, Activity, Layers, ChevronLeft, ChevronRight } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { MapContainer } from './components/MapContainer'
@@ -58,6 +58,57 @@ export function LiveMapPage() {
       .then(data => setVehicleLocations(data.vehicleLocations || []))
       .catch(console.error)
   }, [])
+
+  // Simulate real-time movement of active vehicles
+  useEffect(() => {
+    if (vehicleLocations.length === 0) return
+    const interval = setInterval(() => {
+      setVehicleLocations(prev =>
+        prev.map(v => {
+          if (v.status !== 'on_trip') return v
+
+          // Define target destinations (approximate coordinates)
+          let destLat = v.lat
+          let destLng = v.lng
+          if (v.driver === 'Akin Bello') { // Lagos -> Ibadan
+            destLat = 7.3775
+            destLng = 3.9470
+          } else if (v.driver === 'Chidi Okafor') { // Lagos -> Abuja
+            destLat = 9.0765
+            destLng = 7.3986
+          } else if (v.driver === 'Funke Adeleke') { // Lagos -> Benin
+            destLat = 6.3350
+            destLng = 5.6263
+          } else {
+            return v
+          }
+
+          // Move 0.5% closer to destination on each tick
+          const step = 0.005
+          const newLat = v.lat + (destLat - v.lat) * step
+          const newLng = v.lng + (destLng - v.lng) * step
+
+          // If close to destination, loop it back to starting point
+          const dist = Math.sqrt(Math.pow(destLat - newLat, 2) + Math.pow(destLng - newLng, 2))
+          if (dist < 0.01) {
+            return {
+              ...v,
+              lat: 6.5244 + (Math.random() - 0.5) * 0.05,
+              lng: 3.3792 + (Math.random() - 0.5) * 0.05,
+            }
+          }
+
+          return {
+            ...v,
+            lat: newLat,
+            lng: newLng,
+          }
+        })
+      )
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [vehicleLocations.length])
 
   const filtered = useMemo(() =>
     vehicleLocations.filter(v =>

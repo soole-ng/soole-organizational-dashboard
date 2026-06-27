@@ -102,7 +102,18 @@ export function VehiclesPage() {
       </div>
 
       <div className="flex-1 p-4 space-y-3 lg:pt-8 lg:px-8 max-w-5xl mx-auto w-full">
-        <DesktopPageHeader title="Vehicles" subtitle={`${filtered.length} vehicles · ${totalSeats} total seats`} />
+        <DesktopPageHeader
+          title="Vehicles"
+          subtitle={`${filtered.length} vehicles · ${totalSeats} total seats`}
+          actions={
+            <button
+              onClick={() => toast('Add Vehicle feature coming soon!')}
+              className="flex items-center gap-2 bg-[#042011] text-white font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-400 transition-colors"
+            >
+              + Add Vehicle
+            </button>
+          }
+        />
 
         {filtered.length === 0 ? (
           <EmptyState icon={Car} title="No vehicles yet" description="Add your first vehicle to start publishing trips." action={{ label: '+ Add Vehicle', onClick: () => {} }} />
@@ -232,6 +243,15 @@ export function VehiclesPage() {
           </div>
         </div>
       )}
+
+      {/* FAB */}
+      <button
+        onClick={() => toast('Add Vehicle feature coming soon!')}
+        className="lg:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 rounded-full flex items-center justify-center shadow-float text-white z-30"
+        aria-label="Add vehicle"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
     </div>
   )
 }

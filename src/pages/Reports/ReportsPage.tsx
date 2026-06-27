@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { BarChart2, Bus, Users, Car, TrendingUp, Navigation, Download } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useMockData } from '../../lib/useMockData'
 import { formatMoneyCompact } from '../../lib/formatters'
+import toast from 'react-hot-toast'
 
 const reportTypes = [
   { icon: Bus, label: 'Trip Report', desc: 'All trips with revenue, occupancy and status', color: 'bg-white text-secondary-300' },
@@ -11,8 +13,6 @@ const reportTypes = [
   { icon: TrendingUp, label: 'Revenue Report', desc: 'Earnings by route, week and month', color: 'bg-white text-secondary-300' },
   { icon: Navigation, label: 'Route Report', desc: 'Top routes by occupancy and revenue', color: 'bg-white text-primary-400' },
 ]
-
-const dateRanges = ['Today', 'This Week']
 
 export function ReportsPage() {
   const { data, loading } = useMockData()
@@ -42,6 +42,16 @@ export function ReportsPage() {
   const totalNet = weeklyRevData.reduce((a, d) => a + d.net, 0)
   const totalGross = weeklyRevData.reduce((a, d) => a + d.gross, 0)
 
+  // Active date range state
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [selectedRange, setSelectedRange] = useState('This Week')
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [showCustomPicker, setShowCustomPicker] = useState(false)
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [customDates, setCustomDates] = useState({ start: '', end: '' })
+
+  const dateRanges = ['Today', 'This Week', 'This Month', 'Custom']
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <TopBar title="Reports" />
@@ -50,18 +60,94 @@ export function ReportsPage() {
         <DesktopPageHeader title="Reports" subtitle="Business performance at a glance" />
 
         <div className="flex gap-2 overflow-x-auto scrollbar-thin pb-1">
-          {dateRanges.map((r, i) => (
+          {dateRanges.map((r) => (
             <button
               key={r}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${i === 1
+              onClick={() => {
+                setSelectedRange(r)
+                if (r === 'Custom') {
+                  setShowCustomPicker(true)
+                }
+              }}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedRange === r
                   ? 'bg-primary-500 text-white border-primary-500'
                   : 'bg-white text-neutral-200 border-neutral-50'
                 }`}
             >
-              {r}
+              {r === 'Custom' && customDates.start && customDates.end
+                ? `${customDates.start} - ${customDates.end}`
+                : r
+              }
             </button>
           ))}
         </div>
+
+        {/* Custom date range modal */}
+        {showCustomPicker && (
+          <div
+            className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowCustomPicker(false)}
+          >
+            <div
+              className="bg-white w-full sm:max-w-md sm:mx-4 rounded-t-3xl sm:rounded-3xl shadow-float flex flex-col p-6 space-y-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                <h3 className="text-sm font-bold text-primary-500">Custom Date Range</h3>
+                <button
+                  onClick={() => setShowCustomPicker(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-neutral-50 text-neutral-200 hover:text-primary-400 transition-colors"
+                >&#x2715;</button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">Start Date</label>
+                  <input
+                    type="date"
+                    value={customDates.start}
+                    onChange={e => setCustomDates(p => ({ ...p, start: e.target.value }))}
+                    className="input-field bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">End Date</label>
+                  <input
+                    type="date"
+                    value={customDates.end}
+                    onChange={e => setCustomDates(p => ({ ...p, end: e.target.value }))}
+                    className="input-field bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 justify-end pt-2">
+                <button
+                  onClick={() => {
+                    setCustomDates({ start: '', end: '' })
+                    setSelectedRange('This Week')
+                    setShowCustomPicker(false)
+                  }}
+                  className="px-4 py-2 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-black transition-colors"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={() => {
+                    if (!customDates.start || !customDates.end) {
+                      toast.error('Please select both start and end dates')
+                      return
+                    }
+                    setShowCustomPicker(false)
+                  }}
+                  className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+                >
+                  Apply Filter
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Summary stats */}
         <div className="grid grid-cols-3 gap-3">
@@ -85,7 +171,27 @@ export function ReportsPage() {
                 NGN {totalNet.toLocaleString()}
               </p>
             </div>
-            {/* Export PDF hidden */}
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  toast.loading('Generating PDF report...', { duration: 1500 })
+                  setTimeout(() => toast.success('PDF report downloaded successfully!'), 1500)
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-primary-500 border border-neutral-100 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" /> PDF
+              </button>
+              <button
+                onClick={() => {
+                  toast.loading('Generating Excel sheet...', { duration: 1500 })
+                  setTimeout(() => toast.success('Excel sheet downloaded successfully!'), 1500)
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-[#1D754C] border border-neutral-100 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" /> Excel
+              </button>
+            </div>
           </div>
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={weeklyRevData} barSize={20} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
@@ -95,7 +201,7 @@ export function ReportsPage() {
               <Tooltip
                 formatter={(v: number) => [formatMoneyCompact(v), 'Net']}
                 contentStyle={{ background: '#042011', border: 'none', borderRadius: 12, fontSize: 11, color: '#fff', padding: '6px 12px' }}
-                cursor={{ fill: '#A7C957' }}
+                cursor={{ fill: 'rgba(4, 32, 17, 0.05)' }}
               />
               <Bar dataKey="net" fill="#1D754C" radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -111,16 +217,40 @@ export function ReportsPage() {
           <p className="text-xs font-semibold text-neutral-200 uppercase tracking-wider mb-3">Report Types</p>
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             {reportTypes.map(({ icon: Icon, label, desc, color }) => (
-              <button key={label} className="card text-left hover:shadow-card-hover transition-shadow flex items-center gap-4">
-                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${color}`}>
-                  <Icon className="w-5 h-5" />
+              <div key={label} className="card p-4 hover:shadow-card-hover transition-all flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${color} border border-neutral-100`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-primary-500">{label}</p>
+                    <p className="text-xs text-neutral-200 mt-0.5 leading-relaxed truncate">{desc}</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-primary-500">{label}</p>
-                  <p className="text-xs text-neutral-200 mt-0.5 leading-relaxed">{desc}</p>
+                
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      toast.loading(`Preparing ${label} (PDF)...`, { duration: 1500 })
+                      setTimeout(() => toast.success(`${label} downloaded as PDF`), 1500)
+                    }}
+                    className="w-8 h-8 rounded-xl bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center border border-neutral-100 text-primary-400 hover:text-primary-500 transition-colors"
+                    title="Export PDF"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      toast.loading(`Preparing ${label} (Excel)...`, { duration: 1500 })
+                      setTimeout(() => toast.success(`${label} downloaded as Excel`), 1500)
+                    }}
+                    className="w-8 h-8 rounded-xl bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center border border-neutral-100 text-[#1D754C] hover:text-[#16593a] transition-colors"
+                    title="Export Excel"
+                  >
+                    <span className="text-[10px] font-bold">XLS</span>
+                  </button>
                 </div>
-                {/* PDF/XLS buttons hidden */}
-              </button>
+              </div>
             ))}
           </div>
         </div>

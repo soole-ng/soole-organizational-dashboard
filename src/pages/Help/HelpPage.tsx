@@ -68,8 +68,8 @@ export function HelpPage() {
         {/* Search & Hero Banner */}
         <div className="bg-primary-500 rounded-3xl p-6 lg:p-8 text-white relative overflow-hidden shadow-sm">
           <div className="relative z-10 max-w-xl">
-            <h2 className="text-xl lg:text-2xl font-bold mb-2">How can we help you today?</h2>
-            <p className="text-primary-100 text-xs lg:text-sm mb-6">Search our knowledge base or get in touch with Soole support representative.</p>
+            <h2 className="text-xl lg:text-2xl font-bold mb-2 !text-white">How can we help you today?</h2>
+            <p className="text-xs lg:text-sm mb-6 !text-white/80">Search our knowledge base or get in touch with Soole support representative.</p>
             
             <div className="relative">
               <Search className="absolute left-4 top-3.5 w-5 h-5 text-neutral-300" />

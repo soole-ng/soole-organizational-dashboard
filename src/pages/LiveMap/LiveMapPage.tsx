@@ -136,6 +136,7 @@ export function LiveMapPage() {
       <div className="flex-1 relative overflow-hidden flex">
         {/* Left Sidebar - Driver List */}
         <div
+          id="tour-driver-sidebar"
           className={clsx(
             'w-72 bg-white shadow-float z-20 flex flex-col overflow-hidden',
             'absolute left-0 top-0 bottom-0 transition-transform duration-300',
@@ -157,7 +158,7 @@ export function LiveMapPage() {
         </div>
 
         {/* Map Container */}
-        <div className="flex-1 relative">
+        <div id="tour-map-container" className="flex-1 relative">
           <MapContainer
             ref={mapRef}
             basemap={basemap}

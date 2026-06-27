@@ -159,6 +159,17 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
 
         {/* Action buttons */}
         <div className="flex items-center gap-1">
+          {/* Start Website Tour */}
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('start-soole-tour'))
+            }}
+            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/80 transition-colors"
+            title="Start Website Tour"
+          >
+            <Sparkles className="w-4 h-4 text-accent-300 animate-pulse" strokeWidth={1.8} />
+          </button>
+
           {/* Notifications */}
           <button
             onClick={onOpenNotifications}
@@ -195,7 +206,7 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
       </div>
 
       {/* ── Organization Profile ── */}
-      <div className="px-4 py-4 border-b border-neutral-50">
+      <div id="tour-org-profile" className="px-4 py-4 border-b border-neutral-50">
         <div className="flex items-center gap-3">
           {/* Org logo — clickable to upload */}
           <div className="relative flex-shrink-0 group">
@@ -244,7 +255,7 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5 scrollbar-thin">
+      <nav id="tour-sidebar" className="flex-1 overflow-y-auto py-4 px-3 space-y-5 scrollbar-thin">
         {filteredGroups.map((group, gi) => (
           <div key={gi}>
             {group.label && (

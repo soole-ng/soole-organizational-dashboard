@@ -27,7 +27,7 @@ export function HeroBand() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div id="tour-metrics-mobile" className="grid grid-cols-2 gap-3">
         {stats.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="bg-primary-400 rounded-2xl p-3.5">
             <div className="flex items-center gap-2 mb-2">

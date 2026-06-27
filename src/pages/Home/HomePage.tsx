@@ -25,12 +25,12 @@ export function HomePage() {
             <p className="text-primary-200 text-sm">Good morning,</p>
             <h1 className="text-3xl font-bold text-white">{org.name}</h1>
           </div>
-          <Link to="/trips/new" className="flex items-center gap-2 bg-white text-primary-500 font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-75 transition-colors">
+          <Link to="/trips/new" id="tour-new-trip" className="flex items-center gap-2 bg-white text-primary-500 font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-75 transition-colors">
             <Plus className="w-4 h-4" />
             New Trip
           </Link>
         </div>
-        <div className="grid grid-cols-4 gap-4">
+        <div id="tour-metrics" className="grid grid-cols-4 gap-4">
           {[
             { label: 'Trips Today', value: '3', sub: '+1 vs yesterday' },
             { label: 'Bookings Today', value: '34', sub: '10 seats remaining' },
@@ -49,7 +49,9 @@ export function HomePage() {
       <div className="flex-1 lg:px-8 w-full">
         <div className="space-y-4 py-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 lg:py-8">
           <div className="lg:col-span-2 space-y-4">
-            <AlertsBanner notifications={notifications} setNotifications={setNotifications} />
+            <div id="tour-alerts">
+              <AlertsBanner notifications={notifications} setNotifications={setNotifications} />
+            </div>
             <UpcomingTrips />
           </div>
           <div className="space-y-4">
@@ -60,6 +62,7 @@ export function HomePage() {
 
       <Link
         to="/trips/new"
+        id="tour-new-trip-mobile"
         className="lg:hidden fixed bottom-28 right-4 w-14 h-14 bg-primary-500 rounded-full flex items-center justify-center shadow-float text-white z-30"
         aria-label="New trip"
       >

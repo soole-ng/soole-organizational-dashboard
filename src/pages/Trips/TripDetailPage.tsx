@@ -257,15 +257,19 @@ export function TripDetailPage() {
             {isCompleted && (() => {
               const avgSpeed = calcAvgSpeed(distanceKm, durationMinutes)
               const estFuelL = Math.round((distanceKm / 100) * 10) // ~10L per 100km for a bus
+              const hrs = Math.floor(durationMinutes / 60)
+              const mins = durationMinutes % 60
+              const timeTaken = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`
               const completedStats = [
-                { icon: Navigation, label: 'Distance Covered', value: `${distanceKm} km`, color: 'text-secondary-300' },
-                { icon: Gauge,      label: 'Avg Speed',        value: `${avgSpeed} km/h`,  color: 'text-primary-400' },
-                { icon: Droplets,   label: 'Est. Fuel Used',   value: `${estFuelL} L`,     color: 'text-blue-400' },
+                { icon: Navigation, label: 'Distance Covered', value: `${distanceKm} km`,  color: 'text-secondary-300' },
+                { icon: Gauge,      label: 'Avg Speed',        value: `${avgSpeed} km/h`,   color: 'text-primary-400'   },
+                { icon: Droplets,   label: 'Est. Fuel Used',   value: `${estFuelL} L`,      color: 'text-blue-400'      },
+                { icon: Clock,      label: 'Time Taken',       value: timeTaken,             color: 'text-orange-400'    },
               ]
               return (
                 <div className="bg-white rounded-xl border border-neutral-100 p-4">
                   <p className="text-xs font-bold text-black uppercase tracking-wider mb-3">Trip Summary</p>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {completedStats.map(({ icon: Icon, label, value, color }) => (
                       <div key={label} className="flex flex-col items-center text-center gap-1 bg-neutral-50 rounded-xl p-3">
                         <Icon className={`w-4 h-4 ${color}`} />

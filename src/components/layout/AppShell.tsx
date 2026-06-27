@@ -4,7 +4,7 @@
  * ≤ 400 lines
  */
 import { Outlet, useLocation } from 'react-router-dom'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { TopBar } from './TopBar'
@@ -46,6 +46,16 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS)
+  const mainRef = useRef<HTMLElement>(null)
+  const { pathname } = useLocation()
+
+  // Reset scroll position on page/route changes (essential for iOS PWA smoothness)
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0
+    }
+    window.scrollTo(0, 0)
+  }, [pathname])
 
   const unreadCount = notifications.filter(n => !n.read).length
 
@@ -69,7 +79,6 @@ export function AppShell() {
     setDrawerOpen(true)
   }, [])
 
-  const { pathname } = useLocation()
   const isFullscreen = pathname === '/live-map'
 
   return (
@@ -78,6 +87,7 @@ export function AppShell() {
       <Sidebar unreadCount={unreadCount} onOpenNotifications={handleOpenDrawer} />
 
       <main
+        ref={mainRef}
         className={`flex-1 flex flex-col w-full lg-ml-76 ${
           isFullscreen ? 'overflow-hidden h-screen' : 'min-h-screen overflow-y-auto overflow-x-hidden'
         }`}

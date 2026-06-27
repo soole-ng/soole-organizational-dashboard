@@ -129,9 +129,7 @@ export function SettingsPage() {
                     )}
 
                     {label === 'Payout Settings' && (
-                      <PayoutSettings
-                        org={org}
-                      />
+                      <PayoutSettings />
                     )}
 
                     {label === 'Notifications' && (

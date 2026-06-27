@@ -39,13 +39,52 @@ const seedComments: TripComment[] = [
 
 export function TripDetailPage() {
   const { id } = useParams()
-  const { data } = useMockData()
+  const { data, loading } = useMockData()
   const ctx = useOutletContext<any>()
   const notifications = ctx?.notifications ?? []
   const setNotifications = ctx?.setNotifications
 
+  const [comments, setComments] = useState<TripComment[]>(seedComments)
+  const [newComment, setNewComment] = useState('')
+  const [showAllComments, setShowAllComments] = useState(false)
+  const [modalComment, setModalComment] = useState('')
+
+  const handleSpeedViolation = useCallback((speed: number, plate: string, driver: string) => {
+    // Show immediate toast alert
+    toast.error(`⚠ Speed limit exceeded! ${plate} is travelling at ~${speed} km/h`, {
+      duration: 8000,
+      style: { maxWidth: 380 },
+    })
+
+    const currentTrip = data.trips.find((t: any) => t.id === id) ?? data.trips[0]
+
+    // Push into the global notification bell (if context available)
+    if (setNotifications) {
+      const newNotif = {
+        id: `speed-${plate}-${Date.now()}`,
+        type: 'warning' as const,
+        title: `Speed limit exceeded — ${plate}`,
+        message: `${driver} is estimated to be travelling at ~${speed} km/h, exceeding the ${SPEED_LIMIT_KMH} km/h fleet limit on the ${currentTrip?.routeName ?? 'Lagos → Ibadan'} route.`,
+        read: false,
+        createdAt: new Date().toISOString(),
+        action: { label: 'View on map', href: '/live-map' },
+      }
+      setNotifications((prev: any[]) => [newNotif, ...prev])
+    }
+  }, [setNotifications, data.trips, id])
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-white">
+        <TopBar title="Loading Trip..." backHref="/trips" />
+        <div className="flex-1 flex items-center justify-center">
+          <span className="w-8 h-8 border-4 border-primary-100 border-t-primary-500 rounded-full animate-spin" />
+        </div>
+      </div>
+    )
+  }
+
   const trip = data.trips.find((t: any) => t.id === id) ?? data.trips[0]
-  const route = data.routes?.find((r: any) => r.id === trip?.routeId)
 
   if (!trip) {
     return (
@@ -58,17 +97,13 @@ export function TripDetailPage() {
     )
   }
 
+  const route = data.routes?.find((r: any) => r.id === trip.routeId)
   const distanceKm: number = route?.distanceKm ?? 148
   const durationMinutes: number = route?.durationMinutes ?? 165
 
   const isLive = trip.status === 'boarding' || trip.status === 'in_progress'
   const isScheduled = trip.status === 'scheduled'
   const isCompleted = trip.status === 'completed'
-
-  const [comments, setComments] = useState<TripComment[]>(seedComments)
-  const [newComment, setNewComment] = useState('')
-  const [showAllComments, setShowAllComments] = useState(false)
-  const [modalComment, setModalComment] = useState('')
 
   const submitComment = (text: string, fromModal = false) => {
     const trimmed = text.trim()
@@ -98,29 +133,6 @@ export function TripDetailPage() {
     isScheduled && { icon: Edit2, label: 'Edit', action: handleEdit, danger: false },
     isScheduled && { icon: XCircle, label: 'Cancel', action: handleCancel, danger: true },
   ].filter(Boolean) as { icon: any; label: string; action: () => void; danger: boolean }[]
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const handleSpeedViolation = useCallback((speed: number, plate: string, driver: string) => {
-    // Show immediate toast alert
-    toast.error(`⚠ Speed limit exceeded! ${plate} is travelling at ~${speed} km/h`, {
-      duration: 8000,
-      style: { maxWidth: 380 },
-    })
-
-    // Push into the global notification bell (if context available)
-    if (setNotifications) {
-      const newNotif = {
-        id: `speed-${plate}-${Date.now()}`,
-        type: 'warning' as const,
-        title: `Speed limit exceeded — ${plate}`,
-        message: `${driver} is estimated to be travelling at ~${speed} km/h, exceeding the ${SPEED_LIMIT_KMH} km/h fleet limit on the ${trip.routeName} route.`,
-        read: false,
-        createdAt: new Date().toISOString(),
-        action: { label: 'View on map', href: '/live-map' },
-      }
-      setNotifications((prev: any[]) => [newNotif, ...prev])
-    }
-  }, [setNotifications, trip.routeName])
 
   return (
     <div className="flex flex-col min-h-screen bg-white w-full">

@@ -47,7 +47,7 @@ export function LoginPage() {
     setTimeout(() => {
       setLoading(false)
       // Check if security question and answer are setup
-      if (org.securityQuestion && org.securityAnswer) {
+      if (org.securityQuestions && org.securityQuestions.length > 0) {
         setStep('security_question')
       } else {
         toast.success('Welcome back to Mobiliti!')
@@ -61,7 +61,8 @@ export function LoginPage() {
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
-      if (secAnswer.toLowerCase().trim() === (org.securityAnswer || '').toLowerCase().trim()) {
+      const activeQuestion = org.securityQuestions?.[0]
+      if (activeQuestion && secAnswer.toLowerCase().trim() === (activeQuestion.answer || '').toLowerCase().trim()) {
         toast.success('Welcome back to Mobiliti!')
         navigate('/')
       } else {
@@ -319,7 +320,7 @@ export function LoginPage() {
 
                   <div className="space-y-3">
                     <label className="block text-sm font-black text-black">
-                      Question: <span className="font-extrabold text-primary-500">{org.securityQuestion}</span>
+                      Question: <span className="font-extrabold text-primary-500">{org.securityQuestions?.[0]?.question ?? 'Backup Security Question'}</span>
                     </label>
                     <input
                       type="password"

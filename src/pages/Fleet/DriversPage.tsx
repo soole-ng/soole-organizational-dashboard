@@ -20,14 +20,18 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
 function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' }) {
   const filled = Math.round(rating)
   const cls = size === 'md' ? 'w-4 h-4' : 'w-3 h-3'
+  const hasRating = rating > 0
   return (
     <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map(i => (
-        <Star
-          key={i}
-          className={clsx(cls, i <= filled ? 'text-accent fill-accent' : 'text-neutral-100 fill-neutral-100')}
-        />
-      ))}
+      {[1, 2, 3, 4, 5].map(i => {
+        const isFilled = hasRating && i <= filled
+        return (
+          <Star
+            key={i}
+            className={clsx(cls, isFilled ? 'text-accent fill-accent' : 'text-neutral-200 fill-white')}
+          />
+        )
+      })}
     </div>
   )
 }

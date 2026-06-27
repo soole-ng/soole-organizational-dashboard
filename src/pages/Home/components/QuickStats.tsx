@@ -12,6 +12,26 @@ export function QuickStats() {
       .catch(console.error);
   }, []);
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-[#042011] p-3 rounded-xl border border-neutral-100/20 text-xs space-y-1.5 shadow-lg">
+          <p className="font-bold text-white mb-1 uppercase tracking-wider text-[10px]">Revenue Trend</p>
+          <div className="flex items-center gap-4 justify-between">
+            <span className="text-neutral-200">Gross Revenue:</span>
+            <span className="font-bold text-[#A7C957]">{formatMoneyCompact(data.gross)}</span>
+          </div>
+          <div className="flex items-center gap-4 justify-between">
+            <span className="text-neutral-200">Net (Settled):</span>
+            <span className="font-bold text-[#1D754C]">{formatMoneyCompact(data.net)}</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="px-4">
       <div className="card">
@@ -28,39 +48,39 @@ export function QuickStats() {
         </div>
 
         {weeklyRevenue.length > 0 && (
-          <ResponsiveContainer width="100%" height={100}>
+          <ResponsiveContainer width="100%" height={120}>
             <AreaChart data={weeklyRevenue} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
               <defs>
+                <linearGradient id="grossGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#095B4F" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#095B4F" stopOpacity={0.0} />
+                </linearGradient>
                 <linearGradient id="netGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#1D754C" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#1D754C" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#1D754C" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#1D754C" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#A7C957' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#8aad96', fontWeight: 'bold' }} axisLine={false} tickLine={false} />
               <YAxis hide />
-              <Tooltip
-                formatter={(v: number) => [formatMoneyCompact(v), 'Net']}
-                contentStyle={{ background: '#042011', border: 'none', borderRadius: 12, fontSize: 11, color: '#fff', padding: '6px 12px' }}
-                itemStyle={{ color: '#fff' }}
-                cursor={{ stroke: '#A7C957', strokeWidth: 1 }}
-              />
-              <Area type="monotone" dataKey="net" stroke="#1D754C" strokeWidth={2} fill="url(#netGrad)" dot={false} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#A7C957', strokeWidth: 1, strokeDasharray: '3 3' }} />
+              <Area type="monotone" dataKey="gross" stroke="#095B4F" strokeWidth={1.8} fill="url(#grossGrad)" dot={false} />
+              <Area type="monotone" dataKey="net" stroke="#1D754C" strokeWidth={2.5} fill="url(#netGrad)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         )}
 
         <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-neutral-50 text-center text-xs">
           <div>
-            <p className="text-neutral-200">Trips</p>
-            <p className="font-bold text-primary-500 mt-0.5">21</p>
+            <p className="text-neutral-200 font-medium">Trips</p>
+            <p className="font-black text-primary-500 text-sm mt-0.5">21</p>
           </div>
           <div className="border-x border-neutral-50">
-            <p className="text-neutral-200">Bookings</p>
-            <p className="font-bold text-accent-400 mt-0.5">187</p>
+            <p className="text-neutral-200 font-medium">Bookings</p>
+            <p className="font-black text-[#FF5500] text-sm mt-0.5">187</p>
           </div>
           <div>
-            <p className="text-neutral-200">Avg occupancy</p>
-            <p className="font-bold text-secondary-300 mt-0.5">84%</p>
+            <p className="text-neutral-200 font-medium">Avg occupancy</p>
+            <p className="font-black text-secondary-300 text-sm mt-0.5">84%</p>
           </div>
         </div>
       </div>

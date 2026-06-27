@@ -6,6 +6,7 @@ import { AlertsBanner } from './components/AlertsBanner'
 import { UpcomingTrips } from './components/UpcomingTrips'
 import { QuickStats } from './components/QuickStats'
 import { useOrg } from '../../lib/OrgContext'
+import { AIInputBar } from './components/AIInputBar'
 
 export function HomePage() {
   const { org } = useOrg()
@@ -14,8 +15,9 @@ export function HomePage() {
     <div className="flex flex-col min-h-screen bg-white">
       <TopBar />
 
-      <div className="lg:hidden">
+      <div className="lg:hidden space-y-4">
         <HeroBand />
+        <AIInputBar />
       </div>
 
       <div className="hidden lg:block bg-primary-500 px-8 pt-8 pb-10 w-full lg:rounded-b-3xl">
@@ -46,6 +48,9 @@ export function HomePage() {
       </div>
 
       <div className="flex-1 lg:px-8 w-full">
+        <div className="mt-6 hidden lg:block">
+          <AIInputBar />
+        </div>
         <div className="space-y-4 py-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 lg:py-8">
           <div className="lg:col-span-2 space-y-4">
             <AlertsBanner />

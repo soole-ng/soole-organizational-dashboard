@@ -73,21 +73,21 @@ export function AIInputBar() {
         </div>
 
         {response && (
-          <div className="border-t border-neutral-50 bg-secondary-50/30 px-3 py-3">
+          <div className="border-t border-neutral-50 bg-[#042011] px-3.5 py-3">
             <div className="flex items-start gap-2">
-              <div className="w-6 h-6 rounded-full bg-secondary-300 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Sparkles className="w-3 h-3 text-white" />
+              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Sparkles className="w-3.5 h-3.5 text-secondary-300" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-primary-500 leading-relaxed">{response.text}</p>
+                <p className="text-xs text-white/95 leading-relaxed font-bold">{response.text}</p>
                 {response.link && (
-                  <a href={response.link.href} className="text-xs text-secondary-300 font-semibold mt-1.5 inline-block">
+                  <a href={response.link.href} className="text-xs text-accent-400 font-bold mt-1.5 inline-block hover:underline">
                     {response.link.label} →
                   </a>
                 )}
               </div>
               <button onClick={() => setResponse(null)} className="w-5 h-5 flex items-center justify-center">
-                <X className="w-3 h-3 text-neutral-100" />
+                <X className="w-3.5 h-3.5 text-white/70" />
               </button>
             </div>
           </div>

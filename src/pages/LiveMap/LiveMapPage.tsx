@@ -129,7 +129,7 @@ export function LiveMapPage() {
         </button>
 
         {/* Basemap Switcher */}
-        <div className="absolute bottom-[110px] right-4 z-10">
+        <div className="absolute top-[10px] right-[55px] z-10">
           <div className="relative">
             <button
               onClick={() => setShowBasemapMenu(!showBasemapMenu)}
@@ -139,7 +139,7 @@ export function LiveMapPage() {
               <Layers className="w-5 h-5" />
             </button>
             {showBasemapMenu && (
-              <div className="absolute bottom-full right-0 mb-2 bg-white rounded-2xl shadow-float overflow-hidden min-w-48 z-20">
+              <div className="absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-float overflow-hidden min-w-48 z-20">
                 {Object.entries(basemapStyles).map(([key, style]) => (
                   <button
                     key={key}

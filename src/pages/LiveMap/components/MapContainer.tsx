@@ -1,5 +1,7 @@
 import { forwardRef, useEffect, useState, useRef } from 'react'
 import { clsx } from 'clsx'
+import { useNavigate } from 'react-router-dom'
+import { useMockData } from '../../../lib/useMockData'
 
 type VehicleLoc = {
   id: string
@@ -26,6 +28,8 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
     const [mapLoaded, setMapLoaded] = useState(false)
     const markersRef = useRef<Record<string, any>>({})
     const popupRef = useRef<any>(null)
+    const navigate = useNavigate()
+    const { data } = useMockData()
 
     useEffect(() => {
       // Load MapLibre GL JS
@@ -55,7 +59,7 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
         zoom: 11,
       })
 
-      map.addControl(new ml.NavigationControl({ showCompass: false }), 'bottom-right')
+      map.addControl(new ml.NavigationControl({ showCompass: false }), 'top-right')
 
       map.on('load', () => {
         if (ref) {
@@ -126,10 +130,15 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
 
       if (selectedDriver) {
         const vehicle = vehicles.find(v => v.id === selectedDriver.id) || selectedDriver
+        const activeTrip = data?.trips?.find((t: any) => t.vehiclePlate === vehicle.plate && t.status !== 'completed')
+
         const popupDiv = document.createElement('div')
-        popupDiv.className = 'p-3 bg-white text-black rounded-xl min-w-[200px] shadow-lg border border-neutral-100'
+        popupDiv.className = 'p-3 bg-white text-black rounded-xl min-w-[200px] shadow-lg border border-neutral-100 cursor-pointer hover:bg-neutral-50 transition-colors'
         popupDiv.innerHTML = `
-          <p class="text-sm font-bold text-black">${vehicle.plate}</p>
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-bold text-black">${vehicle.plate}</p>
+            ${activeTrip ? `<span class="text-[9px] bg-secondary-50 text-secondary-300 font-bold px-1.5 py-0.5 rounded-full border border-secondary-100/50">ON TRIP</span>` : ''}
+          </div>
           <p class="text-xs text-neutral-400 font-medium">${vehicle.driver}</p>
           <div class="mt-2 pt-2 border-t border-neutral-100 text-xs space-y-1">
             <p class="flex items-center gap-1.5 font-bold text-primary-500">
@@ -138,8 +147,15 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
             </p>
             ${vehicle.eta ? `<p class="text-neutral-500 font-medium">ETA: ${vehicle.eta}</p>` : ''}
             <p class="text-neutral-500 font-bold">${vehicle.speed} km/h</p>
+            ${activeTrip ? `<p class="text-[10px] text-secondary-300 font-bold mt-2 pt-1 border-t border-dashed border-neutral-100/50 flex items-center gap-1">Click to view trip details →</p>` : ''}
           </div>
         `
+
+        if (activeTrip) {
+          popupDiv.addEventListener('click', () => {
+            navigate(`/trips/${activeTrip.id}`)
+          })
+        }
 
         popupRef.current = new ml.Popup({
           closeButton: false,
@@ -151,7 +167,7 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
           .setDOMContent(popupDiv)
           .addTo(map)
       }
-    }, [mapLoaded, vehicles, selectedDriver])
+    }, [mapLoaded, vehicles, selectedDriver, data, navigate])
 
     // Cleanup markers and popup on unmount
     useEffect(() => {

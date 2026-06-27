@@ -42,7 +42,7 @@ export function FleetPage() {
         {/* Alerts Banner */}
         {hasAlerts && (
           <div className="bg-warning-50 border border-warning-100 rounded-2xl p-4 flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-warning-100 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
               <AlertTriangle className="w-5 h-5 text-warning" />
             </div>
             <div className="flex-1">
@@ -59,10 +59,10 @@ export function FleetPage() {
         {/* Quick Metric Tiles */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
-            { label: 'Verified Drivers', value: verifiedDrivers, total: data.drivers.length, icon: Users, color: 'bg-secondary-50 text-secondary-300', progress: (verifiedDrivers / Math.max(data.drivers.length, 1)) * 100 },
-            { label: 'Active Vehicles', value: verifiedVehicles, total: data.vehicles.length, icon: Car, color: 'bg-teal-50 text-teal-400', progress: (verifiedVehicles / Math.max(data.vehicles.length, 1)) * 100 },
-            { label: 'Total Seats', value: totalSeats, total: null, icon: Activity, color: 'bg-info-50 text-info-400', progress: null },
-            { label: 'Avg Rating', value: avgRating.toFixed(1) + '★', total: null, icon: TrendingUp, color: 'bg-accent-50 text-accent-400', progress: (avgRating / 5) * 100 },
+            { label: 'Verified Drivers', value: verifiedDrivers, total: data.drivers.length, icon: Users, color: 'bg-white text-secondary-300', progress: (verifiedDrivers / Math.max(data.drivers.length, 1)) * 100 },
+            { label: 'Active Vehicles', value: verifiedVehicles, total: data.vehicles.length, icon: Car, color: 'bg-white text-teal-400', progress: (verifiedVehicles / Math.max(data.vehicles.length, 1)) * 100 },
+            { label: 'Total Seats', value: totalSeats, total: null, icon: Activity, color: 'bg-white text-info-400', progress: null },
+            { label: 'Avg Rating', value: avgRating.toFixed(1) + '★', total: null, icon: TrendingUp, color: 'bg-white text-accent-400', progress: (avgRating / 5) * 100 },
           ].map(({ label, value, total, icon: Icon, color, progress }) => (
             <div key={label} className="card p-4">
               <div className="flex items-start justify-between mb-3">
@@ -90,7 +90,7 @@ export function FleetPage() {
               return (
                 <div key={driver.id} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-14">
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-full bg-primary-75 border-2 border-primary-100 flex items-center justify-center text-xs font-bold text-primary-500">
+                    <div className="w-10 h-10 rounded-full bg-white border-2 border-primary-100 flex items-center justify-center text-xs font-bold text-primary-500">
                       {initials}
                     </div>
                     <span className={clsx('absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white', statusColor)} />
@@ -105,7 +105,7 @@ export function FleetPage() {
         {/* Navigation Cards */}
         <Link to="/fleet/drivers" className="card hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5 block">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-secondary-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center flex-shrink-0">
               <Users className="w-6 h-6 text-secondary-300" />
             </div>
             <div className="flex-1">
@@ -123,7 +123,7 @@ export function FleetPage() {
 
         <Link to="/fleet/vehicles" className="card hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5 block">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center flex-shrink-0">
               <Car className="w-6 h-6 text-teal-400" />
             </div>
             <div className="flex-1">

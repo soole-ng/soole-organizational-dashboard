@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Plus, Phone, Car, Star, Award, X, User } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Plus, Phone, Car, Star, Award, X, User, MapPin, Hash } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -37,8 +37,8 @@ function GenericAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const sizeClass = size === 'lg' ? 'w-16 h-16' : size === 'md' ? 'w-11 h-11' : 'w-8 h-8'
   const iconClass = size === 'lg' ? 'w-9 h-9' : size === 'md' ? 'w-6 h-6' : 'w-4 h-4'
   return (
-    <div className={clsx('rounded-full bg-neutral-100 flex items-center justify-center flex-shrink-0', sizeClass)}>
-      <User className={clsx('text-neutral-300', iconClass)} />
+    <div className={clsx('rounded-full bg-white flex items-center justify-center flex-shrink-0', sizeClass)}>
+      <User className={clsx('text-primary-400', iconClass)} />
     </div>
   )
 }
@@ -49,6 +49,7 @@ export function DriversPage() {
   const [showAddSheet, setShowAddSheet] = useState(false)
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null)
   const [form, setForm] = useState({ name: '', phone: '' })
+  const reviewScrollRef = useRef<HTMLDivElement>(null)
 
   const filtered = data.drivers.filter(d => filter === 'all' || d.status === filter)
   const verified = data.drivers.filter(d => d.status === 'verified').length
@@ -135,21 +136,23 @@ export function DriversPage() {
                 onClick={() => setSelectedDriver(driver)}
                 className="bg-white rounded-card border border-neutral-100 shadow-card hover:shadow-card-hover transition-all cursor-pointer overflow-hidden"
               >
-                {/* Header */}
-                <div className="bg-white border-b border-neutral-100 px-4 py-3 flex items-start gap-3">
-                  <GenericAvatar size="md" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-1">
-                      <p className="text-sm font-bold text-black truncate">{driver.name}</p>
-                      <StatusPill status={driver.status} size="sm" />
+                {/* Header — dark green, 40% transparent */}
+                <div className="bg-[#042011]/60 px-4 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5 text-[#042011]" />
                     </div>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <StarRating rating={driver.avgRating ?? 0} />
-                      <span className="text-[10px] font-bold text-black">
-                        {(driver.avgRating ?? 0) > 0 ? (driver.avgRating ?? 0).toFixed(1) : 'No rating'}
-                      </span>
+                    <div>
+                      <p className="text-sm font-bold !text-white truncate">{driver.name}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <StarRating rating={driver.avgRating ?? 0} />
+                        <span className="text-[10px] font-bold !text-white/80">
+                          {(driver.avgRating ?? 0) > 0 ? (driver.avgRating ?? 0).toFixed(1) : 'No rating'}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <StatusPill status={driver.status} size="sm" className="!text-white font-bold" />
                 </div>
 
                 {/* Body */}
@@ -168,7 +171,7 @@ export function DriversPage() {
                   </div>
 
                   {/* Footer */}
-                  <div className="flex items-center justify-between pt-1 border-t border-black">
+                  <div className="flex items-center justify-between pt-1 border-t border-neutral-100">
                     {(driver.reviews?.length ?? 0) > 0 ? (
                       <span className="flex items-center gap-1 text-[10px] text-black font-semibold">
                         <Award className="w-3 h-3" />
@@ -189,7 +192,7 @@ export function DriversPage() {
                       <a
                         href={`tel:${driver.phone}`}
                         onClick={e => e.stopPropagation()}
-                        className="w-7 h-7 flex items-center justify-center rounded-full bg-primary-75 text-primary-400 hover:bg-primary-500 hover:text-white transition-colors"
+                        className="w-7 h-7 flex items-center justify-center rounded-full bg-white text-primary-400 hover:bg-primary-500 hover:text-white transition-colors"
                       >
                         <Phone className="w-3.5 h-3.5" />
                       </a>
@@ -229,7 +232,7 @@ export function DriversPage() {
               </div>
               <button
                 onClick={() => setSelectedDriver(null)}
-                className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-black hover:bg-neutral-200 transition-colors flex-shrink-0"
+                className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-black hover:bg-neutral-50 transition-colors flex-shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -242,7 +245,7 @@ export function DriversPage() {
                 { label: 'Trips Done', value: selectedDriver.tripsCompleted },
                 { label: 'Reviews', value: selectedDriver.reviews?.length ?? 0 },
               ].map(s => (
-                <div key={s.label} className="bg-primary-75 rounded-2xl p-4 text-center border border-neutral-100">
+                <div key={s.label} className="bg-white rounded-2xl p-4 text-center border border-neutral-100">
                   <p className="text-3xl font-black text-black stat-number">{s.value}</p>
                   <p className="text-xs text-black mt-1">{s.label}</p>
                 </div>
@@ -250,34 +253,76 @@ export function DriversPage() {
             </div>
 
             {/* Scrollable comments */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-              <p className="text-sm font-bold text-black uppercase tracking-wider mb-3">Passenger Comments</p>
-              {!selectedDriver.reviews || selectedDriver.reviews.length === 0 ? (
-                <div className="text-center py-16 bg-primary-75 rounded-2xl border border-neutral-100">
-                  <Star className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-black">No comments yet</p>
-                  <p className="text-xs text-black mt-1">Reviews appear after completed trips.</p>
-                </div>
-              ) : (
-                selectedDriver.reviews.map((rev: any) => (
-                  <div key={rev.id} className="bg-primary-75 rounded-2xl p-4 border border-neutral-100">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-full bg-neutral-200 flex items-center justify-center flex-shrink-0">
-                          <User className="w-5 h-5 text-neutral-400" />
-                        </div>
-                        <p className="text-sm font-bold text-black">{rev.passengerName}</p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <StarRating rating={rev.rating} size="md" />
-                        <span className="text-sm font-bold text-black">{rev.rating}</span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-black leading-relaxed">"{rev.comment}"</p>
-                    <p className="text-xs text-black text-right mt-2">{rev.date}</p>
+            <div className="flex-1 flex flex-col min-h-0">
+              {/* Header row with scroll hint */}
+              <div className="flex items-center justify-between px-6 pt-4 pb-2 flex-shrink-0">
+                <p className="text-sm font-bold text-black uppercase tracking-wider">
+                  Passenger Comments
+                  {selectedDriver.reviews?.length > 0 && (
+                    <span className="ml-2 text-[10px] font-bold text-primary-400 normal-case tracking-normal">
+                      ({selectedDriver.reviews.length})
+                    </span>
+                  )}
+                </p>
+                {selectedDriver.reviews?.length > 2 && (
+                  <button
+                    onClick={() => reviewScrollRef.current?.scrollBy({ top: 220, behavior: 'smooth' })}
+                    className="text-[10px] font-semibold text-primary-400 flex items-center gap-1 hover:text-primary-500 transition-colors"
+                  >
+                    Scroll ↓
+                  </button>
+                )}
+              </div>
+
+              <div
+                ref={reviewScrollRef}
+                className="flex-1 overflow-y-auto px-6 pb-4 space-y-3"
+                style={{ scrollBehavior: 'smooth' }}
+              >
+                {!selectedDriver.reviews || selectedDriver.reviews.length === 0 ? (
+                  <div className="text-center py-16 bg-white rounded-2xl border border-neutral-100">
+                    <Star className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
+                    <p className="text-sm font-semibold text-black">No comments yet</p>
+                    <p className="text-xs text-black mt-1">Reviews appear after completed trips.</p>
                   </div>
-                ))
-              )}
+                ) : (
+                  selectedDriver.reviews.map((rev: any) => (
+                    <div key={rev.id} className="bg-white rounded-2xl p-4 border border-neutral-100">
+                      {/* Trip route + ID */}
+                      {rev.tripRoute && (
+                        <div className="flex items-center justify-between mb-3 pb-3 border-b border-neutral-100">
+                          <div className="flex items-center gap-1.5 text-[10px] text-primary-400 font-semibold">
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                            <span>{rev.tripRoute}</span>
+                          </div>
+                          {rev.tripId && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-neutral-200 font-mono">
+                              <Hash className="w-2.5 h-2.5" />{rev.tripId}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Passenger + rating */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                            <User className="w-4 h-4 text-primary-400" />
+                          </div>
+                          <p className="text-sm font-bold text-black">{rev.passengerName}</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <StarRating rating={rev.rating} size="sm" />
+                          <span className="text-xs font-bold text-black">{rev.rating}</span>
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-black leading-relaxed">"{rev.comment}"</p>
+                      <p className="text-[10px] text-neutral-200 text-right mt-2">{rev.date}</p>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -294,7 +339,7 @@ export function DriversPage() {
             <label className="block text-xs font-semibold text-black mb-1.5">Phone Number</label>
             <input className="input-field" type="tel" placeholder="+234 803 123 4567" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
           </div>
-          <p className="text-xs text-black bg-primary-75 rounded-xl p-3 leading-relaxed border border-neutral-100">
+          <p className="text-xs text-black bg-white rounded-xl p-3 leading-relaxed border border-neutral-100">
             {form.name || 'The driver'} will receive an SMS to download the Soole driver app and complete verification.
           </p>
           <button onClick={handleInvite} disabled={!form.name || !form.phone} className="btn-primary w-full">Send Invite</button>

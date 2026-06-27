@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Plus, Fuel, Users, AlertTriangle, CheckCircle2, Clock, XCircle, Car, Bus } from 'lucide-react'
+import { Plus, Users, CheckCircle2, Clock, XCircle, Car, Bus, UserPlus, X, History } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useMockData } from '../../lib/useMockData'
+import { formatDate, formatTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
+import toast from 'react-hot-toast'
 
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'All', value: 'all' },
@@ -14,12 +16,8 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'Suspended', value: 'suspended' },
 ]
 
-// SVG vehicle icon by type — no emoji
 function VehicleIcon({ type, className }: { type: string; className?: string }) {
-  // Hiace and Coaster → Bus icon; Sienna and others → Car icon
-  if (type === 'Hiace' || type === 'Coaster') {
-    return <Bus className={className} />
-  }
+  if (type === 'Hiace' || type === 'Coaster') return <Bus className={className} />
   return <Car className={className} />
 }
 
@@ -29,28 +27,18 @@ function docStatusIcon(status: string) {
   return <XCircle className="w-3 h-3 text-warning" />
 }
 
-/** Plain fuel level display — no bar */
-function FuelLevel({ level }: { level: number }) {
-  const pct = Math.round(level * 100)
-  const isLow = pct <= 25
-  return (
-    <div className="flex items-center justify-between text-[10px]">
-      <div className="flex items-center gap-1">
-        <Fuel className={clsx('w-3 h-3', isLow ? 'text-warning' : 'text-secondary-300')} />
-        <span className="text-black">Estimated fuel</span>
-      </div>
-      <span className={clsx('font-bold', isLow ? 'text-warning' : 'text-black')}>{pct}%</span>
-    </div>
-  )
-}
-
 export function VehiclesPage() {
   const { data, loading } = useMockData()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
+  const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
 
   const filtered = data.vehicles.filter(v => filter === 'all' || v.status === filter)
   const totalSeats = data.vehicles.reduce((a, v) => a + v.capacity, 0)
   const verified = data.vehicles.filter(v => v.status === 'verified').length
+
+  const vehicleTrips = historyVehicle
+    ? data.trips.filter((t: any) => t.vehicleId === historyVehicle.id)
+    : []
 
   if (loading) {
     return (
@@ -111,39 +99,51 @@ export function VehiclesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filtered.map(vehicle => {
-              const approvedDocs = vehicle.documents.filter(d => d.status === 'approved').length
+              const approvedDocs = vehicle.documents.filter((d: any) => d.status === 'approved').length
               const totalDocs = vehicle.documents.length
-              const docsPct = Math.round((approvedDocs / totalDocs) * 100)
 
               return (
                 <div key={vehicle.id} className="bg-white rounded-card border border-neutral-100 shadow-card overflow-hidden hover:shadow-card-hover transition-shadow">
-                  {/* Card header */}
-                  <div className="bg-[#042011] px-4 py-3 flex items-center justify-between text-white">
+                  {/* Card header — dark green, 40% transparent */}
+                  <div className="bg-[#042011]/60 px-4 py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white border border-neutral-100 flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
                         <VehicleIcon type={vehicle.type} className="w-5 h-5 text-[#042011]" />
                       </div>
                       <div>
                         <p className="text-sm font-bold !text-white">{vehicle.plate}</p>
-                        <p className="text-[10px] !text-white/90">{vehicle.model} · {vehicle.year} · {vehicle.capacity} seats</p>
+                        <p className="text-[10px] !text-white/80">{vehicle.model} · {vehicle.year} · {vehicle.capacity} seats</p>
                       </div>
                     </div>
-                    <StatusPill status={vehicle.status} size="sm" />
+                    <StatusPill status={vehicle.status} size="sm" className="!text-white font-bold" />
                   </div>
 
                   {/* Card body */}
                   <div className="px-4 py-3 space-y-3">
                     {/* Driver row */}
                     <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5 text-neutral-200">
-                        <Users className="w-3.5 h-3.5" />
-                        <span>{vehicle.assignedDriverName ?? <span className="text-warning font-semibold">No driver assigned</span>}</span>
+                      <div className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-neutral-200" />
+                        {vehicle.assignedDriverName ? (
+                          <span className="text-black font-medium">{vehicle.assignedDriverName}</span>
+                        ) : (
+                          <button
+                            onClick={() => toast('Assign driver — coming soon!')}
+                            className="flex items-center gap-1 text-secondary-300 font-semibold hover:text-secondary-400 transition-colors"
+                          >
+                            <UserPlus className="w-3 h-3" /> Assign Driver
+                          </button>
+                        )}
                       </div>
-                      <span className="text-neutral-200 font-mono text-[11px]">{vehicle.totalKm.toLocaleString()} km</span>
+                      {vehicle.assignedDriverName && (
+                        <button
+                          onClick={() => toast('Change driver — coming soon!')}
+                          className="text-[10px] text-neutral-200 hover:text-primary-400 transition-colors"
+                        >
+                          Change →
+                        </button>
+                      )}
                     </div>
-
-                    {/* Fuel — plain number */}
-                    <FuelLevel level={vehicle.fuelLevel} />
 
                     {/* Documents */}
                     <div className="space-y-1.5 pt-2 border-t border-neutral-100">
@@ -153,16 +153,23 @@ export function VehiclesPage() {
                           {approvedDocs}/{totalDocs} approved
                         </span>
                       </div>
-
                       <div className="flex flex-wrap gap-1.5 pt-0.5">
-                        {vehicle.documents.map(doc => (
-                          <div key={doc.type} className="flex items-center gap-1 text-[9px] !text-white bg-[#042011] rounded-lg px-2 py-0.5">
+                        {vehicle.documents.map((doc: any) => (
+                          <div key={doc.type} className="flex items-center gap-1 text-[9px] bg-[#042011]/60 rounded-lg px-2 py-0.5">
                             {docStatusIcon(doc.status)}
                             <span className="!text-white">{doc.label.split(' ').slice(0, 2).join(' ')}</span>
                           </div>
                         ))}
                       </div>
                     </div>
+
+                    {/* View history button */}
+                    <button
+                      onClick={() => setHistoryVehicle(vehicle)}
+                      className="w-full text-[11px] text-primary-400 font-semibold flex items-center justify-center gap-1.5 py-2 rounded-xl border border-neutral-100 hover:bg-primary-75 transition-colors"
+                    >
+                      <History className="w-3.5 h-3.5" /> View Trip History
+                    </button>
                   </div>
                 </div>
               )
@@ -177,6 +184,60 @@ export function VehiclesPage() {
       >
         <Plus className="w-6 h-6" />
       </button>
+
+      {/* Vehicle History Modal */}
+      {historyVehicle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-float flex flex-col max-h-[80vh]">
+            {/* Modal header */}
+            <div className="flex items-center gap-4 px-6 py-4 border-b border-neutral-100 flex-shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#042011]/60 flex items-center justify-center flex-shrink-0">
+                <VehicleIcon type={historyVehicle.type} className="w-5 h-5 !text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-black text-black">{historyVehicle.plate} — Trip History</h2>
+                <p className="text-[10px] text-neutral-200">{historyVehicle.model} · {historyVehicle.year} · {historyVehicle.capacity} seats</p>
+              </div>
+              <button
+                onClick={() => setHistoryVehicle(null)}
+                className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-black hover:bg-neutral-50 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Trip list */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 scrollbar-thin">
+              {vehicleTrips.length === 0 ? (
+                <div className="text-center py-12">
+                  <History className="w-10 h-10 text-neutral-100 mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-black">No trip history yet</p>
+                  <p className="text-xs text-neutral-200 mt-1">Completed trips will appear here.</p>
+                </div>
+              ) : (
+                vehicleTrips.map((trip: any) => (
+                  <div key={trip.id} className="bg-white rounded-xl p-3 border border-neutral-100">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <p className="text-sm font-bold text-black leading-snug">
+                        {trip.origin} → {trip.destination}
+                      </p>
+                      <StatusPill status={trip.status} size="sm" />
+                    </div>
+                    <div className="flex items-center gap-3 text-[10px] text-neutral-200">
+                      <span>{formatDate(trip.departureAt)}</span>
+                      <span>{formatTime(trip.departureAt)}</span>
+                      <span className="ml-auto text-black font-semibold">{trip.driverName}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[10px] text-neutral-200 mt-1">
+                      <span>{trip.bookedSeats}/{trip.capacity} seats booked</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

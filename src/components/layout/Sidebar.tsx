@@ -147,7 +147,7 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
           >
             <Bell className="w-4 h-4 text-white/80" strokeWidth={1.8} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-accent-300 text-primary-500 text-[8px] font-black rounded-full flex items-center justify-center px-0.5 border border-primary-500">
+              <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-0.5 border border-white">
                 {unreadCount}
               </span>
             )}

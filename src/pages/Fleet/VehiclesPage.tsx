@@ -417,7 +417,7 @@ export function VehiclesPage() {
         {/* Step 2: Upload Documents checklists */}
         {currentStep === 2 && (
           <div className="space-y-4">
-            <p className="text-xs text-primary-500 leading-relaxed bg-white rounded-xl p-3 border border-neutral-100">
+            <p className="text-xs text-neutral-300 leading-relaxed bg-white rounded-xl p-3 border border-neutral-100">
               Attach clear photos of documents and all 4 side views of the vehicle showing the plate number to complete verification. 
             </p>
             <div className="space-y-2">
@@ -487,9 +487,9 @@ export function VehiclesPage() {
                       <Camera className="w-3.5 h-3.5" />
                     </button>
                     {uploads[d.key] ? (
-                      <span className="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center text-white text-[10px] font-bold">✓</span>
+                      <span className="w-5 h-5 rounded-full bg-white border border-primary-500 flex items-center justify-center text-primary-500 text-[10px] font-bold">✓</span>
                     ) : (
-                      <span className="w-5 h-5 rounded-full bg-neutral-50 border border-neutral-100" />
+                      <span className="w-5 h-5 rounded-full bg-white border border-neutral-100" />
                     )}
                   </div>
                 </div>
@@ -497,7 +497,12 @@ export function VehiclesPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 mt-2">
-              <button onClick={() => setCurrentStep(1)} className="btn-secondary w-full">Back</button>
+              <button
+                onClick={() => setCurrentStep(1)}
+                className="px-4 py-2 border border-neutral-100 hover:bg-neutral-50 text-xs font-bold rounded-xl text-primary-500 bg-white transition-colors w-full"
+              >
+                Back
+              </button>
               <button
                 onClick={() => {
                   const allUploaded = Object.values(uploads).every(v => v)

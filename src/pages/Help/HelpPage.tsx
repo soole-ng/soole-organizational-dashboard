@@ -12,27 +12,27 @@ const FAQS: FAQItem[] = [
   {
     category: 'Trips & Dispatch',
     question: 'How do I schedule a new trip?',
-    answer: 'Navigate to the Trips page and click "New Trip" (or use the float button on mobile). Fill in the route, vehicle, driver, departure time, and base fare. Once saved, the trip status becomes Scheduled and is broadcast to the passenger apps.',
+    answer: '1. Navigate to the Trips page.\n2. Click the "+ New Trip" button (or the floating action button on mobile).\n3. Fill in the route, vehicle, driver, departure time, and base fare.\n4. Click Save to publish the trip and broadcast it to the passenger apps.',
   },
   {
     category: 'Trips & Dispatch',
     question: 'How do I manage the passenger manifest?',
-    answer: 'Click on any active or scheduled trip from your Trips list. Under the Manifest tab, you can view booked passengers, check them in as they board, or manually add passengers if they are paying cash at the terminal.',
+    answer: '1. Locate the active or scheduled trip in your Trips list.\n2. Click the trip card to open the details.\n3. Open the "Manifest" tab.\n4. Review bookings, check in passengers as they board, or manually register walk-in passengers paying cash at the terminal.',
   },
   {
     category: 'Fleet & Drivers',
     question: 'How do I approve a pending driver?',
-    answer: 'Go to Fleet > Drivers. Click on the driver with the "Invite Pending" or "Review" status. Verify their driver\'s license and phone number, then toggle their status to Active. They will immediately receive an SMS notification to start taking trips.',
+    answer: '1. Go to Fleet > Drivers from the navigation menu.\n2. Find and click on the driver with the "Invite Pending" or "Review" status.\n3. Check their driver\'s license and phone number for accuracy.\n4. Change their status indicator to Active to notify them and allow them to take rides.',
   },
   {
     category: 'Payments & Wallet',
     question: 'When are payouts processed?',
-    answer: 'Payouts are automatically processed every Wednesday to your registered settlement bank account. The minimum payout threshold is NGN 10,000. You can view pending payouts and transaction histories on the Money page.',
+    answer: '1. Payouts are computed automatically every Wednesday.\n2. Ensure your account meets the minimum payout limit of NGN 10,000.\n3. Funds are sent to your organization\'s registered settlement bank account.\n4. Review payout details and statement logs on the Money page.',
   },
   {
     category: 'Technical Support',
     question: 'How do I install the Mobiliti PWA on my phone?',
-    answer: 'On Android, open this dashboard in Chrome and tap "Add to Home Screen" or click the "Install" button in the top bar. On iOS, open Safari, tap the Share button, and select "Add to Home Screen". The PWA functions offline and supports push notifications.',
+    answer: 'For iOS (iPhone/iPad):\n1. Open your Safari browser and visit this dashboard.\n2. Tap the "Share" button (the box with an upward arrow).\n3. Select "Add to Home Screen" from the menu.\n\nFor Android:\n1. Open your Google Chrome browser.\n2. Tap the menu dots or the install banner in the address bar.\n3. Tap "Install App" or "Add to Home Screen".',
   },
 ]
 
@@ -223,17 +223,23 @@ export function HelpPage() {
         )}
 
         {/* Soole Brand & PWA Details */}
-        <div className="bg-white border border-neutral-50 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div className="flex items-center gap-3">
-            <img src="/soole-icon.png" alt="Soole" className="w-10 h-10 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-            <div>
-              <h4 className="text-xs font-bold text-primary-500">Mobiliti Dashboard</h4>
-              <p className="text-[10px] text-neutral-200">Powered by Mobiliti · Version 2.4.0 (PWA)</p>
+        <div className="bg-white border border-neutral-50 rounded-2xl p-5 flex items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+            <div className="flex items-center gap-3">
+              <img src="/soole-icon.png" alt="Soole" className="w-10 h-10 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              <div>
+                <h4 className="text-xs font-bold text-primary-500">Mobiliti Dashboard</h4>
+                <p className="text-[10px] text-neutral-200">Powered by Mobiliti · Version 2.4.0 (PWA)</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-secondary-300" />
-            <span className="text-[10px] font-bold text-secondary-300">Terminal Server: Connected</span>
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('start-soole-tour'))
+              }}
+              className="px-3.5 py-1.5 bg-primary-50 hover:bg-primary-75 text-primary-500 rounded-xl text-[10px] font-bold transition-colors border border-primary-100"
+            >
+              Start Website Tour
+            </button>
           </div>
         </div>
       </div>

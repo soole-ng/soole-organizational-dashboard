@@ -76,6 +76,20 @@ export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavPro
           </NavLink>
         ))}
 
+        {/* Tour tab — triggers the tour guide */}
+        <button
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('start-soole-tour'))
+          }}
+          className="flex-1 flex flex-col items-center gap-1 pt-2.5 pb-2 text-[10px] font-medium text-neutral-200 transition-colors min-w-0"
+          aria-label="Start Website Tour"
+        >
+          <span className="w-11 h-7 flex items-center justify-center rounded-full">
+            <Sparkles className="w-5 h-5 text-accent-400" strokeWidth={1.8} />
+          </span>
+          <span className="truncate w-full text-center">Tour</span>
+        </button>
+
         {/* Bell tab — not a nav route, opens drawer */}
         <button
           onClick={onOpenNotifications}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Users, Wallet, Bell, RefreshCw, HelpCircle, ChevronRight, AlertTriangle } from 'lucide-react'
+import { Building2, Users, Wallet, Bell, RefreshCw, HelpCircle, ChevronRight, AlertTriangle, FileText } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { useMockData } from '../../lib/useMockData'
 import { clsx } from 'clsx'
@@ -65,6 +65,7 @@ export function SettingsPage() {
     { icon: AlertTriangle, label: 'Alert Settings', desc: 'Speed limits and custom fleet safety alerts' },
     { icon: RefreshCw, label: 'Refund Policy', desc: 'Set your cancellation and refund rules' },
     { icon: HelpCircle, label: 'Help & Support', desc: 'FAQs, chat and contact Soole', to: '/help' },
+    { icon: FileText, label: 'Terms & Conditions', desc: 'Terms of service & user agreement', href: 'https://www.soole.ng/privacy-policy' },
   ]
 
   const navigate = useNavigate()
@@ -77,12 +78,20 @@ export function SettingsPage() {
         <DesktopPageHeader title="Settings" subtitle="Organization profile, team and account settings" />
 
         <div className="card p-0 overflow-hidden divide-y divide-neutral-50">
-          {sections.map(({ icon: Icon, label, desc, badge, to }) => {
+          {sections.map(({ icon: Icon, label, desc, badge, to, href }) => {
             const isOpen = activeSection === label;
             return (
               <div key={label} className="transition-colors hover:bg-primary-75/30">
                 <button
-                  onClick={() => to ? navigate(to) : setActiveSection(isOpen ? null : label)}
+                  onClick={() => {
+                    if (href) {
+                      window.open(href, '_blank', 'noopener,noreferrer')
+                    } else if (to) {
+                      navigate(to)
+                    } else {
+                      setActiveSection(isOpen ? null : label)
+                    }
+                  }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-primary-75 transition-colors text-left focus:outline-none"
                 >
                   <div className={clsx("w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors", isOpen ? "bg-primary-500 text-white" : "bg-white text-primary-400")}>
@@ -97,7 +106,7 @@ export function SettingsPage() {
                       {badge}
                     </span>
                   )}
-                  {to ? (
+                  {to || href ? (
                     <ChevronRight className="w-4 h-4 flex-shrink-0 text-neutral-100" />
                   ) : (
                     <ChevronRight className={clsx('w-4 h-4 flex-shrink-0 transition-transform', isOpen ? 'rotate-90 text-primary-400' : 'text-neutral-100')} />

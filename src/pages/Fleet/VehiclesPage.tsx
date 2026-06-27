@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Users, CheckCircle2, Clock, XCircle, Car, Bus, X, History } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { BottomSheet } from '../../components/ui/BottomSheet'
 import { useMockData } from '../../lib/useMockData'
 import { formatDate, formatTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
@@ -41,10 +42,37 @@ export function VehiclesPage() {
   const { data, loading } = useMockData()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
+  
+  const [showAddSheet, setShowAddSheet] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
+  const [vehiclesList, setVehiclesList] = useState<any[]>([])
 
-  const filtered = data.vehicles.filter(v => filter === 'all' || v.status === filter)
-  const totalSeats = data.vehicles.reduce((a, v) => a + v.capacity, 0)
-  const verified = data.vehicles.filter(v => v.status === 'verified').length
+  useEffect(() => {
+    if (data.vehicles.length > 0 && vehiclesList.length === 0) {
+      setVehiclesList(data.vehicles)
+    }
+  }, [data.vehicles])
+
+  const [form, setForm] = useState({
+    plate: '',
+    type: 'Hiace',
+    model: '',
+    year: '2023',
+    capacity: '14',
+    fuelType: 'petrol',
+  })
+
+  const [uploads, setUploads] = useState<Record<string, boolean>>({
+    registration: false,
+    roadWorthiness: false,
+    insurance: false,
+    exteriorFront: false,
+    exteriorRear: false,
+  })
+
+  const filtered = vehiclesList.filter(v => filter === 'all' || v.status === filter)
+  const totalSeats = vehiclesList.reduce((a, v) => a + v.capacity, 0)
+  const verified = vehiclesList.filter(v => v.status === 'verified').length
 
   const vehicleTrips = historyVehicle
     ? data.trips.filter((t: any) => t.vehicleId === historyVehicle.id)
@@ -107,7 +135,7 @@ export function VehiclesPage() {
           subtitle={`${filtered.length} vehicles · ${totalSeats} total seats`}
           actions={
             <button
-              onClick={() => toast('Add Vehicle feature coming soon!')}
+              onClick={() => { setShowAddSheet(true); setCurrentStep(1); }}
               className="flex items-center gap-2 bg-[#042011] text-white font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-400 transition-colors"
             >
               + Add Vehicle
@@ -246,12 +274,241 @@ export function VehiclesPage() {
 
       {/* FAB */}
       <button
-        onClick={() => toast('Add Vehicle feature coming soon!')}
+        onClick={() => { setShowAddSheet(true); setCurrentStep(1); }}
         className="lg:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 rounded-full flex items-center justify-center shadow-float text-white z-30"
         aria-label="Add vehicle"
       >
         <Plus className="w-6 h-6" />
       </button>
+
+      {/* Invite Sheet */}
+      <BottomSheet open={showAddSheet} onClose={() => setShowAddSheet(false)} title="Register a Vehicle">
+        {/* Progress Bar / Steps indicator */}
+        <div className="flex items-center justify-between mb-5 border-b border-neutral-50 pb-3">
+          {[
+            { step: 1, label: 'Details' },
+            { step: 2, label: 'Documents' },
+            { step: 3, label: 'Summary' },
+          ].map(s => (
+            <div key={s.step} className="flex items-center gap-1.5">
+              <span className={clsx(
+                'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border',
+                currentStep === s.step
+                  ? 'bg-[#042011] text-white border-[#042011]'
+                  : currentStep > s.step
+                    ? 'bg-secondary-300 text-white border-secondary-300'
+                    : 'bg-white text-neutral-200 border-neutral-100'
+              )}>
+                {s.step}
+              </span>
+              <span className={clsx(
+                'text-[10px] font-bold',
+                currentStep === s.step ? 'text-primary-500' : 'text-neutral-200'
+              )}>
+                {s.label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Step 1: Basic details form */}
+        {currentStep === 1 && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-black mb-1.5">Plate Number</label>
+              <input
+                className="input-field uppercase"
+                placeholder="e.g. KJA 008 MN"
+                value={form.plate}
+                onChange={e => setForm(p => ({ ...p, plate: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-black mb-1.5">Vehicle Type</label>
+                <select
+                  className="input-field"
+                  value={form.type}
+                  onChange={e => setForm(p => ({ ...p, type: e.target.value as any }))}
+                >
+                  <option value="Hiace">Hiace Bus</option>
+                  <option value="Sienna">Sienna Mini-van</option>
+                  <option value="Coaster">Coaster Bus</option>
+                  <option value="Other">Other Sedan</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-black mb-1.5">Fuel Type</label>
+                <select
+                  className="input-field"
+                  value={form.fuelType}
+                  onChange={e => setForm(p => ({ ...p, fuelType: e.target.value }))}
+                >
+                  <option value="petrol">Petrol</option>
+                  <option value="diesel">Diesel</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-black mb-1.5">Model Name</label>
+              <input
+                className="input-field"
+                placeholder="e.g. Toyota Hiace Hummer"
+                value={form.model}
+                onChange={e => setForm(p => ({ ...p, model: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-black mb-1.5">Manufacture Year</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  placeholder="e.g. 2022"
+                  value={form.year}
+                  onChange={e => setForm(p => ({ ...p, year: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-black mb-1.5">Seating Capacity</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  placeholder="e.g. 14"
+                  value={form.capacity}
+                  onChange={e => setForm(p => ({ ...p, capacity: e.target.value }))}
+                />
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                if (!form.plate || !form.model || !form.year || !form.capacity) {
+                  toast.error('Please fill in all details')
+                  return
+                }
+                setCurrentStep(2)
+              }}
+              className="btn-primary w-full mt-2"
+            >
+              Continue to Documents
+            </button>
+          </div>
+        )}
+
+        {/* Step 2: Upload Documents checklists */}
+        {currentStep === 2 && (
+          <div className="space-y-4">
+            <p className="text-xs text-neutral-300 leading-relaxed bg-neutral-50 rounded-xl p-3 border border-neutral-100">
+              Attach clear photos of documents and vehicle exterior to complete verification. Tap each to attach.
+            </p>
+            {[
+              { key: 'registration', label: 'Vehicle Registration License' },
+              { key: 'roadWorthiness', label: 'Road Worthiness Certificate' },
+              { key: 'insurance', label: 'Insurance Policy Document' },
+              { key: 'exteriorFront', label: 'Vehicle Exterior Photo (Front)' },
+              { key: 'exteriorRear', label: 'Vehicle Exterior Photo (Rear)' },
+            ].map(d => (
+              <button
+                key={d.key}
+                onClick={() => setUploads(p => ({ ...p, [d.key]: !p[d.key] }))}
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-neutral-50 hover:bg-neutral-50/50 transition-colors text-left bg-white"
+              >
+                <div>
+                  <p className="text-xs font-bold text-black">{d.label}</p>
+                  <p className="text-[10px] text-neutral-200 mt-0.5">
+                    {uploads[d.key] ? 'Attached successfully' : 'Tap to attach document'}
+                  </p>
+                </div>
+                {uploads[d.key] ? (
+                  <span className="w-5 h-5 rounded-full bg-secondary-300 flex items-center justify-center text-white text-[10px] font-bold">✓</span>
+                ) : (
+                  <span className="w-5 h-5 rounded-full bg-neutral-50 border border-neutral-100 flex-shrink-0" />
+                )}
+              </button>
+            ))}
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <button onClick={() => setCurrentStep(1)} className="btn-secondary w-full">Back</button>
+              <button
+                onClick={() => {
+                  const allUploaded = Object.values(uploads).every(v => v)
+                  if (!allUploaded) {
+                    toast.error('Please upload all required documents')
+                    return
+                  }
+                  setCurrentStep(3)
+                }}
+                className="btn-primary w-full"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Registration summary and success */}
+        {currentStep === 3 && (
+          <div className="text-center py-4 space-y-4">
+            <div className="w-16 h-16 rounded-full bg-secondary-50 text-secondary-300 flex items-center justify-center mx-auto border border-secondary-100 shadow-sm animate-bounce">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-black">Ready for Verification</h3>
+              <p className="text-xs text-neutral-200 mt-1 max-w-xs mx-auto leading-relaxed">
+                Your vehicle has been registered and all files were uploaded. It will remain in "Pending" status until verified.
+              </p>
+            </div>
+            <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-4 text-left space-y-1.5 text-xs max-w-sm mx-auto">
+              <div className="flex justify-between"><span className="text-neutral-200">Plate Number</span><span className="font-bold text-black uppercase">{form.plate}</span></div>
+              <div className="flex justify-between"><span className="text-neutral-200">Model</span><span className="font-bold text-black">{form.model}</span></div>
+              <div className="flex justify-between"><span className="text-neutral-200">Capacity</span><span className="font-bold text-black">{form.capacity} seats</span></div>
+              <div className="flex justify-between"><span className="text-neutral-200">Fuel Type</span><span className="font-bold text-black capitalize">{form.fuelType}</span></div>
+            </div>
+            <button
+              onClick={() => {
+                const newVehicle = {
+                  id: `v${Date.now()}`,
+                  plate: form.plate.toUpperCase(),
+                  model: form.model,
+                  year: parseInt(form.year) || 2023,
+                  capacity: parseInt(form.capacity) || 14,
+                  type: form.type as any,
+                  fuelType: form.fuelType as any,
+                  status: 'pending' as const,
+                  fuelLevel: 100,
+                  totalKm: 0,
+                  documents: [
+                    { type: 'registration' as const, label: 'Registration', status: 'uploaded' as const },
+                    { type: 'road_worthiness' as const, label: 'Road Worthiness', status: 'uploaded' as const },
+                    { type: 'insurance' as const, label: 'Insurance', status: 'uploaded' as const },
+                  ],
+                }
+                setVehiclesList(prev => [newVehicle, ...prev])
+                toast.success('Vehicle registered and pending review!')
+                setShowAddSheet(false)
+                setCurrentStep(1)
+                setForm({
+                  plate: '',
+                  type: 'Hiace',
+                  model: '',
+                  year: '2023',
+                  capacity: '14',
+                  fuelType: 'petrol',
+                })
+                setUploads({
+                  registration: false,
+                  roadWorthiness: false,
+                  insurance: false,
+                  exteriorFront: false,
+                  exteriorRear: false,
+                })
+              }}
+              className="btn-primary w-full mt-2"
+            >
+              Submit & Finish
+            </button>
+          </div>
+        )}
+      </BottomSheet>
     </div>
   )
 }

@@ -134,6 +134,14 @@ export function DriversPage() {
         <DesktopPageHeader
           title="Drivers"
           subtitle={`${filtered.length} drivers · ${verified} verified · Avg ${avgRating > 0 ? avgRating.toFixed(1) : '—'}★`}
+          actions={
+            <button
+              onClick={() => setShowAddSheet(true)}
+              className="flex items-center gap-2 bg-[#042011] text-white font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-400 transition-colors"
+            >
+              + Invite Driver
+            </button>
+          }
         />
 
         {filtered.length === 0 ? (
@@ -351,23 +359,58 @@ export function DriversPage() {
         </div>
       )}
 
-      {/* Invite Sheet */}
-      <BottomSheet open={showAddSheet} onClose={() => setShowAddSheet(false)} title="Invite a Driver">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-black mb-1.5">Driver's Name</label>
-            <input className="input-field" placeholder="e.g. Akin Bello" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} />
+      {/* Invite Center Dialog Popup */}
+      {showAddSheet && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-[#042011]/60 backdrop-blur-sm"
+            onClick={() => setShowAddSheet(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-float w-full max-w-md p-6 flex flex-col z-10 border border-neutral-100/50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-primary-500">Invite a Driver</h2>
+              <button
+                onClick={() => setShowAddSheet(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-50 transition-colors"
+              >
+                <X className="w-4 h-4 text-neutral-200" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-black mb-1.5">Driver's Name</label>
+                <input
+                  className="input-field"
+                  placeholder="e.g. Akin Bello"
+                  value={form.name}
+                  onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-black mb-1.5">Phone Number</label>
+                <input
+                  className="input-field"
+                  type="tel"
+                  placeholder="+234 803 123 4567"
+                  value={form.phone}
+                  onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+                />
+              </div>
+              <p className="text-xs text-black bg-white rounded-xl p-3 leading-relaxed border border-neutral-100">
+                {form.name || 'The driver'} will receive an SMS to download the Soole driver app and complete verification.
+              </p>
+              <button
+                onClick={handleInvite}
+                disabled={!form.name || !form.phone}
+                className="btn-primary w-full"
+              >
+                Send Invite
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-black mb-1.5">Phone Number</label>
-            <input className="input-field" type="tel" placeholder="+234 803 123 4567" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
-          </div>
-          <p className="text-xs text-black bg-white rounded-xl p-3 leading-relaxed border border-neutral-100">
-            {form.name || 'The driver'} will receive an SMS to download the Soole driver app and complete verification.
-          </p>
-          <button onClick={handleInvite} disabled={!form.name || !form.phone} className="btn-primary w-full">Send Invite</button>
         </div>
-      </BottomSheet>
+      )}
     </div>
   )
 }

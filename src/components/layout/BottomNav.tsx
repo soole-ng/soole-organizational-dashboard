@@ -8,6 +8,8 @@ import { NavLink } from 'react-router-dom'
 import { Home, Route, Users, Wallet, Sparkles, Bell } from 'lucide-react'
 import { clsx } from 'clsx'
 
+import { useOrg } from '../../lib/OrgContext'
+
 interface BottomNavProps {
   unreadCount?: number
   onOpenNotifications?: () => void
@@ -22,13 +24,25 @@ const tabs = [
 ]
 
 export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavProps) {
+  const { org } = useOrg()
+  const userRole = org.role ? org.role.toLowerCase() : 'owner'
+
+  const filteredTabs = tabs.filter(tab => {
+    if (userRole === 'admin') {
+      return ['/money'].includes(tab.to)
+    } else if (userRole === 'dispatcher') {
+      return tab.to !== '/money'
+    }
+    return true
+  })
+
   return (
     <nav
       className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-neutral-50 bottom-nav lg:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       <div className="flex">
-        {tabs.map(({ to, label, icon: Icon, accent }: any) => (
+        {filteredTabs.map(({ to, label, icon: Icon, accent }: any) => (
           <NavLink
             key={to}
             to={to}

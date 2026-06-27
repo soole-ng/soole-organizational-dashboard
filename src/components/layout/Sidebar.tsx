@@ -97,6 +97,20 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
   const [signingOut, setSigningOut] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
 
+  const userRole = org.role ? org.role.toLowerCase() : 'owner'
+
+  const filteredGroups = navGroups.map(group => {
+    const items = group.items.filter(item => {
+      if (userRole === 'admin') {
+        return ['/money', '/settings', '/help'].includes(item.to)
+      } else if (userRole === 'dispatcher') {
+        return item.to !== '/money'
+      }
+      return true
+    })
+    return { ...group, items }
+  }).filter(group => group.items.length > 0)
+
   const handleSignOut = () => {
     setSigningOut(true)
     setTimeout(() => {
@@ -224,9 +238,8 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
         </div>
       </div>
 
-      {/* ── Navigation ── */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5 scrollbar-thin">
-        {navGroups.map((group, gi) => (
+        {filteredGroups.map((group, gi) => (
           <div key={gi}>
             {group.label && (
               <p className="text-[10px] font-bold text-neutral-200 uppercase tracking-widest px-3 mb-2">

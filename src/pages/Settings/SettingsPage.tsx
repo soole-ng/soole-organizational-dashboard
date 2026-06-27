@@ -1,31 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Users, Wallet, Bell, Shield, RefreshCw, HelpCircle, ChevronRight, Upload, Globe, Mail, Phone } from 'lucide-react'
+import { Building2, Users, Wallet, Bell, Shield, RefreshCw, HelpCircle, ChevronRight, ChevronDown, Upload, Mail, Phone } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { useMockData } from '../../lib/useMockData'
 import { clsx } from 'clsx'
 import { useOrg } from '../../lib/OrgContext'
 import toast from 'react-hot-toast'
 
-const roleColors: Record<string, string> = {
-  owner: 'bg-primary-500 text-white',
-  admin: 'bg-secondary-300 text-white',
-  dispatcher: 'bg-teal-400 text-white',
-  finance: 'bg-accent-300 text-primary-500 font-bold',
-  viewer: 'bg-neutral-300 text-white',
-}
-
 export function SettingsPage() {
   const { org, updateOrg } = useOrg()
   const { data } = useMockData()
-  const organizationMembers = data.organizationMembers
+  
+  const [members, setMembers] = useState<any[]>([])
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const [speedLimit, setSpeedLimit] = useState(100)
   const [alertChannels, setAlertChannels] = useState({ push: true, sms: true, email: false })
+  
+  const [showInviteForm, setShowInviteForm] = useState(false)
+  const [inviteForm, setInviteForm] = useState({ name: '', phone: '', role: 'dispatcher' })
+
+  // Initialize members list with phone numbers
+  useEffect(() => {
+    if (data.organizationMembers) {
+      const formatted = data.organizationMembers.map((m: any, idx: number) => ({
+        ...m,
+        // Make sure we always show their phone number instead of email
+        phone: m.phone || `+234 803 111 ${2200 + idx * 11}`
+      }))
+      setMembers(formatted)
+    }
+  }, [data.organizationMembers])
 
   const sections = [
     { icon: Building2, label: 'Business Profile', desc: 'Name, logo, contact and public page' },
-    { icon: Users, label: 'Organization Team', desc: `${organizationMembers.length} members`, badge: organizationMembers.length },
+    { icon: Users, label: 'Organization Team', desc: `${members.length} members`, badge: members.length },
     { icon: Wallet, label: 'Payout Settings', desc: 'Bank account and payout schedule' },
     { icon: Bell, label: 'Notifications', desc: 'Alerts and notification channels' },
     { icon: Shield, label: 'Security', desc: 'Password, 2FA and active sessions' },
@@ -128,6 +136,25 @@ export function SettingsPage() {
                             />
                           </div>
 
+                          {/* Profile Role Selector for Access Control Testing */}
+                          <div>
+                            <label className="block text-xs font-semibold text-primary-400 mb-1.5">My Profile Role (Access Control)</label>
+                            <div className="relative">
+                              <select
+                                value={org.role}
+                                onChange={(e) => updateOrg({ role: e.target.value })}
+                                className="input-field bg-white appearance-none pr-10"
+                              >
+                                <option value="Owner">Owner (Access to Everything)</option>
+                                <option value="Admin">Admin (Access ONLY to Money)</option>
+                                <option value="Dispatcher">Dispatcher (Access to Everything BUT Money)</option>
+                              </select>
+                              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {/* Contact Phone */}
                           <div>
                             <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
@@ -141,20 +168,20 @@ export function SettingsPage() {
                               placeholder="+234 803 123 4567"
                             />
                           </div>
-                        </div>
 
-                        {/* Contact Email */}
-                        <div>
-                          <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
-                            <Mail className="w-3.5 h-3.5" /> Contact Email
-                          </label>
-                          <input
-                            type="email"
-                            value={org.email || 'contact@speedway.ng'}
-                            onChange={(e) => updateOrg({ email: e.target.value })}
-                            className="input-field bg-white"
-                            placeholder="contact@speedway.ng"
-                          />
+                          {/* Contact Email */}
+                          <div>
+                            <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
+                              <Mail className="w-3.5 h-3.5" /> Contact Email
+                            </label>
+                            <input
+                              type="email"
+                              value={org.email || 'contact@speedway.ng'}
+                              onChange={(e) => updateOrg({ email: e.target.value })}
+                              className="input-field bg-white"
+                              placeholder="contact@speedway.ng"
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
@@ -162,22 +189,103 @@ export function SettingsPage() {
                     {label === 'Organization Team' && (
                       <div className="space-y-3 max-w-2xl">
                         <div className="bg-white rounded-2xl border border-primary-100 p-2 space-y-1">
-                          {organizationMembers.map(m => (
+                          {members.map(m => (
                             <div key={m.id} className="flex items-center gap-3 p-2 hover:bg-primary-75 rounded-xl transition-colors">
-                              <div className="w-9 h-9 rounded-full bg-secondary-300 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                                {m.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              <div className="w-9 h-9 rounded-full bg-[#042011] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                                {m.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-primary-500 truncate">{m.name}</p>
-                                <p className="text-xs text-neutral-200 truncate">{m.email}</p>
+                                <p className="text-sm font-bold text-black truncate">{m.name}</p>
+                                <p className="text-xs text-neutral-200 truncate">{m.phone}</p>
                               </div>
-                              <span className={clsx('text-[10px] font-bold px-2 py-0.5 rounded-full capitalize', roleColors[m.role])}>
+                              <span className={clsx('text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase border border-neutral-100/50', m.role === 'admin' ? 'bg-[#042011] text-white' : 'bg-primary-75 text-primary-500')}>
                                 {m.role}
                               </span>
                             </div>
                           ))}
                         </div>
-                        <button className="btn-secondary w-full text-sm py-2 bg-white hover:bg-primary-75 border-primary-100">+ Invite Member</button>
+
+                        {showInviteForm ? (
+                          <div className="bg-white p-4 rounded-2xl border border-primary-100 space-y-3">
+                            <h4 className="text-xs font-bold text-black uppercase tracking-wider">Invite New Team Member</h4>
+                            <div className="space-y-2.5">
+                              <div>
+                                <label className="block text-[10px] font-bold text-primary-400 mb-1 uppercase">Full Name</label>
+                                <input
+                                  type="text"
+                                  className="input-field bg-white"
+                                  placeholder="e.g. John Doe"
+                                  value={inviteForm.name}
+                                  onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))}
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-bold text-primary-400 mb-1 uppercase">Phone Number</label>
+                                <input
+                                  type="tel"
+                                  className="input-field bg-white"
+                                  placeholder="e.g. +234 803 111 2233"
+                                  value={inviteForm.phone}
+                                  onChange={e => setInviteForm(p => ({ ...p, phone: e.target.value }))}
+                                />
+                                <span className="text-[10px] text-secondary-300 font-bold block mt-1">
+                                  * Must be registered to the Soole app.
+                                </span>
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-bold text-primary-400 mb-1 uppercase">Role (Exactly two choices)</label>
+                                <div className="relative">
+                                  <select
+                                    className="input-field bg-white appearance-none pr-10"
+                                    value={inviteForm.role}
+                                    onChange={e => setInviteForm(p => ({ ...p, role: e.target.value }))}
+                                  >
+                                    <option value="admin">Admin (Only has access to Money)</option>
+                                    <option value="dispatcher">Dispatcher (Access to everything except Money)</option>
+                                  </select>
+                                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 justify-end pt-1">
+                              <button
+                                onClick={() => setShowInviteForm(false)}
+                                className="px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-black transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (!inviteForm.name || !inviteForm.phone) {
+                                    toast.error('Please enter name and phone number')
+                                    return
+                                  }
+                                  const newMember = {
+                                    id: `m-${Date.now()}`,
+                                    name: inviteForm.name,
+                                    phone: inviteForm.phone,
+                                    role: inviteForm.role,
+                                    joinedAt: new Date().toISOString().split('T')[0]
+                                  }
+                                  setMembers(p => [...p, newMember])
+                                  setShowInviteForm(false)
+                                  setInviteForm({ name: '', phone: '', role: 'dispatcher' })
+                                  toast.success(`Invitation sent to ${inviteForm.name}!`)
+                                }}
+                                className="px-3 py-1.5 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+                              >
+                                Send Invite
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setShowInviteForm(true)}
+                            className="btn-secondary w-full text-sm py-2 bg-white hover:bg-primary-75 border-primary-100"
+                          >
+                            + Invite Member
+                          </button>
+                        )}
                       </div>
                     )}
 

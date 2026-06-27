@@ -129,17 +129,17 @@ export function LiveMapPage() {
         </button>
 
         {/* Basemap Switcher */}
-        <div className="absolute top-20 right-4 z-10">
+        <div className="absolute bottom-[110px] right-4 z-10">
           <div className="relative">
             <button
               onClick={() => setShowBasemapMenu(!showBasemapMenu)}
-              className="flex items-center gap-2 bg-white text-primary-500 rounded-full px-3 py-1.5 text-xs font-semibold shadow-card hover:bg-primary-75 transition-colors"
+              className="w-10 h-10 flex items-center justify-center bg-white text-primary-500 rounded-full shadow-card hover:bg-primary-75 transition-colors border border-neutral-100/50"
+              title="Switch Basemap"
             >
-              <Layers className="w-4 h-4" />
-              <span className="hidden sm:inline">{basemapStyles[basemap].name}</span>
+              <Layers className="w-5 h-5" />
             </button>
             {showBasemapMenu && (
-              <div className="absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-float overflow-hidden min-w-48 z-20">
+              <div className="absolute bottom-full right-0 mb-2 bg-white rounded-2xl shadow-float overflow-hidden min-w-48 z-20">
                 {Object.entries(basemapStyles).map(([key, style]) => (
                   <button
                     key={key}

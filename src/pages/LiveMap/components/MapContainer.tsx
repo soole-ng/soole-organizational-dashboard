@@ -55,6 +55,8 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
         zoom: 11,
       })
 
+      map.addControl(new ml.NavigationControl({ showCompass: false }), 'bottom-right')
+
       map.on('load', () => {
         if (ref) {
           (ref as any).current = map

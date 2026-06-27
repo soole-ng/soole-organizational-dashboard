@@ -411,84 +411,46 @@ export function TripDetailPage() {
             </div>
 
             {/* Scrollable comment & rating list */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-              {/* Render passenger ratings & reviews */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-neutral-50/50">
               {(() => {
                 const driverObj = data.drivers?.find((d: any) => d.id === trip.driverId)
                 const tripReviews = driverObj?.reviews?.filter((r: any) => r.tripId === trip.id) ?? []
                 
-                return (
-                  <>
-                    {tripReviews.length > 0 && (
-                      <div className="space-y-3">
-                        <p className="text-[10px] font-bold text-neutral-200 uppercase tracking-widest">Passenger Reviews & Ratings</p>
-                        {tripReviews.map((rev: any) => (
-                          <div key={rev.id} className="bg-neutral-50 rounded-xl p-3 border border-neutral-100 space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-primary-500">{rev.passengerName}</span>
-                              <div className="flex items-center gap-0.5">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={clsx(
-                                      "w-3 h-3",
-                                      i < Math.floor(rev.rating)
-                                        ? "fill-amber-400 text-amber-400"
-                                        : "text-neutral-100"
-                                    )}
-                                  />
-                                ))}
-                                <span className="text-[10px] font-bold text-neutral-200 ml-1">{rev.rating}</span>
-                              </div>
-                            </div>
-                            <p className="text-xs text-neutral-300 leading-relaxed italic">"{rev.comment}"</p>
-                            <span className="text-[9px] text-neutral-200 block text-right">{rev.date}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                if (tripReviews.length === 0) {
+                  return (
+                    <div className="text-center py-16 bg-white rounded-2xl border border-neutral-100">
+                      <Star className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
+                      <p className="text-sm font-semibold text-black">No passenger comments yet</p>
+                      <p className="text-xs text-neutral-200 mt-1">Reviews appear after completed trips.</p>
+                    </div>
+                  )
+                }
 
-                    {/* Render internal notes / logs */}
-                    <div className="space-y-3 pt-2">
-                      <p className="text-[10px] font-bold text-neutral-200 uppercase tracking-widest">Internal Operations Notes</p>
-                      {comments.map((c) => (
-                        <div key={c.id} className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary-75 flex items-center justify-center flex-shrink-0">
-                            <span className="text-[11px] font-black text-primary-500">{c.initials}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-baseline gap-2 flex-wrap">
-                              <span className="text-sm font-semibold text-primary-500">{c.author}</span>
-                              <span className="text-xs text-neutral-200">{formatTime(c.timestamp)}</span>
+                return (
+                  <div className="space-y-3">
+                    {tripReviews.map((rev: any) => (
+                      <div key={rev.id} className="bg-white rounded-2xl p-4 border border-neutral-100 shadow-sm">
+                        {/* Passenger + rating */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center flex-shrink-0 border border-neutral-100">
+                              <User className="w-4 h-4 text-primary-400" />
                             </div>
-                            <p className="text-sm text-neutral-300 leading-relaxed mt-1">{c.text}</p>
+                            <p className="text-sm font-bold text-black">{rev.passengerName}</p>
+                          </div>
+                          <div className="flex items-center gap-1 bg-primary-75/40 px-2 py-1 rounded-lg">
+                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                            <span className="text-xs font-bold text-black">{rev.rating}</span>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </>
+
+                        <p className="text-xs text-black leading-relaxed mt-1.5">"{rev.comment}"</p>
+                        <p className="text-[9px] text-neutral-200 text-right mt-2">{rev.date}</p>
+                      </div>
+                    ))}
+                  </div>
                 )
               })()}
-            </div>
-
-            {/* Modal post input for operations notes */}
-            <div className="px-5 py-4 border-t border-neutral-100 flex gap-2 flex-shrink-0">
-              <textarea
-                value={modalComment}
-                onChange={e => setModalComment(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(modalComment, true) } }}
-                placeholder="Add an internal note…"
-                rows={2}
-                className="flex-1 text-sm text-primary-500 placeholder-neutral-200 bg-neutral-50 border border-neutral-100 rounded-xl px-3 py-2 resize-none focus:outline-none focus:border-primary-200 transition-colors"
-              />
-              <button
-                onClick={() => submitComment(modalComment, true)}
-                disabled={!modalComment.trim()}
-                className="self-end w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center text-white hover:bg-primary-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                aria-label="Post comment"
-              >
-                <Send className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>

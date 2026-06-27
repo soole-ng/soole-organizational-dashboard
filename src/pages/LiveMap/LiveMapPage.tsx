@@ -4,6 +4,7 @@ import { TopBar } from '../../components/layout/TopBar'
 import { MapContainer } from './components/MapContainer'
 import { DriverSidebar } from './components/DriverSidebar'
 import { clsx } from 'clsx'
+import { AIAssistant } from '../../components/AIAssistant'
 
 type VehicleLoc = {
   id: string
@@ -49,13 +50,17 @@ export function LiveMapPage() {
   const [basemap, setBasemap] = useState<BasemapStyle>('osm')
   const [showBasemapMenu, setShowBasemapMenu] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [suggestions, setSuggestions] = useState<string[]>([])
   const mapRef = useRef<any>(null)
 
   // Load vehicle locations from mock data
   useMemo(() => {
     fetch('/mock-data.json')
       .then(res => res.json())
-      .then(data => setVehicleLocations(data.vehicleLocations || []))
+      .then(data => {
+        setVehicleLocations(data.vehicleLocations || [])
+        setSuggestions(data.aiAssistantSuggestions || [])
+      })
       .catch(console.error)
   }, [])
 
@@ -227,6 +232,8 @@ export function LiveMapPage() {
           </div>
         )}
       </div>
+
+      <AIAssistant suggestions={suggestions} />
     </div>
   )
 }

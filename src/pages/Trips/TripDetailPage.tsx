@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useOutletContext } from 'react-router-dom'
-import { Edit2, Copy, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle } from 'lucide-react'
+import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { ManifestList } from './components/ManifestList'
@@ -171,12 +171,10 @@ export function TripDetailPage() {
   const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
 
   const handleEdit = () => toast('Edit trip details')
-  const handleDuplicate = () => toast.success('Trip duplicated')
   const handleCancel = () => toast.error('Cancel this trip?')
 
   const actions = [
     isScheduled && { icon: Edit2, label: 'Edit', action: handleEdit, danger: false },
-    { icon: Copy, label: 'Duplicate', action: handleDuplicate, danger: false },
     isScheduled && { icon: XCircle, label: 'Cancel', action: handleCancel, danger: true },
   ].filter(Boolean) as { icon: any; label: string; action: () => void; danger: boolean }[]
 
@@ -240,20 +238,7 @@ export function TripDetailPage() {
 
           <div className="text-center py-4 border-y border-neutral-100 mb-4">
             <p className="text-5xl font-bold text-primary-500 stat-number">{paidPassengers.length}</p>
-            <p className="text-sm text-neutral-200 mt-1">of {trip.capacity} seats paid &amp; booked</p>
-            <div className="h-2 bg-neutral-50 rounded-full mt-3 overflow-hidden">
-              <div
-                className={clsx(
-                  'h-full rounded-full transition-all',
-                  paidPassengers.length / trip.capacity >= 0.9
-                    ? 'bg-secondary-300'
-                    : paidPassengers.length / trip.capacity >= 0.6
-                    ? 'bg-warning'
-                    : 'bg-secondary-100',
-                )}
-                style={{ width: `${Math.round((paidPassengers.length / trip.capacity) * 100)}%` }}
-              />
-            </div>
+            <p className="text-sm text-neutral-200 mt-1">of {trip.capacity} seats booked</p>
           </div>
 
           <div className="flex justify-between items-center text-xs mt-2 px-2">

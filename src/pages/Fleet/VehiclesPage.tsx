@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Users, CheckCircle2, Clock, XCircle, Car, Bus, X, History } from 'lucide-react'
+import { Plus, Users, CheckCircle2, Clock, XCircle, Car, Bus, X, History, Upload, Camera } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -299,7 +299,7 @@ export function VehiclesPage() {
                 currentStep === s.step
                   ? 'bg-[#042011] text-white border-[#042011]'
                   : currentStep > s.step
-                    ? 'bg-secondary-300 text-white border-secondary-300'
+                    ? 'bg-primary-500 text-white border-primary-500'
                     : 'bg-white text-neutral-200 border-neutral-100'
               )}>
                 {s.step}
@@ -437,7 +437,7 @@ export function VehiclesPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-black truncate">{d.label}</p>
                     <p className="text-[10px] text-neutral-200 mt-0.5">
-                      {uploads[d.key] ? '📁 Attached successfully' : 'Tap to attach document'}
+                      {uploads[d.key] ? 'Attached successfully' : 'Tap to attach document'}
                     </p>
                   </div>
 
@@ -447,23 +447,23 @@ export function VehiclesPage() {
                         setUploads(p => ({ ...p, [d.key]: true }))
                         toast.success(`${d.label} file selected!`)
                       }}
-                      className="w-8 h-8 flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 rounded-xl text-primary-500 border border-neutral-50 transition-colors"
+                      className="w-8 h-8 flex items-center justify-center bg-white hover:bg-neutral-50 rounded-xl text-primary-500 border border-neutral-100 transition-colors"
                       title="Upload File"
                     >
-                      📁
+                      <Upload className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => {
                         setUploads(p => ({ ...p, [d.key]: true }))
                         toast.success(`Camera active. Capturing ${d.label}... Done!`)
                       }}
-                      className="w-8 h-8 flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 rounded-xl text-primary-500 border border-neutral-50 transition-colors"
+                      className="w-8 h-8 flex items-center justify-center bg-white hover:bg-neutral-50 rounded-xl text-primary-500 border border-neutral-100 transition-colors"
                       title="Use Camera"
                     >
-                      📸
+                      <Camera className="w-3.5 h-3.5" />
                     </button>
                     {uploads[d.key] ? (
-                      <span className="w-5 h-5 rounded-full bg-secondary-300 flex items-center justify-center text-white text-[10px] font-bold">✓</span>
+                      <span className="w-5 h-5 rounded-full bg-primary-500 flex items-center justify-center text-white text-[10px] font-bold">✓</span>
                     ) : (
                       <span className="w-5 h-5 rounded-full bg-neutral-50 border border-neutral-100" />
                     )}
@@ -494,7 +494,7 @@ export function VehiclesPage() {
         {/* Step 3: Registration summary and success */}
         {currentStep === 3 && (
           <div className="text-center py-4 space-y-4">
-            <div className="w-16 h-16 rounded-full bg-secondary-50 text-secondary-300 flex items-center justify-center mx-auto border border-secondary-100 shadow-sm animate-bounce">
+            <div className="w-16 h-16 rounded-full bg-primary-50 text-primary-500 flex items-center justify-center mx-auto border border-primary-100 shadow-sm animate-bounce">
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div>
@@ -540,6 +540,7 @@ export function VehiclesPage() {
                   year: '2023',
                   capacity: '14',
                   fuelType: 'petrol',
+                  color: 'White',
                 })
                 setUploads({
                   registration: false,
@@ -547,6 +548,8 @@ export function VehiclesPage() {
                   insurance: false,
                   exteriorFront: false,
                   exteriorRear: false,
+                  exteriorRight: false,
+                  exteriorLeft: false,
                 })
               }}
               className="btn-primary w-full mt-2"

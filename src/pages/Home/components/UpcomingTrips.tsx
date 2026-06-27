@@ -68,7 +68,8 @@ export function UpcomingTrips() {
       ) : (
         <div className="space-y-3">
           {upcoming.map(trip => {
-            const pct = Math.round((trip.bookedSeats / trip.capacity) * 100)
+            const bookedSeats = Math.min(trip.bookedSeats, trip.capacity)
+            const pct = Math.round((bookedSeats / trip.capacity) * 100)
             return (
               <Link
                 key={trip.id}
@@ -95,13 +96,13 @@ export function UpcomingTrips() {
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-neutral-200">
                     <Users className="w-3.5 h-3.5" />
-                    {formatOccupancy(trip.bookedSeats, trip.capacity)} seats
+                    {formatOccupancy(bookedSeats, trip.capacity)} seats
                   </div>
                 </div>
 
                 <div className="flex items-center justify-end text-[10px] text-neutral-200">
                   <span className="font-semibold text-secondary-300">
-                    {trip.capacity - trip.bookedSeats} seats left
+                    {trip.capacity - bookedSeats} seats left
                   </span>
                 </div>
               </Link>

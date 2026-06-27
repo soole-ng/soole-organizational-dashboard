@@ -111,7 +111,7 @@ export function VehiclesPage() {
         {filtered.length === 0 ? (
           <EmptyState icon={Car} title="No vehicles yet" description="Add your first vehicle to start publishing trips." action={{ label: '+ Add Vehicle', onClick: () => {} }} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div id="tour-vehicles-list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map(vehicle => {
               const approvedDocs = vehicle.documents.filter((d: any) => d.status === 'approved').length
               const totalDocs = vehicle.documents.length
@@ -154,20 +154,26 @@ export function VehiclesPage() {
                       </div>
                       <div className="flex flex-wrap gap-1.5 pt-0.5">
                         {vehicle.documents.map((doc: any) => (
-                          <div key={doc.type} className="flex items-center gap-1 text-[11px] bg-[#042011]/60 rounded-lg px-2 py-0.5">
+                          <div key={doc.type} className="flex items-center gap-1 text-[11px] bg-white border border-neutral-100 rounded-lg px-2 py-0.5">
                             {docStatusIcon(doc.status)}
-                            <span className="!text-white font-medium">{doc.label.split(' ').slice(0, 2).join(' ')}</span>
+                            <span className="text-black font-semibold">{doc.label.split(' ').slice(0, 2).join(' ')}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => setHistoryVehicle(vehicle)}
-                      className="w-full text-xs text-primary-400 font-bold flex items-center justify-center gap-1.5 py-2 rounded-xl border border-neutral-100 hover:bg-primary-75 transition-colors"
-                    >
-                      <History className="w-3.5 h-3.5" /> View Trip History
-                    </button>
+                    {vehicle.status !== 'pending' ? (
+                      <button
+                        onClick={() => setHistoryVehicle(vehicle)}
+                        className="w-full text-xs text-primary-400 font-bold flex items-center justify-center gap-1.5 py-2 rounded-xl border border-neutral-100 hover:bg-primary-75 transition-colors"
+                      >
+                        <History className="w-3.5 h-3.5" /> View Trip History
+                      </button>
+                    ) : (
+                      <div className="w-full text-xs text-neutral-200 font-medium flex items-center justify-center gap-1.5 py-2 bg-neutral-50 rounded-xl border border-neutral-100 cursor-not-allowed select-none">
+                        <History className="w-3.5 h-3.5 text-neutral-200" /> History Unavailable
+                      </div>
+                    )}
                   </div>
                 </div>
               )

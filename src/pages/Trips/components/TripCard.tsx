@@ -31,7 +31,8 @@ function DriverAvatar({ name }: { name: string }) {
 }
 
 export function TripCard({ trip, compact }: TripCardProps) {
-  const seatsLeft = trip.capacity - trip.bookedSeats
+  const bookedSeats = Math.min(trip.bookedSeats, trip.capacity)
+  const seatsLeft = trip.capacity - bookedSeats
 
   return (
     <Link
@@ -81,7 +82,7 @@ export function TripCard({ trip, compact }: TripCardProps) {
           </span>
           <span className="flex items-center gap-1 text-[11px] text-neutral-200 font-medium">
             <Users className="w-3 h-3" />
-            {trip.bookedSeats}/{trip.capacity} booked
+            {bookedSeats}/{trip.capacity} booked
           </span>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { X, History } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { StatusPill } from '../../../components/ui/StatusPill'
 import { formatDate, formatTime } from '../../../lib/formatters'
 import { VehicleIcon } from '../../../components/ui/VehicleIcons'
@@ -40,7 +41,12 @@ export function VehicleHistoryModal({ historyVehicle, vehicleTrips, onClose }: V
             </div>
           ) : (
             vehicleTrips.map((trip: any) => (
-              <div key={trip.id} className="bg-white rounded-xl p-3 border border-neutral-100">
+              <Link 
+                key={trip.id} 
+                to={`/trips/${trip.id}`}
+                onClick={onClose}
+                className="block bg-white rounded-xl p-3 border border-neutral-100 hover:border-primary-300 transition-colors hover:shadow-sm"
+              >
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <p className="text-sm font-bold text-black leading-snug">
                     {trip.origin} → {trip.destination}
@@ -55,7 +61,7 @@ export function VehicleHistoryModal({ historyVehicle, vehicleTrips, onClose }: V
                 <div className="flex items-center gap-3 text-[10px] text-neutral-200 mt-1">
                   <span>{trip.bookedSeats}/{trip.capacity} seats booked</span>
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>

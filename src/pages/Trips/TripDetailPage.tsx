@@ -88,7 +88,7 @@ export function TripDetailPage() {
     toast.success('Comment added')
   }
 
-  const passengers = mockPassengers(trip.id)
+  const passengers = mockPassengers(trip.id).slice(0, trip.capacity)
   const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
 
   const handleEdit = () => toast('Edit trip details')

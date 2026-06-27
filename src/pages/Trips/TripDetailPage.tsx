@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useOutletContext } from 'react-router-dom'
-import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle, Droplets } from 'lucide-react'
+import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle, Droplets, MessageSquare, Send } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { ManifestList } from './components/ManifestList'
@@ -18,6 +18,20 @@ function calcAvgSpeed(distanceKm: number, durationMinutes: number): number {
   if (!durationMinutes) return 0
   return Math.round((distanceKm / durationMinutes) * 60)
 }
+/** Trip comment shape */
+interface TripComment {
+  id: string
+  author: string
+  initials: string
+  text: string
+  timestamp: string
+}
+
+/** Seed comments shown on completed trips */
+const seedComments: TripComment[] = [
+  { id: 'c1', author: 'Akin Bello', initials: 'AB', text: 'Driver reported minor traffic near Sagamu interchange. Trip completed smoothly overall.', timestamp: '2026-06-25T09:18:00' },
+  { id: 'c2', author: 'Ops Team',   initials: 'OT', text: 'Revenue reconciled. Two passengers requested receipts via email.', timestamp: '2026-06-25T10:05:00' },
+]
 
 interface LiveTrackerProps {
   trip: any
@@ -168,6 +182,26 @@ export function TripDetailPage() {
   const isScheduled = trip.status === 'scheduled'
   const isCompleted = trip.status === 'completed'
 
+  const [comments, setComments] = useState<TripComment[]>(seedComments)
+  const [newComment, setNewComment] = useState('')
+
+  const submitComment = () => {
+    const text = newComment.trim()
+    if (!text) return
+    setComments(prev => [
+      ...prev,
+      {
+        id: `c${Date.now()}`,
+        author: 'You',
+        initials: 'ME',
+        text,
+        timestamp: new Date().toISOString(),
+      },
+    ])
+    setNewComment('')
+    toast.success('Comment added')
+  }
+
   const passengers = mockPassengers(trip.id)
   const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
 
@@ -312,6 +346,55 @@ export function TripDetailPage() {
                     {label}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Comments — completed trips only */}
+            {isCompleted && (
+              <div className="bg-white rounded-xl border border-neutral-100 p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <MessageSquare className="w-4 h-4 text-primary-400" />
+                  <p className="text-xs font-bold text-black uppercase tracking-wider">Comments</p>
+                  <span className="ml-auto text-[10px] text-neutral-200 font-medium">{comments.length} note{comments.length !== 1 ? 's' : ''}</span>
+                </div>
+
+                {/* Comment list */}
+                <div className="space-y-3 mb-4 max-h-48 overflow-y-auto pr-1">
+                  {comments.map(c => (
+                    <div key={c.id} className="flex gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-primary-75 flex items-center justify-center flex-shrink-0">
+                        <span className="text-[10px] font-black text-primary-500">{c.initials}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-xs font-semibold text-primary-500">{c.author}</span>
+                          <span className="text-[10px] text-neutral-200">{formatTime(c.timestamp)}</span>
+                        </div>
+                        <p className="text-xs text-neutral-300 leading-relaxed mt-0.5">{c.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* New comment input */}
+                <div className="flex gap-2">
+                  <textarea
+                    value={newComment}
+                    onChange={e => setNewComment(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment() } }}
+                    placeholder="Add a note about this trip…"
+                    rows={2}
+                    className="flex-1 text-xs text-primary-500 placeholder-neutral-200 bg-neutral-50 border border-neutral-100 rounded-xl px-3 py-2 resize-none focus:outline-none focus:border-primary-200 transition-colors"
+                  />
+                  <button
+                    onClick={submitComment}
+                    disabled={!newComment.trim()}
+                    className="self-end w-9 h-9 rounded-xl bg-primary-500 flex items-center justify-center text-white hover:bg-primary-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    aria-label="Post comment"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             )}
           </div>

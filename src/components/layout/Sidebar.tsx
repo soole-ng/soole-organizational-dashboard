@@ -11,7 +11,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Home, Route, Map, Users, Car, Wallet, BarChart2,
   Settings, HelpCircle, Power, Sparkles, Bell,
-  ChevronRight, Upload,
+  ChevronRight, Upload, Navigation,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useState, useRef } from 'react'
@@ -49,6 +49,7 @@ const navGroups: NavGroup[] = [
   {
     label: 'Operations',
     items: [
+      { to: '/routes', label: 'Routes', icon: Navigation },
       { to: '/money', label: 'Money', icon: Wallet },
       { to: '/reports', label: 'Reports', icon: BarChart2 },
     ],

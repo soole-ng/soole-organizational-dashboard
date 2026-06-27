@@ -427,13 +427,6 @@ export function VehiclesPage() {
                 { key: 'insurance', label: 'Insurance Policy Document' },
                 { key: 'exteriorFront', label: 'Vehicle Exterior Photo (Front View - showing plate number)' },
                 { key: 'exteriorRear', label: 'Vehicle Exterior Photo (Rear View - showing plate number)' },
-            <div className="space-y-2">
-              {[
-                { key: 'registration', label: 'Vehicle Registration License' },
-                { key: 'roadWorthiness', label: 'Road Worthiness Certificate' },
-                { key: 'insurance', label: 'Insurance Policy Document' },
-                { key: 'exteriorFront', label: 'Vehicle Exterior Photo (Front View - showing plate number)' },
-                { key: 'exteriorRear', label: 'Vehicle Exterior Photo (Rear View - showing plate number)' },
                 { key: 'exteriorRight', label: 'Vehicle Exterior Photo (Right Side View)' },
                 { key: 'exteriorLeft', label: 'Vehicle Exterior Photo (Left Side View)' },
               ].map(d => (

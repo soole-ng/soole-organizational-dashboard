@@ -88,7 +88,7 @@ export default {
         neutral: {
           '50': '#f5f4fa',   // very subtle — used for hover states, skeletons
           '100': '#DEDBEC',  // Light Gray brand — borders, dividers
-          '200': '#b8b4d0',  // medium — muted / secondary text
+          '200': '#042011',  // medium — muted / secondary text
           '300': '#9491b4',  // darker muted text
           '400': '#6a6898',
           '500': '#42415f',

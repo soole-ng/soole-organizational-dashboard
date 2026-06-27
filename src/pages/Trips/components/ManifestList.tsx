@@ -116,12 +116,14 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
         </p>
       )}
 
-      {/* 3-column grid — more passengers visible at once */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* Responsive grid — 1 column on mobile, 2 columns on small screens, 3 columns on larger screens */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
         {passengers.map((pass, idx) => {
           const isPaid = pass.paymentStatus === 'paid'
           const isRefunded = pass.paymentStatus === 'refunded'
           const isBoarded = pass.boardingStatus === 'boarded'
+          // Green check shows if they've boarded, or if they paid and the trip is scheduled
+          const showCheck = isBoarded || (isScheduled && isPaid)
           // Refundable: completed, paid, didn't board
           const canRefund = isCompleted && isPaid && !isBoarded
           const portrait = getPortrait(pass.name, idx)
@@ -172,7 +174,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
                 )}
 
                 {/* Status / action */}
-                {isBoarded ? (
+                {showCheck ? (
                   <div className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50 border border-emerald-200">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" strokeWidth={1.8} />
                   </div>

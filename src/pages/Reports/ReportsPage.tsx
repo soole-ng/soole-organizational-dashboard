@@ -85,11 +85,11 @@ export function ReportsPage() {
         {/* Custom date range modal */}
         {showCustomPicker && (
           <div
-            className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
             onClick={() => setShowCustomPicker(false)}
           >
             <div
-              className="bg-white w-full sm:max-w-md sm:mx-4 rounded-t-3xl sm:rounded-3xl shadow-float flex flex-col p-6 space-y-4"
+              className="bg-white w-full max-w-md mx-4 rounded-3xl shadow-float flex flex-col p-6 space-y-4"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
@@ -200,7 +200,9 @@ export function ReportsPage() {
               <YAxis hide />
               <Tooltip
                 formatter={(v: number) => [formatMoneyCompact(v), 'Net']}
-                contentStyle={{ background: '#042011', border: 'none', borderRadius: 12, fontSize: 11, color: '#fff', padding: '6px 12px' }}
+                contentStyle={{ background: '#ffffff', border: '1px solid #DEDBEC', borderRadius: 12, fontSize: 11, color: '#000000', padding: '6px 12px' }}
+                itemStyle={{ color: '#000000' }}
+                labelStyle={{ color: '#042011', fontWeight: 'bold' }}
                 cursor={{ fill: 'rgba(4, 32, 17, 0.05)' }}
               />
               <Bar dataKey="net" fill="#1D754C" radius={[4, 4, 0, 0]} />

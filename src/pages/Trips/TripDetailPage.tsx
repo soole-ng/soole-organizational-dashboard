@@ -389,11 +389,11 @@ export function TripDetailPage() {
       {/* ── All Comments & Ratings Modal ── */}
       {showAllComments && (
         <div
-          className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
           onClick={() => setShowAllComments(false)}
         >
           <div
-            className="bg-white w-full sm:max-w-lg sm:mx-4 rounded-t-3xl sm:rounded-3xl shadow-float flex flex-col max-h-[90vh]"
+            className="bg-white w-full max-w-lg mx-4 rounded-3xl shadow-float flex flex-col max-h-[90vh]"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal header */}

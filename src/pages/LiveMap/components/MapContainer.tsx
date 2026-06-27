@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useState, useRef } from 'react'
 import { clsx } from 'clsx'
 import { useNavigate } from 'react-router-dom'
 import { useMockData } from '../../../lib/useMockData'
+import { Activity, WifiOff, MapPin } from 'lucide-react'
 
 type VehicleLoc = {
   id: string
@@ -26,6 +27,8 @@ interface MapContainerProps {
 export const MapContainer = forwardRef<any, MapContainerProps>(
   ({ basemap, selectedDriver, vehicles, onSelectDriver, markerColor }, ref) => {
     const [mapLoaded, setMapLoaded] = useState(false)
+    const [loadError, setLoadError] = useState(false)
+    const [isOffline, setIsOffline] = useState(!navigator.onLine)
     const markersRef = useRef<Record<string, any>>({})
     const popupRef = useRef<any>(null)
     const navigate = useNavigate()
@@ -33,9 +36,17 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
     const trailsRef = useRef<Record<string, [number, number][]>>({})
 
     useEffect(() => {
+      const handleOnline = () => setIsOffline(false)
+      const handleOffline = () => setIsOffline(true)
+      window.addEventListener('online', handleOnline)
+      window.addEventListener('offline', handleOffline)
+
       // Load MapLibre GL JS
       const script = document.createElement('script')
       script.src = 'https://cdn.jsdelivr.net/npm/maplibre-gl@4.0.0/dist/maplibre-gl.js'
+      script.onerror = () => {
+        setLoadError(true)
+      }
       script.onload = () => {
         const link = document.createElement('link')
         link.href = 'https://cdn.jsdelivr.net/npm/maplibre-gl@4.0.0/dist/maplibre-gl.css'
@@ -44,6 +55,19 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
         setMapLoaded(true)
       }
       document.head.appendChild(script)
+
+      // Fallback timer
+      const timer = setTimeout(() => {
+        if (!(window as any).maplibregl) {
+          setLoadError(true)
+        }
+      }, 4000)
+
+      return () => {
+        window.removeEventListener('online', handleOnline)
+        window.removeEventListener('offline', handleOffline)
+        clearTimeout(timer)
+      }
     }, [])
 
     useEffect(() => {
@@ -345,6 +369,127 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
         },
       }
       return styles[style] || styles['osm']
+    }
+
+    if (loadError || isOffline) {
+      return (
+        <div className="flex-1 w-full h-full relative bg-neutral-900 text-white p-6 flex flex-col justify-between overflow-y-auto">
+          {/* Header indicator */}
+          <div className="flex items-center justify-between border-b border-neutral-800 pb-3 mb-4">
+            <div>
+              <h3 className="font-semibold text-lg text-accent-400">Offline Live Tracker</h3>
+              <p className="text-xs text-neutral-300">Displaying cached status & route checkpoints</p>
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent-500/20 text-accent-400 text-xs font-semibold animate-pulse border border-accent-500/30">
+              <span className="w-2 h-2 rounded-full bg-accent-500" />
+              Progressive PWA Mode
+            </div>
+          </div>
+
+          {/* SVG Map Canvas */}
+          <div className="flex-1 min-h-[250px] relative bg-neutral-950 rounded-2xl border border-neutral-800 flex items-center justify-center p-4">
+            <svg viewBox="0 0 500 400" className="w-full h-full max-h-[350px]">
+              {/* Route Lines */}
+              {/* Lagos -> Ibadan */}
+              <path d="M 100 350 L 150 250" stroke="#1D754C" strokeWidth="4" strokeLinecap="round" strokeDasharray="6 4" />
+              {/* Lagos -> Benin */}
+              <path d="M 100 350 L 250 320" stroke="#1D754C" strokeWidth="4" strokeLinecap="round" strokeDasharray="6 4" />
+              {/* Lagos -> Abuja */}
+              <path d="M 100 350 L 300 150" stroke="#1D754C" strokeWidth="4" strokeLinecap="round" strokeDasharray="6 4" />
+
+              {/* Station/City Nodes */}
+              <circle cx="100" cy="350" r="8" fill="#A7C957" />
+              <text x="70" y="375" fill="#A7C957" fontSize="11" fontWeight="bold">Lagos (Hub)</text>
+
+              <circle cx="150" cy="250" r="6" fill="#ffffff" />
+              <text x="162" y="254" fill="#ffffff" fontSize="10">Ibadan</text>
+
+              <circle cx="250" cy="320" r="6" fill="#ffffff" />
+              <text x="262" y="324" fill="#ffffff" fontSize="10">Benin City</text>
+
+              <circle cx="300" cy="150" r="8" fill="#A7C957" />
+              <text x="280" y="135" fill="#A7C957" fontSize="11" fontWeight="bold">Abuja (Capital)</text>
+
+              {/* Vehicles */}
+              {vehicles.map((v, i) => {
+                // Calculate static or simulated coordinates on the screen based on driver
+                let cx = 100
+                let cy = 350
+                if (v.driver === 'Akin Bello') {
+                  cx = 120
+                  cy = 310
+                } else if (v.driver === 'Chidi Okafor') {
+                  cx = 200
+                  cy = 250
+                } else if (v.driver === 'Funke Adeleke') {
+                  cx = 175
+                  cy = 335
+                } else {
+                  cx = 100 + (i * 30)
+                  cy = 350 - (i * 20)
+                }
+
+                const isSelected = selectedDriver?.id === v.id
+
+                return (
+                  <g
+                    key={v.id}
+                    className="cursor-pointer"
+                    onClick={() => onSelectDriver(v)}
+                  >
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={isSelected ? 10 : 7}
+                      fill={v.status === 'on_trip' ? '#1D754C' : '#9ca3af'}
+                      stroke={isSelected ? '#A7C957' : '#ffffff'}
+                      strokeWidth={isSelected ? 3 : 1.5}
+                      className={v.status === 'on_trip' ? 'animate-pulse' : ''}
+                    />
+                    <text
+                      x={cx + 12}
+                      y={cy + 4}
+                      fill={isSelected ? '#A7C957' : '#ffffff'}
+                      fontSize="9"
+                      fontWeight={isSelected ? 'bold' : 'normal'}
+                    >
+                      {v.driver.split(' ')[0]}
+                    </text>
+                  </g>
+                )
+              })}
+            </svg>
+          </div>
+
+          {/* Quick list / detail card */}
+          <div className="mt-4 bg-neutral-950 p-4 rounded-xl border border-neutral-800">
+            {selectedDriver ? (
+              <div>
+                <h4 className="font-semibold text-accent-400 text-sm">{selectedDriver.driver}</h4>
+                <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                  <div>
+                    <span className="text-neutral-400">Vehicle:</span> {selectedDriver.plate}
+                  </div>
+                  <div>
+                    <span className="text-neutral-400">Speed:</span> {selectedDriver.speed} km/h
+                  </div>
+                  <div>
+                    <span className="text-neutral-400">ETA:</span> {selectedDriver.eta || 'N/A'}
+                  </div>
+                  <div>
+                    <span className="text-neutral-400">Status:</span>{' '}
+                    <span className={selectedDriver.status === 'on_trip' ? 'text-emerald-400' : 'text-neutral-400'}>
+                      {selectedDriver.status === 'on_trip' ? 'On Trip' : 'Idle'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-neutral-400 text-center py-2">Select a vehicle on the map to see offline telemetry</p>
+            )}
+          </div>
+        </div>
+      )
     }
 
     return (

@@ -182,14 +182,16 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
                   <button
                     onClick={() => processRefund(pass.id)}
                     disabled={refunding === pass.id}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-200 text-orange-500 text-sm font-semibold hover:bg-orange-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center md:justify-start gap-1.5 w-9 h-9 md:w-auto md:px-3 md:py-1.5 rounded-full md:rounded-lg bg-orange-50 border border-orange-200 text-orange-500 text-sm font-semibold hover:bg-orange-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     aria-label={`Process refund for ${pass.name}`}
                   >
                     {refunding === pass.id
-                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      : <RefreshCw className="w-3.5 h-3.5" />
+                      ? <Loader2 className="w-4 h-4 md:w-3.5 md:h-3.5 animate-spin" />
+                      : <RefreshCw className="w-4 h-4 md:w-3.5 md:h-3.5" />
                     }
-                    {refunding === pass.id ? 'Sending…' : 'Refund'}
+                    <span className="hidden md:inline">
+                      {refunding === pass.id ? 'Sending…' : 'Refund'}
+                    </span>
                   </button>
                 ) : isBoarding ? (
                   <button

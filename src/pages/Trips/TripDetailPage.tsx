@@ -138,7 +138,7 @@ export function TripDetailPage() {
     <div className="flex flex-col min-h-screen bg-white w-full">
       <TopBar title={trip.routeName} backHref="/trips" />
 
-      <div className="flex-1 p-2 pt-2 lg:pt-3 lg:px-4 w-full">
+      <div className="flex-1 p-4 pt-4 lg:pt-6 lg:px-8 w-full">
         {/* Side-by-side layout on desktop, stacked on mobile */}
         <div className="lg:grid lg:gap-4 space-y-4 lg:space-y-0 w-full" style={{ gridTemplateColumns: '2fr 3fr' }}>
 

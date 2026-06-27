@@ -64,7 +64,7 @@ export function TripCreatePage() {
     <div className="flex flex-col min-h-screen bg-white">
       <TopBar title="New Trip" backHref="/trips" />
 
-      <div className="flex-1 p-3 sm:p-5 space-y-4 lg:pt-8 lg:px-8 w-full max-w-2xl mx-auto">
+      <div className="flex-1 p-4 sm:p-5 space-y-4 lg:pt-8 lg:px-8 w-full max-w-2xl mx-auto">
         <div className="card p-4 sm:p-5 space-y-4">
           <h2 className="text-sm font-semibold text-primary-500 hidden lg:block">Create a trip</h2>
 

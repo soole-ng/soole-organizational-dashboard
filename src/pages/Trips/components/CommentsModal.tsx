@@ -29,7 +29,7 @@ export function CommentsModal({ trip, data, onClose }: CommentsModalProps) {
           >&#x2715;</button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-neutral-50/50">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-white">
           {(() => {
             const driverObj = data.drivers?.find((d: any) => d.id === trip.driverId)
             const tripReviews = driverObj?.reviews?.filter((r: any) => 
@@ -72,12 +72,12 @@ export function CommentsModal({ trip, data, onClose }: CommentsModalProps) {
                       <div key={rev.id} className="bg-white rounded-2xl p-4 border border-neutral-100 shadow-sm">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center flex-shrink-0 border border-neutral-100">
+                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0 border border-neutral-100">
                               <User className="w-4 h-4 text-primary-400" />
                             </div>
                             <p className="text-sm font-bold text-black">{rev.passengerName}</p>
                           </div>
-                          <div className="flex items-center gap-1 bg-primary-75/40 px-2 py-1 rounded-lg">
+                          <div className="flex items-center gap-1 bg-white border border-neutral-100 px-2 py-1 rounded-lg">
                             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                             <span className="text-xs font-bold text-black">{rev.rating}</span>
                           </div>

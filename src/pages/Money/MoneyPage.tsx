@@ -131,12 +131,9 @@ export function MoneyPage() {
         </div>
 
         <div className="bg-primary-400 rounded-2xl p-4 mb-4">
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-xs text-primary-200 font-medium">Instant payout eligible</p>
-            <div className="flex items-center gap-1 text-xs text-white">
-              <Calendar className="w-3 h-3" />
-              <span>Instant Transfer Available</span>
-            </div>
+          <div className="flex items-center gap-1 text-xs text-white mb-2">
+            <Calendar className="w-3.5 h-3.5 text-accent-300" />
+            <span className="font-medium text-primary-100">Instant Transfer Available</span>
           </div>
           <p className="text-2xl sm:text-3xl font-black text-white stat-number">NGN {balance.toLocaleString()}</p>
           <p className="text-[11px] text-primary-200 mt-1">

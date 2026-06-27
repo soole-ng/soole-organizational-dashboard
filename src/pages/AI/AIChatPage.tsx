@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Send, Sparkles, TrendingUp, Fuel, Car, Navigation,
   CreditCard, ClipboardCheck, Bot, User, RotateCcw,
-  PanelLeftOpen, PanelLeftClose, X,
+  ChevronRight, X,
 } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { useMockData } from '../../lib/useMockData'
@@ -43,13 +43,13 @@ const quickSuggestions = [
 ]
 
 const chatHistory: HistorySession[] = [
-  { id: 'h1', title: 'Revenue this week',       dateLabel: 'Today',     time: '10:32 AM' },
-  { id: 'h2', title: 'Driver performance query', dateLabel: 'Today',     time: '09:14 AM' },
-  { id: 'h3', title: 'Fuel levels check',        dateLabel: 'Yesterday', time: '04:45 PM' },
-  { id: 'h4', title: 'Top routes analysis',      dateLabel: 'Yesterday', time: '11:02 AM' },
-  { id: 'h5', title: 'Next payout schedule',     dateLabel: 'Jun 25',    time: '02:30 PM' },
-  { id: 'h6', title: 'Occupancy stats review',   dateLabel: 'Jun 24',    time: '09:55 AM' },
-  { id: 'h7', title: 'Trip planning Lagos–Abuja', dateLabel: 'Jun 23',   time: '03:12 PM' },
+  { id: 'h1', title: 'Revenue this week',        dateLabel: 'Today',     time: '10:32 AM' },
+  { id: 'h2', title: 'Driver performance query',  dateLabel: 'Today',     time: '09:14 AM' },
+  { id: 'h3', title: 'Fuel levels check',         dateLabel: 'Yesterday', time: '04:45 PM' },
+  { id: 'h4', title: 'Top routes analysis',       dateLabel: 'Yesterday', time: '11:02 AM' },
+  { id: 'h5', title: 'Next payout schedule',      dateLabel: 'Jun 25',    time: '02:30 PM' },
+  { id: 'h6', title: 'Occupancy stats review',    dateLabel: 'Jun 24',    time: '09:55 AM' },
+  { id: 'h7', title: 'Trip planning Lagos–Abuja', dateLabel: 'Jun 23',    time: '03:12 PM' },
 ]
 
 function findResponse(query: string): string {
@@ -78,7 +78,8 @@ export function AIChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [showHistory, setShowHistory] = useState(true)
+  // Always starts collapsed — user clicks the slim tab to expand
+  const [showHistory, setShowHistory] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -117,55 +118,81 @@ export function AIChatPage() {
       <TopBar title="AI Assistant" backHref="/" />
 
       <div className="flex-1 flex overflow-hidden">
-        {/* ── History sidebar (LEFT) ── */}
-        <div className={clsx(
-          'border-r border-neutral-100 bg-white transition-all duration-300 flex-shrink-0 flex flex-col overflow-hidden',
-          showHistory ? 'w-64' : 'w-0',
-        )}>
-          {showHistory && (
-            <>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 flex-shrink-0">
-                <p className="text-sm font-bold text-black">Chat History</p>
-                <button
-                  onClick={() => setShowHistory(false)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-200 hover:text-black hover:bg-neutral-50 transition-colors"
-                >
-                  <PanelLeftClose className="w-4 h-4" />
-                </button>
-              </div>
 
-              <div className="flex-1 overflow-y-auto scrollbar-thin">
-                {historyGroups.map(group => (
-                  <div key={group.label}>
-                    <p className="text-[10px] font-bold text-neutral-200 uppercase tracking-wider px-4 py-2 bg-neutral-50/50">
-                      {group.label}
-                    </p>
-                    {group.items.map(session => (
-                      <button
-                        key={session.id}
-                        className="w-full text-left px-4 py-2.5 hover:bg-primary-75 transition-colors border-b border-neutral-50 group"
-                        onClick={() => toast(`Loading: "${session.title}"`)}
-                      >
-                        <p className="text-xs font-medium text-black truncate group-hover:text-primary-500 transition-colors">
-                          {session.title}
-                        </p>
-                        <p className="text-[10px] text-neutral-200 mt-0.5">{session.time}</p>
-                      </button>
-                    ))}
-                  </div>
-                ))}
-              </div>
+        {/* ── Permanent slim tab + expandable history panel ── */}
+        <div className="flex flex-shrink-0 h-full">
 
-              <div className="px-4 py-3 border-t border-neutral-100 flex-shrink-0">
-                <button
-                  onClick={() => { setMessages([]); toast.success('New chat started') }}
-                  className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary-500 text-white text-xs font-semibold hover:bg-primary-400 transition-colors"
-                >
-                  <X className="w-3 h-3" /> New Chat
-                </button>
-              </div>
-            </>
-          )}
+          {/* Slim always-visible tab — pinned at the left edge */}
+          <button
+            onClick={() => setShowHistory(v => !v)}
+            title={showHistory ? 'Collapse history' : 'Expand history'}
+            className="w-8 flex flex-col items-center justify-center gap-2 bg-white border-r border-neutral-100 hover:bg-primary-75 transition-colors flex-shrink-0 group"
+          >
+            {/* Rotated "History" label */}
+            <span
+              className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest select-none group-hover:text-primary-500 transition-colors"
+              style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+            >
+              History
+            </span>
+            {/* Chevron — points right when collapsed, left when expanded */}
+            <ChevronRight
+              className={clsx(
+                'w-3.5 h-3.5 text-neutral-300 group-hover:text-primary-500 transition-all duration-300',
+                showHistory && 'rotate-180',
+              )}
+            />
+          </button>
+
+          {/* Expandable history drawer */}
+          <div
+            className={clsx(
+              'border-r border-neutral-100 bg-white transition-all duration-300 flex flex-col overflow-hidden',
+              showHistory ? 'w-64' : 'w-0',
+            )}
+          >
+            {showHistory && (
+              <>
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 flex-shrink-0">
+                  <p className="text-sm font-bold text-black">Chat History</p>
+                </div>
+
+                {/* Session list */}
+                <div className="flex-1 overflow-y-auto scrollbar-thin">
+                  {historyGroups.map(group => (
+                    <div key={group.label}>
+                      <p className="text-[10px] font-bold text-neutral-200 uppercase tracking-wider px-4 py-2 bg-neutral-50/50">
+                        {group.label}
+                      </p>
+                      {group.items.map(session => (
+                        <button
+                          key={session.id}
+                          className="w-full text-left px-4 py-2.5 hover:bg-primary-75 transition-colors border-b border-neutral-50 group"
+                          onClick={() => toast(`Loading: "${session.title}"`)}
+                        >
+                          <p className="text-xs font-medium text-black truncate group-hover:text-primary-500 transition-colors">
+                            {session.title}
+                          </p>
+                          <p className="text-[10px] text-neutral-200 mt-0.5">{session.time}</p>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+
+                {/* New chat button */}
+                <div className="px-4 py-3 border-t border-neutral-100 flex-shrink-0">
+                  <button
+                    onClick={() => { setMessages([]); toast.success('New chat started') }}
+                    className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary-500 text-white text-xs font-semibold hover:bg-primary-400 transition-colors"
+                  >
+                    <X className="w-3 h-3" /> New Chat
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* ── Main chat column ── */}
@@ -264,7 +291,7 @@ export function AIChatPage() {
             )}
           </div>
 
-          {/* ── Input area — no top border ── */}
+          {/* ── Input area ── */}
           <div className="bg-white px-4 pb-4 pt-3">
             {/* Quick chips when conversation active */}
             {messages.length > 0 && (
@@ -310,17 +337,6 @@ export function AIChatPage() {
               >
                 <Send className="w-4 h-4" />
               </button>
-
-          {/* History toggle when sidebar is closed */}
-              {!showHistory && (
-                <button
-                  onClick={() => setShowHistory(true)}
-                  className="w-12 h-12 bg-white border border-neutral-100 rounded-2xl flex items-center justify-center text-primary-400 hover:bg-primary-75 transition-colors flex-shrink-0 self-end"
-                  title="Show chat history"
-                >
-                  <PanelLeftOpen className="w-4 h-4" />
-                </button>
-              )}
             </div>
           </div>
         </div>

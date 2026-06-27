@@ -65,7 +65,7 @@ export function AppShell() {
   }, [])
 
   const { pathname } = useLocation()
-  const isFullscreen = pathname === '/live-map'
+  const isFullscreen = pathname === '/live-map' || pathname === '/ai'
 
   return (
     <OrgProvider>

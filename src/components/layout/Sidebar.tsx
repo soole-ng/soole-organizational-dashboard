@@ -36,7 +36,6 @@ const navGroups: NavGroup[] = [
       { to: '/', label: 'Home', icon: Home },
       { to: '/trips', label: 'Trips', icon: Route },
       { to: '/live-map', label: 'Live Map', icon: Map },
-      { to: '/ai', label: 'AI Assistant', icon: Sparkles, accent: true },
     ],
   },
   {
@@ -102,7 +101,7 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
 
   const filteredGroups = navGroups.map(group => {
     const items = group.items.filter(item => {
-      if (userRole === 'admin') {
+      if (userRole === 'finance') {
         return ['/money', '/settings', '/help'].includes(item.to)
       } else if (userRole === 'dispatcher') {
         return item.to !== '/money'

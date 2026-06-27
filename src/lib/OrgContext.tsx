@@ -5,6 +5,19 @@
  */
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 
+export interface SecurityQuestion {
+  question: string
+  answer: string
+}
+
+export interface BankAccount {
+  id: string
+  bankName: string
+  accountName: string
+  accountNumber: string
+  isPrimary: boolean
+}
+
 interface OrgProfile {
   name: string
   logoUrl: string | null   // org's own uploaded logo
@@ -12,8 +25,8 @@ interface OrgProfile {
   commissionPct: number
   email?: string
   phone?: string
-  securityQuestion?: string
-  securityAnswer?: string
+  securityQuestions?: SecurityQuestion[]
+  bankAccounts?: BankAccount[]
 }
 
 interface OrgContextValue {
@@ -28,8 +41,20 @@ const DEFAULT_ORG: OrgProfile = {
   commissionPct: 8,
   email: 'contact@speedway.ng',
   phone: '+234 803 123 4567',
-  securityQuestion: 'What is your favourite food?',
-  securityAnswer: 'Ojota',
+  securityQuestions: [
+    { question: 'What is your favourite food?', answer: 'Ojota' },
+    { question: 'What was the name of your first school?', answer: 'Lagos Primary' },
+    { question: 'What is your mother\'s maiden name?', answer: 'Alabi' },
+  ],
+  bankAccounts: [
+    {
+      id: 'bank-1',
+      bankName: 'Guaranty Trust Bank (GTB)',
+      accountName: 'Speedway Transport Limited',
+      accountNumber: '0123456789',
+      isPrimary: true
+    }
+  ]
 }
 
 const OrgContext = createContext<OrgContextValue>({

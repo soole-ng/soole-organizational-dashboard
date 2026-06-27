@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Settings, Download, Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X } from 'lucide-react'
+import { Settings, Download, Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X, ChevronDown } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay'
 import { StatusPill } from '../../components/ui/StatusPill'
@@ -7,6 +7,7 @@ import { useMockData } from '../../lib/useMockData'
 import { formatDate, formatDateTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
+import { useOrg } from '../../lib/OrgContext'
 
 const tabs = ['Transactions', 'Payouts']
 
@@ -17,11 +18,25 @@ export function MoneyPage() {
   const [extraTransactions, setExtraTransactions] = useState<any[]>([])
   const [extraPayouts, setExtraPayouts] = useState<any[]>([])
 
+  const { org } = useOrg()
+  const bankAccounts = org.bankAccounts || []
+  const primaryAccount = bankAccounts.find(a => a.isPrimary) || bankAccounts[0]
+
   // Security verification states for withdrawal
   const [showModal, setShowModal] = useState(false)
   const [password, setPassword] = useState('')
   const [securityAnswer, setSecurityAnswer] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [selectedAccountId, setSelectedAccountId] = useState('')
+  const [activeQuestionIdx, setActiveQuestionIdx] = useState(0)
+
+  const activeQuestions = org.securityQuestions || [
+    { question: 'What is your favourite food?', answer: 'Ojota' }
+  ]
+  const activeSecQuestion = activeQuestions[activeQuestionIdx]?.question || 'What is your favourite food?'
+  const activeSecAnswer = activeQuestions[activeQuestionIdx]?.answer || 'Ojota'
+
+  const selectedAccount = bankAccounts.find(a => a.id === selectedAccountId) || primaryAccount
 
   const allTransactions = [...extraTransactions, ...data.transactions]
   const allPayouts = [...extraPayouts, ...data.payouts]
@@ -31,6 +46,11 @@ export function MoneyPage() {
       toast.error('No funds available for withdrawal.')
       return
     }
+    const list = org.securityQuestions || []
+    if (list.length > 0) {
+      setActiveQuestionIdx(Math.floor(Math.random() * list.length))
+    }
+    setSelectedAccountId(primaryAccount?.id || '')
     setShowModal(true)
   }
 
@@ -41,15 +61,23 @@ export function MoneyPage() {
       return
     }
 
+    if (securityAnswer.trim().toLowerCase() !== activeSecAnswer.toLowerCase()) {
+      toast.error('Incorrect secret security answer. Please try again.')
+      return
+    }
+
     setIsProcessing(true)
     setTimeout(() => {
       const withdrawnAmount = balance
       setBalance(0)
       
+      const destName = selectedAccount?.bankName || 'GTBank'
+      const destAcc = selectedAccount?.accountNumber ? `****${selectedAccount.accountNumber.slice(-4)}` : '****4521'
+      
       const newTx = {
         id: `tx-instant-${Date.now()}`,
         date: new Date().toISOString(),
-        description: `Instant Payout to GTBank ****4521`,
+        description: `Instant Payout to ${destName} ${destAcc}`,
         type: 'payout' as const,
         gross: -withdrawnAmount,
         commission: 0,
@@ -62,7 +90,7 @@ export function MoneyPage() {
         date: new Date().toISOString(),
         amount: withdrawnAmount,
         status: 'received' as const,
-        bankRef: 'GTBank ****4521',
+        bankRef: `${destName} ${destAcc}`,
         bookingCount: 11,
         expectedArrival: new Date().toISOString()
       }
@@ -111,7 +139,9 @@ export function MoneyPage() {
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-black text-white stat-number">NGN {balance.toLocaleString()}</p>
-          <p className="text-[11px] text-primary-200 mt-1">Ready for withdrawal · GTBank ****4521</p>
+          <p className="text-[11px] text-primary-200 mt-1">
+            Ready for withdrawal · {primaryAccount?.bankName || 'GTBank'} ****{primaryAccount?.accountNumber?.slice(-4) || '4521'}
+          </p>
         </div>
 
         <div className="bg-primary-400 rounded-2xl p-4">
@@ -239,12 +269,30 @@ export function MoneyPage() {
 
             <form onSubmit={handleConfirmWithdraw} className="space-y-4">
               <div>
+                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Select Payout Destination</label>
+                <div className="relative">
+                  <select
+                    value={selectedAccountId}
+                    onChange={e => setSelectedAccountId(e.target.value)}
+                    className="input-field bg-white border border-neutral-200 appearance-none pr-10"
+                  >
+                    {bankAccounts.map(acc => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.bankName} - {acc.accountNumber} {acc.isPrimary ? '(Primary)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-primary-400 mb-1.5">Account Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="input-field"
+                  className="input-field border border-neutral-200"
                   placeholder="Enter password"
                   required
                 />
@@ -252,13 +300,13 @@ export function MoneyPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-primary-400 mb-1.5">
-                  Security Question: What is your favorite childhood keyword?
+                  Security Question: {activeSecQuestion}
                 </label>
                 <input
                   type="text"
                   value={securityAnswer}
                   onChange={e => setSecurityAnswer(e.target.value)}
-                  className="input-field"
+                  className="input-field border border-neutral-200"
                   placeholder="Enter security answer"
                   required
                 />
@@ -267,7 +315,7 @@ export function MoneyPage() {
               <div className="bg-primary-75 border border-primary-100 rounded-xl p-3 text-xs text-primary-400">
                 <p className="font-semibold text-primary-500">Payout details:</p>
                 <p className="mt-1">Amount: NGN {balance.toLocaleString()}</p>
-                <p>Destination: GTBank ****4521</p>
+                <p>Destination: {selectedAccount?.bankName || 'GTBank'} ****{selectedAccount?.accountNumber?.slice(-4) || '4521'}</p>
               </div>
 
               <button

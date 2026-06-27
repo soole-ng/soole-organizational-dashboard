@@ -38,7 +38,7 @@ const basemapStyles: Record<BasemapStyle, { name: string; style: string }> = {
   },
   'google-satellite': {
     name: 'Google Satellite',
-    style: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
+    style: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
   },
 }
 

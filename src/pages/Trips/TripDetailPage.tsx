@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useOutletContext } from 'react-router-dom'
-import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle, Droplets, MessageSquare, Send, Star } from 'lucide-react'
+import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle, Droplets, MessageSquare, Star } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { ManifestList } from './components/ManifestList'
@@ -9,6 +9,8 @@ import { mockPassengers } from '../../lib/mockData'
 import { formatDate, formatTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
+import { LiveTracker } from './components/LiveTracker'
+import { CommentsModal } from './components/CommentsModal'
 
 /** Fleet-wide hard speed limit in km/h */
 const SPEED_LIMIT_KMH = 100
@@ -33,126 +35,7 @@ const seedComments: TripComment[] = [
   { id: 'c2', author: 'Ops Team',   initials: 'OT', text: 'Revenue reconciled. Two passengers requested receipts via email.', timestamp: '2026-06-25T10:05:00' },
 ]
 
-interface LiveTrackerProps {
-  trip: any
-  distanceKm: number
-  durationMinutes: number
-  vehiclePlate: string
-  driverName: string
-  onSpeedViolation: (speed: number, plate: string, driver: string) => void
-}
 
-function LiveTracker({
-  trip, distanceKm, durationMinutes, vehiclePlate, driverName, onSpeedViolation,
-}: LiveTrackerProps) {
-  const baseProgress = trip.status === 'boarding' ? 0.05 : trip.status === 'in_progress' ? 0.42 : 0
-  const [progress, setProgress] = useState(baseProgress)
-
-  // Track previous values to estimate real-time speed between ticks
-  const prevProgressRef = useRef(baseProgress)
-  const prevTimestampRef = useRef(Date.now())
-  const violationFiredRef = useRef(false)
-
-  useEffect(() => {
-    if (trip.status !== 'boarding' && trip.status !== 'in_progress') return
-
-    const TICK_MS = 3000
-    const PROGRESS_INCREMENT = 0.001
-
-    const timer = setInterval(() => {
-      const now = Date.now()
-      const elapsedHours = (now - prevTimestampRef.current) / 3_600_000
-
-      setProgress(p => {
-        const next = Math.min(p + PROGRESS_INCREMENT, 0.99)
-
-        // Compute km covered since last tick and derive instantaneous speed
-        const kmSinceLast = (next - prevProgressRef.current) * distanceKm
-        const estimatedSpeedKmh = elapsedHours > 0 ? kmSinceLast / elapsedHours : 0
-
-        if (estimatedSpeedKmh > SPEED_LIMIT_KMH && !violationFiredRef.current) {
-          violationFiredRef.current = true
-          onSpeedViolation(Math.round(estimatedSpeedKmh), vehiclePlate, driverName)
-        }
-
-        prevProgressRef.current = next
-        prevTimestampRef.current = now
-        return next
-      })
-    }, TICK_MS)
-
-    return () => clearInterval(timer)
-  }, [trip.status, distanceKm, driverName, vehiclePlate, onSpeedViolation])
-
-  const coveredKm = Math.round(distanceKm * progress)
-  const remainingKm = distanceKm - coveredKm
-
-  const dep = new Date(trip.departureAt)
-  const etaMs = dep.getTime() + durationMinutes * 60 * 1000
-  const etaStr = new Date(etaMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  const remainingMin = Math.max(0, Math.round((etaMs - Date.now()) / 60000))
-
-  const avgSpeed = calcAvgSpeed(distanceKm, durationMinutes)
-
-  const stats = [
-    { icon: Navigation, label: 'Covered', value: `${coveredKm} km`, color: 'text-secondary-300' },
-    { icon: Navigation, label: 'Remaining', value: `${remainingKm} km`, color: 'text-teal-400' },
-    { icon: Gauge, label: 'Avg Speed', value: `${avgSpeed} km/h`, color: 'text-primary-400' },
-  ]
-
-  return (
-    <div className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-bold text-black uppercase tracking-wider">Live Trip Tracker</p>
-        <span className="flex items-center gap-1 text-[10px] text-secondary-300 font-bold">
-          <span className="w-1.5 h-1.5 rounded-full bg-secondary-300 animate-pulse inline-block" />
-          LIVE
-        </span>
-      </div>
-
-      {/* Route progress bar */}
-      <div>
-        <div className="flex justify-between text-[10px] text-black mb-1 font-medium">
-          <span>{trip.origin?.split('(')[0].trim() ?? 'Origin'}</span>
-          <span className="text-neutral-200 text-[10px]">{Math.round(progress * 100)}% complete</span>
-          <span>{trip.destination?.split('(')[0].trim() ?? 'Destination'}</span>
-        </div>
-        <div className="h-2 bg-neutral-50 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-secondary-300 rounded-full transition-all duration-[3000ms]"
-            style={{ width: `${Math.round(progress * 100)}%` }}
-          />
-        </div>
-      </div>
-
-      {/* ETA strip */}
-      <div className="flex items-center justify-between bg-neutral-50 rounded-xl px-3 py-2">
-        <div className="flex items-center gap-1.5">
-          <Clock className="w-3.5 h-3.5 text-warning" />
-          <span className="text-xs font-bold text-primary-500">ETA {etaStr}</span>
-        </div>
-        <span className="text-[11px] text-neutral-200">{remainingMin} min remaining</span>
-      </div>
-
-      {/* 3-column stats */}
-      <div className="grid grid-cols-3 gap-2">
-        {stats.map(({ icon: Icon, label, value, color }) => (
-          <div key={label} className="bg-white rounded-xl p-3 border border-neutral-100 flex flex-col items-center text-center gap-1">
-            <Icon className={clsx('w-4 h-4', color)} />
-            <p className="text-sm font-black text-black stat-number leading-tight">{value}</p>
-            <p className="text-[10px] text-neutral-200 leading-none">{label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Speed limit note */}
-      <div className="flex items-center gap-1.5 px-1">
-        <AlertTriangle className="w-3 h-3 text-neutral-200 flex-shrink-0" />
-        <p className="text-[10px] text-neutral-200">Fleet speed limit: {SPEED_LIMIT_KMH} km/h — violations trigger an alert</p>
-      </div>
-    </div>
-  )
-}
 
 export function TripDetailPage() {
   const { id } = useParams()
@@ -386,100 +269,13 @@ export function TripDetailPage() {
         </div>
       </div>
 
-      {/* ── All Comments & Ratings Modal ── */}
+      {/* Comments Modal */}
       {showAllComments && (
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
-          onClick={() => setShowAllComments(false)}
-        >
-          <div
-            className="bg-white w-full max-w-lg mx-4 rounded-3xl shadow-float flex flex-col max-h-[90vh]"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Modal header */}
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-neutral-100 flex-shrink-0">
-              <MessageSquare className="w-5 h-5 text-primary-400" />
-              <div>
-                <h2 className="text-sm font-bold text-primary-500">Comments & Ratings</h2>
-                <p className="text-[11px] text-neutral-200">{trip.routeName} &middot; Passenger Feedback</p>
-              </div>
-              <button
-                onClick={() => setShowAllComments(false)}
-                className="ml-auto w-8 h-8 flex items-center justify-center rounded-xl hover:bg-neutral-50 text-neutral-200 hover:text-primary-400 transition-colors text-lg font-light"
-                aria-label="Close"
-              >&#x2715;</button>
-            </div>
-
-            {/* Scrollable comment & rating list */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 bg-neutral-50/50">
-              {(() => {
-                const driverObj = data.drivers?.find((d: any) => d.id === trip.driverId)
-                // Match reviews by either trip.id ('t4') or original tripId ('T-004')
-                const tripReviews = driverObj?.reviews?.filter((r: any) => 
-                  r.tripId?.toLowerCase() === trip.id?.toLowerCase() || 
-                  (trip.id === 't4' && r.tripId === 'T-004')
-                ) ?? []
-
-                const avgRating = tripReviews.length > 0
-                  ? (tripReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / tripReviews.length).toFixed(1)
-                  : 'N/A'
-
-                return (
-                  <div className="space-y-4">
-                    {/* Header stat boxes for completed trip */}
-                    {trip.status === 'completed' && (
-                      <div className="grid grid-cols-3 gap-3 mb-2">
-                        <div className="bg-white p-3.5 rounded-2xl border border-neutral-100 text-center shadow-sm">
-                          <p className="text-xl font-extrabold text-primary-500 stat-number">{avgRating}</p>
-                          <p className="text-[9px] text-neutral-200 uppercase font-bold mt-0.5">Avg Rating</p>
-                        </div>
-                        <div className="bg-white p-3.5 rounded-2xl border border-neutral-100 text-center shadow-sm">
-                          <p className="text-xl font-extrabold text-primary-500 stat-number">{driverObj?.tripsCompleted || 0}</p>
-                          <p className="text-[9px] text-neutral-200 uppercase font-bold mt-0.5">Trips Done</p>
-                        </div>
-                        <div className="bg-white p-3.5 rounded-2xl border border-neutral-100 text-center shadow-sm">
-                          <p className="text-xl font-extrabold text-primary-500 stat-number">{tripReviews.length}</p>
-                          <p className="text-[9px] text-neutral-200 uppercase font-bold mt-0.5">Reviews</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {tripReviews.length === 0 ? (
-                      <div className="text-center py-16 bg-white rounded-2xl border border-neutral-100">
-                        <Star className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
-                        <p className="text-sm font-semibold text-black">No passenger comments yet</p>
-                        <p className="text-xs text-neutral-200 mt-1">Reviews appear after completed trips.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {tripReviews.map((rev: any) => (
-                          <div key={rev.id} className="bg-white rounded-2xl p-4 border border-neutral-100 shadow-sm">
-                            {/* Passenger + rating */}
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center flex-shrink-0 border border-neutral-100">
-                                  <User className="w-4 h-4 text-primary-400" />
-                                </div>
-                                <p className="text-sm font-bold text-black">{rev.passengerName}</p>
-                              </div>
-                              <div className="flex items-center gap-1 bg-primary-75/40 px-2 py-1 rounded-lg">
-                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                <span className="text-xs font-bold text-black">{rev.rating}</span>
-                              </div>
-                            </div>
-
-                            <p className="text-xs text-black leading-relaxed mt-1.5">"{rev.comment}"</p>
-                            <p className="text-[9px] text-neutral-200 text-right mt-2">{rev.date}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })()}
-            </div>
-          </div>
-        </div>
+        <CommentsModal
+          trip={trip}
+          data={data}
+          onClose={() => setShowAllComments(false)}
+        />
       )}
     </div>
   )

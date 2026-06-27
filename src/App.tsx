@@ -10,10 +10,8 @@ import { DriversPage } from './pages/Fleet/DriversPage'
 import { VehiclesPage } from './pages/Fleet/VehiclesPage'
 import { MoneyPage } from './pages/Money/MoneyPage'
 import { LiveMapPage } from './pages/LiveMap/LiveMapPage'
-import { RoutesPage } from './pages/Routes/RoutesPage'
 import { ReportsPage } from './pages/Reports/ReportsPage'
 import { SettingsPage } from './pages/Settings/SettingsPage'
-import { AIChatPage } from './pages/AI/AIChatPage'
 import { HelpPage } from './pages/Help/HelpPage'
 
 export default function App() {
@@ -34,8 +32,6 @@ export default function App() {
 
         <Route path="/money" element={<MoneyPage />} />
         <Route path="/live-map" element={<LiveMapPage />} />
-        <Route path="/ai" element={<AIChatPage />} />
-        <Route path="/routes" element={<RoutesPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/help" element={<HelpPage />} />

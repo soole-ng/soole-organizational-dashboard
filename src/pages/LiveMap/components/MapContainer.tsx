@@ -331,7 +331,7 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
           sources: {
             'google-satellite': {
               type: 'raster',
-              tiles: ['https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'],
+              tiles: ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'],
               tileSize: 256,
             },
           },

@@ -1,14 +1,15 @@
 import { useState, useRef } from 'react'
-import { Plus, Phone, Car, Star, Award, X, User, MapPin, Hash } from 'lucide-react'
+import { Plus, Phone, Award, Users } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
-import { StatusPill } from '../../components/ui/StatusPill'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { BottomSheet } from '../../components/ui/BottomSheet'
 import { useMockData } from '../../lib/useMockData'
-import { Users } from 'lucide-react'
 import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 import toast from 'react-hot-toast'
+import { StarRating } from '../../components/ui/StarRating'
+import { DriverAvatar, getDriverAvatar } from '../../components/ui/DriverAvatar'
+import { InviteDriverModal } from './components/InviteDriverModal'
+import { DriverDetailModal } from './components/DriverDetailModal'
 
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'All', value: 'all' },
@@ -17,54 +18,13 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'Suspended', value: 'suspended' },
 ]
 
-function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md' }) {
-  const filled = Math.round(rating)
-  const cls = size === 'md' ? 'w-4 h-4' : 'w-3 h-3'
-  const hasRating = rating > 0
-  return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map(i => {
-        const isFilled = hasRating && i <= filled
-        return (
-          <Star
-            key={i}
-            className={clsx(cls, isFilled ? 'text-accent fill-accent' : 'fill-white')}
-            style={!isFilled ? { stroke: 'rgba(0, 0, 0, 0.4)' } : undefined}
-          />
-        )
-      })}
-    </div>
-  )
-}
 
-const getDriverAvatar = (driverId: string) => {
-  const avatars: Record<string, string> = {
-    'd1': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80',
-    'd2': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80',
-    'd3': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&h=150&q=80',
-    'd4': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80',
-  }
-  return avatars[driverId] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'
-}
-
-export function DriverAvatar({ driverId, name, size = 'md' }: { driverId: string; name: string; size?: 'sm' | 'md' | 'lg' }) {
-  const sizeClass = size === 'lg' ? 'w-16 h-16' : size === 'md' ? 'w-10 h-10' : 'w-8 h-8'
-  return (
-    <img
-      src={getDriverAvatar(driverId)}
-      alt={name}
-      className={clsx('rounded-full object-cover flex-shrink-0 border border-neutral-100/50', sizeClass)}
-    />
-  )
-}
 
 export function DriversPage() {
   const { data, loading } = useMockData()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [showAddSheet, setShowAddSheet] = useState(false)
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null)
-  const [form, setForm] = useState({ name: '', phone: '' })
-  const reviewScrollRef = useRef<HTMLDivElement>(null)
 
   const filtered = data.drivers.filter(d => filter === 'all' || d.status === filter)
   const verified = data.drivers.filter(d => d.status === 'verified').length
@@ -72,12 +32,7 @@ export function DriversPage() {
   const avgRating = data.drivers.filter(d => (d.avgRating ?? 0) > 0)
     .reduce((a, d, _, arr) => a + (d.avgRating ?? 0) / arr.length, 0)
 
-  const handleInvite = () => {
-    if (!form.name || !form.phone) return
-    setShowAddSheet(false)
-    setForm({ name: '', phone: '' })
-    toast.success(`Invite sent to ${form.name}`)
-  }
+
 
   if (loading) {
     return (
@@ -247,222 +202,16 @@ export function DriversPage() {
 
       {/* ── Driver Detail Modal (full-page overlay) ── */}
       {selectedDriver && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-float flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className="flex items-center gap-4 px-6 py-5 border-b border-neutral-100 flex-shrink-0">
-              <DriverAvatar driverId={selectedDriver.id} name={selectedDriver.name} size="lg" />
-              <div className="flex-1 min-w-0">
-                <h2 className="text-xl font-black text-black truncate">{selectedDriver.name}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <StarRating rating={selectedDriver.avgRating} size="md" />
-                  <span className="text-sm font-bold text-black">
-                    {selectedDriver.avgRating > 0 ? `${selectedDriver.avgRating.toFixed(1)} / 5.0` : 'No rating yet'}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedDriver(null)}
-                className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-black hover:bg-neutral-50 transition-colors flex-shrink-0"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Stats row */}
-            <div className="px-6 py-4 grid grid-cols-3 gap-3 border-b border-neutral-100 flex-shrink-0">
-              {[
-                { label: 'Avg Rating', value: selectedDriver.avgRating > 0 ? selectedDriver.avgRating.toFixed(1) : '—' },
-                { label: 'Trips Done', value: selectedDriver.tripsCompleted },
-                { label: 'Reviews', value: selectedDriver.reviews?.length ?? 0 },
-              ].map(s => (
-                <div key={s.label} className="bg-white rounded-2xl p-4 text-center border border-neutral-100">
-                  <p className="text-3xl font-black text-black stat-number">{s.value}</p>
-                  <p className="text-xs text-black mt-1">{s.label}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Scrollable comments */}
-            <div className="flex-1 flex flex-col min-h-0">
-              {/* Header row with scroll hint */}
-              <div className="flex items-center justify-between px-6 pt-4 pb-2 flex-shrink-0">
-                <p className="text-sm font-bold text-black uppercase tracking-wider">
-                  Passenger Comments
-                  {selectedDriver.reviews?.length > 0 && (
-                    <span className="ml-2 text-[10px] font-bold text-primary-400 normal-case tracking-normal">
-                      ({selectedDriver.reviews.length})
-                    </span>
-                  )}
-                </p>
-                {selectedDriver.reviews?.length > 2 && (
-                  <button
-                    onClick={() => reviewScrollRef.current?.scrollBy({ top: 220, behavior: 'smooth' })}
-                    className="text-[10px] font-semibold text-primary-400 flex items-center gap-1 hover:text-primary-500 transition-colors"
-                  >
-                    Scroll ↓
-                  </button>
-                )}
-              </div>
-
-              <div
-                ref={reviewScrollRef}
-                className="flex-1 overflow-y-auto px-6 pb-4 space-y-3"
-                style={{ scrollBehavior: 'smooth' }}
-              >
-                {!selectedDriver.reviews || selectedDriver.reviews.length === 0 ? (
-                  <div className="text-center py-16 bg-white rounded-2xl border border-neutral-100">
-                    <Star className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
-                    <p className="text-sm font-semibold text-black">No comments yet</p>
-                    <p className="text-xs text-black mt-1">Reviews appear after completed trips.</p>
-                  </div>
-                ) : (
-                  selectedDriver.reviews.map((rev: any) => (
-                    <div key={rev.id} className="bg-white rounded-2xl p-4 border border-neutral-100">
-                      {/* Trip route + ID */}
-                      {rev.tripRoute && (
-                        <div className="flex items-center justify-between mb-3 pb-3 border-b border-neutral-100">
-                          <div className="flex items-center gap-1.5 text-[10px] text-primary-400 font-semibold">
-                            <MapPin className="w-3 h-3 flex-shrink-0" />
-                            <span>{rev.tripRoute}</span>
-                          </div>
-                          {rev.tripId && (
-                            <span className="flex items-center gap-0.5 text-[10px] text-neutral-200 font-mono">
-                              <Hash className="w-2.5 h-2.5" />{rev.tripId}
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Passenger + rating */}
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0">
-                            <User className="w-4 h-4 text-primary-400" />
-                          </div>
-                          <p className="text-sm font-bold text-black">{rev.passengerName}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <StarRating rating={rev.rating} size="sm" />
-                          <span className="text-xs font-bold text-black">{rev.rating}</span>
-                        </div>
-                      </div>
-
-                      <p className="text-sm text-black leading-relaxed">"{rev.comment}"</p>
-                      <p className="text-[10px] text-neutral-200 text-right mt-2">{rev.date}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <DriverDetailModal
+          selectedDriver={selectedDriver}
+          onClose={() => setSelectedDriver(null)}
+        />
       )}
 
       {/* Invite Center Dialog Popup */}
-      {showAddSheet && (() => {
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const [countryPrefix, setCountryPrefix] = useState('+234')
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        const [isResolving, setIsResolving] = useState(false)
-
-        const handlePhoneChange = (val: string) => {
-          const digits = val.replace(/\D/g, '')
-          setForm(p => ({ ...p, phone: digits }))
-          
-          if (digits.length >= 10) {
-            setIsResolving(true)
-            setTimeout(() => {
-              setIsResolving(false)
-              // Resolve mock names based on input digit endings
-              const endDigit = digits.slice(-1)
-              let resolvedName = 'Babajide Sanwo'
-              if (endDigit === '7') resolvedName = 'Akin Bello'
-              else if (endDigit === '1') resolvedName = 'Chidi Okafor'
-              else if (endDigit === '2') resolvedName = 'Funke Adeleke'
-              else if (endDigit === '0') resolvedName = 'Emeka Nwosu'
-              
-              setForm(p => ({ ...p, name: resolvedName }))
-              toast.success(`Driver found: ${resolvedName}`)
-            }, 800)
-          }
-        }
-
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div
-              className="absolute inset-0 bg-[#042011]/60 backdrop-blur-sm"
-              onClick={() => setShowAddSheet(false)}
-            />
-            <div className="relative bg-white rounded-2xl shadow-float w-full max-w-md p-6 flex flex-col z-10 border border-neutral-100/50">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold text-primary-500">Invite a Driver</h2>
-                <button
-                  onClick={() => setShowAddSheet(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-50 transition-colors"
-                >
-                  <X className="w-4 h-4 text-neutral-200" />
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                {/* Phone number input first with country select dropdown */}
-                <div>
-                  <label className="block text-xs font-semibold text-black mb-1.5">Phone Number</label>
-                  <div className="flex gap-2">
-                    <select
-                      value={countryPrefix}
-                      onChange={e => setCountryPrefix(e.target.value)}
-                      className="input-field max-w-[100px] text-xs py-2 bg-white"
-                    >
-                      <option value="+234">🇳🇬 +234</option>
-                      <option value="+233">🇬🇭 +233</option>
-                      <option value="+1">🇺🇸 +1</option>
-                      <option value="+44">🇬🇧 +44</option>
-                    </select>
-                    <input
-                      className="input-field flex-1"
-                      type="tel"
-                      placeholder="803 123 4567"
-                      value={form.phone}
-                      onChange={e => handlePhoneChange(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                {/* Driver's name is NOT editable */}
-                <div>
-                  <label className="block text-xs font-semibold text-black mb-1.5">Driver's Name</label>
-                  <input
-                    className="input-field bg-neutral-50/80 cursor-not-allowed text-neutral-300 font-semibold"
-                    placeholder="Resolves automatically..."
-                    value={form.name}
-                    disabled
-                  />
-                </div>
-
-                {isResolving && (
-                  <div className="flex items-center gap-2 justify-center py-2 text-xs text-primary-400">
-                    <span className="w-4 h-4 border-2 border-primary-400/40 border-t-primary-400 rounded-full animate-spin" />
-                    Checking Soole records...
-                  </div>
-                )}
-
-                <p className="text-xs text-black bg-white rounded-xl p-3 leading-relaxed border border-neutral-100">
-                  {form.name ? `${form.name} (${countryPrefix}${form.phone})` : 'The driver'} will receive an SMS to download the Soole driver app and complete verification.
-                </p>
-                <button
-                  onClick={handleInvite}
-                  disabled={!form.name || !form.phone || isResolving}
-                  className="btn-primary w-full"
-                >
-                  Send Invite
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
+      {showAddSheet && (
+        <InviteDriverModal onClose={() => setShowAddSheet(false)} />
+      )}
     </div>
   )
 }

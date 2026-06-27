@@ -20,7 +20,6 @@ const tabs = [
   { to: '/trips', label: 'Trips',  icon: Route },
   { to: '/fleet', label: 'Fleet',  icon: Users },
   { to: '/money', label: 'Money',  icon: Wallet },
-  { to: '/ai',    label: 'AI Assist', icon: Sparkles, accent: true },
 ]
 
 export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavProps) {
@@ -28,7 +27,7 @@ export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavPro
   const userRole = org.role ? org.role.toLowerCase() : 'owner'
 
   const filteredTabs = tabs.filter(tab => {
-    if (userRole === 'admin') {
+    if (userRole === 'finance') {
       return ['/money'].includes(tab.to)
     } else if (userRole === 'dispatcher') {
       return tab.to !== '/money'

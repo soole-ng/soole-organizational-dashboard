@@ -13,6 +13,7 @@ const tabs = ['Today', 'This Week', 'All']
 const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'All', value: 'all' },
   { label: 'Scheduled', value: 'scheduled' },
+  { label: 'Trip in Progress', value: 'boarding' },
   { label: 'Completed', value: 'completed' },
   { label: 'Cancelled', value: 'cancelled' },
 ]

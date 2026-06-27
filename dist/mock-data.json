@@ -59,8 +59,60 @@
       "avgRating": 4.8,
       "incidentsCount": 0,
       "reviews": [
-        { "id": "rev1", "passengerName": "Adaeze Okonkwo", "rating": 5, "comment": "Excellent driver, arrived challenge terminal right on time!", "date": "2026-06-25" },
-        { "id": "rev2", "passengerName": "Emeka Nwosu", "rating": 4.6, "comment": "Smooth ride from Ojota, clean vehicle.", "date": "2026-06-24" }
+        {
+          "id": "rev1",
+          "passengerName": "Adaeze Okonkwo",
+          "rating": 5,
+          "comment": "Excellent driver, arrived at Challenge terminal right on time!",
+          "date": "2026-06-25",
+          "tripId": "T-004",
+          "tripRoute": "Lagos (Ojota) to Ibadan (Challenge)"
+        },
+        {
+          "id": "rev2",
+          "passengerName": "Emeka Nwosu",
+          "rating": 4.6,
+          "comment": "Smooth ride from Ojota, clean vehicle throughout the journey.",
+          "date": "2026-06-24",
+          "tripId": "T-004",
+          "tripRoute": "Lagos (Ojota) to Ibadan (Challenge)"
+        },
+        {
+          "id": "rev6",
+          "passengerName": "Chisom Ibe",
+          "rating": 5,
+          "comment": "Punctual departure and drove safely on the expressway. Would book again.",
+          "date": "2026-06-22",
+          "tripId": "T-007",
+          "tripRoute": "Lagos (Ojota) to Ibadan (Challenge)"
+        },
+        {
+          "id": "rev7",
+          "passengerName": "Sola Adeyemi",
+          "rating": 4.8,
+          "comment": "Very calm and professional. Music at a good volume and AC was perfect.",
+          "date": "2026-06-20",
+          "tripId": "T-009",
+          "tripRoute": "Lagos (Ojota) to Ibadan (Challenge)"
+        },
+        {
+          "id": "rev8",
+          "passengerName": "Fatima Bello",
+          "rating": 4.5,
+          "comment": "He waited when we were slightly late to the park. Very understanding.",
+          "date": "2026-06-18",
+          "tripId": "T-011",
+          "tripRoute": "Lagos (Ojota) to Ibadan (Challenge)"
+        },
+        {
+          "id": "rev9",
+          "passengerName": "Kelvin Obi",
+          "rating": 5,
+          "comment": "Akin is the best driver on this route. Always smooth and safe.",
+          "date": "2026-06-15",
+          "tripId": "T-013",
+          "tripRoute": "Lagos (Ojota) to Ibadan (Challenge)"
+        }
       ]
     },
     {
@@ -75,8 +127,51 @@
       "avgRating": 4.6,
       "incidentsCount": 1,
       "reviews": [
-        { "id": "rev3", "passengerName": "Halima Abdullahi", "rating": 4.2, "comment": "Safe speed on the express, very polite.", "date": "2026-06-23" },
-        { "id": "rev4", "passengerName": "Tunde Fashola", "rating": 5, "comment": "Chidi was very helpful with handling heavy luggage.", "date": "2026-06-22" }
+        {
+          "id": "rev3",
+          "passengerName": "Halima Abdullahi",
+          "rating": 4.2,
+          "comment": "Safe speed on the express, very polite throughout the journey.",
+          "date": "2026-06-23",
+          "tripId": "T-002",
+          "tripRoute": "Lagos (Jibowu) to Abuja (Utako)"
+        },
+        {
+          "id": "rev4",
+          "passengerName": "Tunde Fashola",
+          "rating": 5,
+          "comment": "Chidi was very helpful with luggage at both ends of the trip.",
+          "date": "2026-06-22",
+          "tripId": "T-002",
+          "tripRoute": "Lagos (Jibowu) to Abuja (Utako)"
+        },
+        {
+          "id": "rev10",
+          "passengerName": "Amaka Obi",
+          "rating": 4.8,
+          "comment": "Long trip but very comfortable. He stopped at the right rest areas.",
+          "date": "2026-06-19",
+          "tripId": "T-006",
+          "tripRoute": "Lagos (Jibowu) to Abuja (Utako)"
+        },
+        {
+          "id": "rev11",
+          "passengerName": "Yusuf Garba",
+          "rating": 4.0,
+          "comment": "Good driver but departed 20 minutes late. The ride itself was fine.",
+          "date": "2026-06-17",
+          "tripId": "T-008",
+          "tripRoute": "Lagos (Jibowu) to Abuja (Utako)"
+        },
+        {
+          "id": "rev12",
+          "passengerName": "Blessing Nnadi",
+          "rating": 5,
+          "comment": "Excellent! He communicated every stop and kept everyone informed.",
+          "date": "2026-06-14",
+          "tripId": "T-010",
+          "tripRoute": "Lagos (Jibowu) to Abuja (Utako)"
+        }
       ]
     },
     {
@@ -104,7 +199,42 @@
       "avgRating": 4.9,
       "incidentsCount": 0,
       "reviews": [
-        { "id": "rev5", "passengerName": "Ngozi Eze", "rating": 5, "comment": "Highly professional, best ride ever!", "date": "2026-06-24" }
+        {
+          "id": "rev5",
+          "passengerName": "Ngozi Eze",
+          "rating": 5,
+          "comment": "Highly professional, best ride ever! The bus was immaculate.",
+          "date": "2026-06-24",
+          "tripId": "T-003",
+          "tripRoute": "Ibadan (Challenge) to Lagos (Ojota)"
+        },
+        {
+          "id": "rev13",
+          "passengerName": "Chukwuma Okafor",
+          "rating": 5,
+          "comment": "Funke is superb. Dropped me exactly at my preferred drop-off point.",
+          "date": "2026-06-22",
+          "tripId": "T-003",
+          "tripRoute": "Ibadan (Challenge) to Lagos (Ojota)"
+        },
+        {
+          "id": "rev14",
+          "passengerName": "Aisha Mohammed",
+          "rating": 4.8,
+          "comment": "Very attentive to passengers, especially the elderly ones on board.",
+          "date": "2026-06-20",
+          "tripId": "T-005",
+          "tripRoute": "Ibadan (Challenge) to Lagos (Ojota)"
+        },
+        {
+          "id": "rev15",
+          "passengerName": "Damilola Okonkwo",
+          "rating": 5,
+          "comment": "No unannounced stops, great communication. Will always choose Funke.",
+          "date": "2026-06-17",
+          "tripId": "T-012",
+          "tripRoute": "Ibadan (Challenge) to Lagos (Ojota)"
+        }
       ]
     }
   ],
@@ -123,11 +253,34 @@
       "fuelLevel": 0.75,
       "totalKm": 47320,
       "documents": [
-        { "type": "registration", "label": "Vehicle Registration", "status": "approved", "expiresAt": "2026-12-31" },
-        { "type": "road_worthiness", "label": "Road Worthiness", "status": "approved", "expiresAt": "2026-09-15" },
-        { "type": "insurance", "label": "Insurance Certificate", "status": "approved", "expiresAt": "2027-01-10" },
-        { "type": "photo_front", "label": "Front Photo", "status": "approved" },
-        { "type": "photo_back", "label": "Rear Photo", "status": "approved" }
+        {
+          "type": "registration",
+          "label": "Vehicle Registration",
+          "status": "approved",
+          "expiresAt": "2026-12-31"
+        },
+        {
+          "type": "road_worthiness",
+          "label": "Road Worthiness",
+          "status": "approved",
+          "expiresAt": "2026-09-15"
+        },
+        {
+          "type": "insurance",
+          "label": "Insurance Certificate",
+          "status": "approved",
+          "expiresAt": "2027-01-10"
+        },
+        {
+          "type": "photo_front",
+          "label": "Front Photo",
+          "status": "approved"
+        },
+        {
+          "type": "photo_back",
+          "label": "Rear Photo",
+          "status": "approved"
+        }
       ]
     },
     {
@@ -144,11 +297,33 @@
       "fuelLevel": 0.25,
       "totalKm": 89120,
       "documents": [
-        { "type": "registration", "label": "Vehicle Registration", "status": "approved", "expiresAt": "2027-03-20" },
-        { "type": "road_worthiness", "label": "Road Worthiness", "status": "pending" },
-        { "type": "insurance", "label": "Insurance Certificate", "status": "approved", "expiresAt": "2026-08-05" },
-        { "type": "photo_front", "label": "Front Photo", "status": "approved" },
-        { "type": "photo_back", "label": "Rear Photo", "status": "missing" }
+        {
+          "type": "registration",
+          "label": "Vehicle Registration",
+          "status": "approved",
+          "expiresAt": "2027-03-20"
+        },
+        {
+          "type": "road_worthiness",
+          "label": "Road Worthiness",
+          "status": "pending"
+        },
+        {
+          "type": "insurance",
+          "label": "Insurance Certificate",
+          "status": "approved",
+          "expiresAt": "2026-08-05"
+        },
+        {
+          "type": "photo_front",
+          "label": "Front Photo",
+          "status": "approved"
+        },
+        {
+          "type": "photo_back",
+          "label": "Rear Photo",
+          "status": "missing"
+        }
       ]
     },
     {
@@ -165,11 +340,31 @@
       "fuelLevel": 1.0,
       "totalKm": 23890,
       "documents": [
-        { "type": "registration", "label": "Vehicle Registration", "status": "approved" },
-        { "type": "road_worthiness", "label": "Road Worthiness", "status": "approved" },
-        { "type": "insurance", "label": "Insurance Certificate", "status": "pending" },
-        { "type": "photo_front", "label": "Front Photo", "status": "uploaded" },
-        { "type": "photo_back", "label": "Rear Photo", "status": "missing" }
+        {
+          "type": "registration",
+          "label": "Vehicle Registration",
+          "status": "approved"
+        },
+        {
+          "type": "road_worthiness",
+          "label": "Road Worthiness",
+          "status": "approved"
+        },
+        {
+          "type": "insurance",
+          "label": "Insurance Certificate",
+          "status": "pending"
+        },
+        {
+          "type": "photo_front",
+          "label": "Front Photo",
+          "status": "uploaded"
+        },
+        {
+          "type": "photo_back",
+          "label": "Rear Photo",
+          "status": "missing"
+        }
       ]
     }
   ],
@@ -252,40 +447,215 @@
     }
   ],
   "transactions": [
-    { "id": "tx1", "date": "2026-06-26T06:15:00Z", "description": "Booking from Adaeze on Lagos–Ibadan 6 AM", "type": "booking", "gross": 5000, "commission": 400, "net": 4600, "balance": 47300 },
-    { "id": "tx2", "date": "2026-06-25T14:30:00Z", "description": "Booking from Emeka on Lagos–Ibadan 6 AM", "type": "booking", "gross": 5000, "commission": 400, "net": 4600, "balance": 42700 },
-    { "id": "tx3", "date": "2026-06-24T09:00:00Z", "description": "Weekly payout to GTBank ****4521", "type": "payout", "gross": 38000, "commission": 0, "net": -38000, "balance": 38100 },
-    { "id": "tx4", "date": "2026-06-24T08:20:00Z", "description": "Booking from Halima on Lagos–Abuja 7:30 AM", "type": "booking", "gross": 14000, "commission": 1120, "net": 12880, "balance": 76100 },
-    { "id": "tx5", "date": "2026-06-23T16:00:00Z", "description": "Refund to Tunde — Trip cancelled", "type": "refund", "gross": -5000, "commission": 0, "net": -5000, "balance": 63220 }
+    {
+      "id": "tx1",
+      "date": "2026-06-26T06:15:00Z",
+      "description": "Booking from Adaeze on Lagos–Ibadan 6 AM",
+      "type": "booking",
+      "gross": 5000,
+      "commission": 400,
+      "net": 4600,
+      "balance": 47300
+    },
+    {
+      "id": "tx2",
+      "date": "2026-06-25T14:30:00Z",
+      "description": "Booking from Emeka on Lagos–Ibadan 6 AM",
+      "type": "booking",
+      "gross": 5000,
+      "commission": 400,
+      "net": 4600,
+      "balance": 42700
+    },
+    {
+      "id": "tx3",
+      "date": "2026-06-24T09:00:00Z",
+      "description": "Weekly payout to GTBank ****4521",
+      "type": "payout",
+      "gross": 38000,
+      "commission": 0,
+      "net": -38000,
+      "balance": 38100
+    },
+    {
+      "id": "tx4",
+      "date": "2026-06-24T08:20:00Z",
+      "description": "Booking from Halima on Lagos–Abuja 7:30 AM",
+      "type": "booking",
+      "gross": 14000,
+      "commission": 1120,
+      "net": 12880,
+      "balance": 76100
+    },
+    {
+      "id": "tx5",
+      "date": "2026-06-23T16:00:00Z",
+      "description": "Refund to Tunde — Trip cancelled",
+      "type": "refund",
+      "gross": -5000,
+      "commission": 0,
+      "net": -5000,
+      "balance": 63220
+    }
   ],
   "payouts": [
-    { "id": "po1", "date": "2026-06-24T09:00:00Z", "amount": 38000, "status": "received", "bankRef": "GTBank ****4521", "bookingCount": 9, "expectedArrival": "2026-06-24T09:00:00Z" },
-    { "id": "po2", "date": "2026-06-17T09:00:00Z", "amount": 52400, "status": "received", "bankRef": "GTBank ****4521", "bookingCount": 13, "expectedArrival": "2026-06-17T09:00:00Z" },
-    { "id": "po3", "date": "2026-07-01T09:00:00Z", "amount": 47300, "status": "pending", "bankRef": "GTBank ****4521", "bookingCount": 11, "expectedArrival": "2026-07-01T09:00:00Z" }
+    {
+      "id": "po1",
+      "date": "2026-06-24T09:00:00Z",
+      "amount": 38000,
+      "status": "received",
+      "bankRef": "GTBank ****4521",
+      "bookingCount": 9,
+      "expectedArrival": "2026-06-24T09:00:00Z"
+    },
+    {
+      "id": "po2",
+      "date": "2026-06-17T09:00:00Z",
+      "amount": 52400,
+      "status": "received",
+      "bankRef": "GTBank ****4521",
+      "bookingCount": 13,
+      "expectedArrival": "2026-06-17T09:00:00Z"
+    },
+    {
+      "id": "po3",
+      "date": "2026-07-01T09:00:00Z",
+      "amount": 47300,
+      "status": "pending",
+      "bankRef": "GTBank ****4521",
+      "bookingCount": 11,
+      "expectedArrival": "2026-07-01T09:00:00Z"
+    }
   ],
   "alerts": [
-    { "id": "a1", "type": "warning", "title": "Low fuel estimate — KJA 008 MN", "message": "Estimated fuel level is below 25% on KJA 008 MN. Verify with the driver before the Lagos–Abuja trip.", "action": { "label": "View vehicle", "href": "/fleet/vehicles/v2" }, "createdAt": "2026-06-26T05:00:00Z" },
-    { "id": "a2", "type": "danger", "title": "Document pending — Road Worthiness", "message": "KJA 008 MN road worthiness certificate is under review. Vehicle cannot be used for new trips until approved.", "action": { "label": "View documents", "href": "/fleet/vehicles/v2" }, "createdAt": "2026-06-25T12:00:00Z" },
-    { "id": "a3", "type": "warning", "title": "Driver Ibrahim Musa — invite pending", "message": "Ibrahim has not yet completed their sign-up. Resend the invite if needed.", "action": { "label": "View driver", "href": "/fleet/drivers/d3" }, "createdAt": "2026-06-20T08:00:00Z" }
+    {
+      "id": "a1",
+      "type": "warning",
+      "title": "Low fuel estimate — KJA 008 MN",
+      "message": "Estimated fuel level is below 25% on KJA 008 MN. Verify with the driver before the Lagos–Abuja trip.",
+      "action": {
+        "label": "View vehicle",
+        "href": "/fleet/vehicles/v2"
+      },
+      "createdAt": "2026-06-26T05:00:00Z"
+    },
+    {
+      "id": "a2",
+      "type": "danger",
+      "title": "Document pending — Road Worthiness",
+      "message": "KJA 008 MN road worthiness certificate is under review. Vehicle cannot be used for new trips until approved.",
+      "action": {
+        "label": "View documents",
+        "href": "/fleet/vehicles/v2"
+      },
+      "createdAt": "2026-06-25T12:00:00Z"
+    },
+    {
+      "id": "a3",
+      "type": "warning",
+      "title": "Driver Ibrahim Musa — invite pending",
+      "message": "Ibrahim has not yet completed their sign-up. Resend the invite if needed.",
+      "action": {
+        "label": "View driver",
+        "href": "/fleet/drivers/d3"
+      },
+      "createdAt": "2026-06-20T08:00:00Z"
+    }
   ],
   "organizationMembers": [
-    { "id": "m1", "name": "Samuel Adeyemi", "email": "samuel@speedway.ng", "role": "owner", "joinedAt": "2024-01-10" },
-    { "id": "m2", "name": "Grace Obi", "email": "grace@speedway.ng", "role": "dispatcher", "joinedAt": "2024-06-15" },
-    { "id": "m3", "name": "Paul Eze", "email": "paul@speedway.ng", "role": "finance", "joinedAt": "2025-01-20" }
+    {
+      "id": "m1",
+      "name": "Samuel Adeyemi",
+      "email": "samuel@speedway.ng",
+      "role": "owner",
+      "joinedAt": "2024-01-10"
+    },
+    {
+      "id": "m2",
+      "name": "Grace Obi",
+      "email": "grace@speedway.ng",
+      "role": "dispatcher",
+      "joinedAt": "2024-06-15"
+    },
+    {
+      "id": "m3",
+      "name": "Paul Eze",
+      "email": "paul@speedway.ng",
+      "role": "finance",
+      "joinedAt": "2025-01-20"
+    }
   ],
   "weeklyRevenue": [
-    { "day": "Mon", "gross": 45000, "net": 41400 },
-    { "day": "Tue", "gross": 62000, "net": 57040 },
-    { "day": "Wed", "gross": 38000, "net": 34960 },
-    { "day": "Thu", "gross": 71000, "net": 65320 },
-    { "day": "Fri", "gross": 88000, "net": 80960 },
-    { "day": "Sat", "gross": 95000, "net": 87400 },
-    { "day": "Sun", "gross": 52000, "net": 47840 }
+    {
+      "day": "Mon",
+      "gross": 45000,
+      "net": 41400
+    },
+    {
+      "day": "Tue",
+      "gross": 62000,
+      "net": 57040
+    },
+    {
+      "day": "Wed",
+      "gross": 38000,
+      "net": 34960
+    },
+    {
+      "day": "Thu",
+      "gross": 71000,
+      "net": 65320
+    },
+    {
+      "day": "Fri",
+      "gross": 88000,
+      "net": 80960
+    },
+    {
+      "day": "Sat",
+      "gross": 95000,
+      "net": 87400
+    },
+    {
+      "day": "Sun",
+      "gross": 52000,
+      "net": 47840
+    }
   ],
   "vehicleLocations": [
-    { "id": "v1", "plate": "LSD 234 KJ", "driver": "Akin Bello", "status": "on_trip", "lat": 6.5244, "lng": 3.3792, "trip": "Lagos → Ibadan", "eta": "09:45 AM", "speed": 87 },
-    { "id": "v2", "plate": "KJA 008 MN", "driver": "Chidi Okafor", "status": "idle", "lat": 6.5944, "lng": 3.3492, "trip": null, "eta": null, "speed": 0 },
-    { "id": "v3", "plate": "ABJ 445 EF", "driver": "Funke Adeleke", "status": "idle", "lat": 6.4844, "lng": 3.4192, "trip": null, "eta": null, "speed": 0 }
+    {
+      "id": "v1",
+      "plate": "LSD 234 KJ",
+      "driver": "Akin Bello",
+      "status": "on_trip",
+      "lat": 6.5244,
+      "lng": 3.3792,
+      "trip": "Lagos → Ibadan",
+      "eta": "09:45 AM",
+      "speed": 87
+    },
+    {
+      "id": "v2",
+      "plate": "KJA 008 MN",
+      "driver": "Chidi Okafor",
+      "status": "idle",
+      "lat": 6.5944,
+      "lng": 3.3492,
+      "trip": null,
+      "eta": null,
+      "speed": 0
+    },
+    {
+      "id": "v3",
+      "plate": "ABJ 445 EF",
+      "driver": "Funke Adeleke",
+      "status": "idle",
+      "lat": 6.4844,
+      "lng": 3.4192,
+      "trip": null,
+      "eta": null,
+      "speed": 0
+    }
   ],
   "aiAssistantSuggestions": [
     "How much did I make last month on the Lagos–Ibadan route?",
@@ -298,23 +668,125 @@
     "When is my next payout due?"
   ],
   "locations": [
-    { "id": "lg", "name": "Lagos", "state": "Lagos", "lat": 6.5244, "lng": 3.3792 },
-    { "id": "ib", "name": "Ibadan", "state": "Oyo", "lat": 7.3869, "lng": 3.8969 },
-    { "id": "ab", "name": "Abuja", "state": "Federal Capital Territory", "lat": 9.0765, "lng": 7.3986 },
-    { "id": "bc", "name": "Benin City", "state": "Edo", "lat": 6.4969, "lng": 5.6289 },
-    { "id": "kn", "name": "Kano", "state": "Kano", "lat": 12.0022, "lng": 8.6753 },
-    { "id": "kt", "name": "Katsina", "state": "Katsina", "lat": 13.1339, "lng": 7.6299 },
-    { "id": "en", "name": "Enugu", "state": "Enugu", "lat": 6.4373, "lng": 7.5105 },
-    { "id": "ow", "name": "Owerri", "state": "Imo", "lat": 5.4833, "lng": 7.0333 },
-    { "id": "cb", "name": "Calabar", "state": "Cross River", "lat": 4.9500, "lng": 8.3833 },
-    { "id": "uy", "name": "Uyo", "state": "Akwa Ibom", "lat": 5.0379, "lng": 7.9113 },
-    { "id": "ak", "name": "Akure", "state": "Ondo", "lat": 7.2571, "lng": 5.1939 },
-    { "id": "il", "name": "Ilorin", "state": "Kwara", "lat": 8.4957, "lng": 4.5419 },
-    { "id": "os", "name": "Osogbo", "state": "Osun", "lat": 7.7667, "lng": 4.5500 },
-    { "id": "ab2", "name": "Abeokuta", "state": "Ogun", "lat": 6.7033, "lng": 3.3373 },
-    { "id": "md", "name": "Maiduguri", "state": "Borno", "lat": 11.8469, "lng": 13.1572 },
-    { "id": "gz", "name": "Gusau", "state": "Zamfara", "lat": 12.1667, "lng": 6.6667 },
-    { "id": "sk", "name": "Sokoto", "state": "Sokoto", "lat": 13.5116, "lng": 5.2411 }
+    {
+      "id": "lg",
+      "name": "Lagos",
+      "state": "Lagos",
+      "lat": 6.5244,
+      "lng": 3.3792
+    },
+    {
+      "id": "ib",
+      "name": "Ibadan",
+      "state": "Oyo",
+      "lat": 7.3869,
+      "lng": 3.8969
+    },
+    {
+      "id": "ab",
+      "name": "Abuja",
+      "state": "Federal Capital Territory",
+      "lat": 9.0765,
+      "lng": 7.3986
+    },
+    {
+      "id": "bc",
+      "name": "Benin City",
+      "state": "Edo",
+      "lat": 6.4969,
+      "lng": 5.6289
+    },
+    {
+      "id": "kn",
+      "name": "Kano",
+      "state": "Kano",
+      "lat": 12.0022,
+      "lng": 8.6753
+    },
+    {
+      "id": "kt",
+      "name": "Katsina",
+      "state": "Katsina",
+      "lat": 13.1339,
+      "lng": 7.6299
+    },
+    {
+      "id": "en",
+      "name": "Enugu",
+      "state": "Enugu",
+      "lat": 6.4373,
+      "lng": 7.5105
+    },
+    {
+      "id": "ow",
+      "name": "Owerri",
+      "state": "Imo",
+      "lat": 5.4833,
+      "lng": 7.0333
+    },
+    {
+      "id": "cb",
+      "name": "Calabar",
+      "state": "Cross River",
+      "lat": 4.95,
+      "lng": 8.3833
+    },
+    {
+      "id": "uy",
+      "name": "Uyo",
+      "state": "Akwa Ibom",
+      "lat": 5.0379,
+      "lng": 7.9113
+    },
+    {
+      "id": "ak",
+      "name": "Akure",
+      "state": "Ondo",
+      "lat": 7.2571,
+      "lng": 5.1939
+    },
+    {
+      "id": "il",
+      "name": "Ilorin",
+      "state": "Kwara",
+      "lat": 8.4957,
+      "lng": 4.5419
+    },
+    {
+      "id": "os",
+      "name": "Osogbo",
+      "state": "Osun",
+      "lat": 7.7667,
+      "lng": 4.55
+    },
+    {
+      "id": "ab2",
+      "name": "Abeokuta",
+      "state": "Ogun",
+      "lat": 6.7033,
+      "lng": 3.3373
+    },
+    {
+      "id": "md",
+      "name": "Maiduguri",
+      "state": "Borno",
+      "lat": 11.8469,
+      "lng": 13.1572
+    },
+    {
+      "id": "gz",
+      "name": "Gusau",
+      "state": "Zamfara",
+      "lat": 12.1667,
+      "lng": 6.6667
+    },
+    {
+      "id": "sk",
+      "name": "Sokoto",
+      "state": "Sokoto",
+      "lat": 13.5116,
+      "lng": 5.2411
+    }
   ],
   "missingFeatures": {
     "alerts": [

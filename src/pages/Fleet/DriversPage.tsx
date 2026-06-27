@@ -152,7 +152,15 @@ export function DriversPage() {
                       </div>
                     </div>
                   </div>
-                  <StatusPill status={driver.status} size="sm" className="!text-white font-bold" />
+                  <span
+                    className={clsx(
+                      "font-black uppercase tracking-wider font-sans",
+                      driver.status === 'verified' ? 'text-emerald-400' : driver.status === 'pending' ? 'text-amber-400' : 'text-neutral-300'
+                    )}
+                    style={{ fontSize: '12px', lineHeight: '1.2' }}
+                  >
+                    {driver.status}
+                  </span>
                 </div>
 
                 {/* Body */}

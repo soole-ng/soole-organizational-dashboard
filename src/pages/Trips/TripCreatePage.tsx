@@ -152,18 +152,33 @@ export function TripCreatePage() {
             </div>
 
             {showCalc && (
-              <div className="mt-3 p-3 bg-primary-75 rounded-xl">
-                <p className="text-[11px] text-neutral-200 mb-2 font-medium">Estimated Earnings</p>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-neutral-200">Fare per seat</span>
-                  <span className="font-semibold text-primary-500 stat-number">{formatMoney(form.fare)}</span>
+              <div className="mt-3 p-4 bg-white border border-neutral-100 rounded-xl shadow-sm">
+                <p className="text-xs font-bold text-black mb-2">Estimated Earnings & Commission</p>
+                <div className="flex justify-between items-center text-xs py-1">
+                  <span className="text-neutral-300">Fare per seat</span>
+                  <span className="font-semibold text-black stat-number">{formatMoney(form.fare)}</span>
                 </div>
-                <div className="flex justify-between items-center text-xs mt-1.5 border-t border-primary-100 pt-1.5">
-                  <span className="text-neutral-200">Total potential payout (if full)</span>
-                  <span className="font-bold text-secondary-300 stat-number">
+                <div className="flex justify-between items-center text-xs py-1 border-t border-neutral-50 mt-1">
+                  <span className="text-neutral-300">Total potential gross (if full)</span>
+                  <span className="font-bold text-black stat-number">
                     {formatMoney(form.fare * (selectedVehicle?.capacity || 14))}
                   </span>
                 </div>
+                <div className="flex justify-between items-center text-xs py-1 text-danger">
+                  <span className="text-neutral-300">Soole Commission (8%)</span>
+                  <span className="font-semibold stat-number">
+                    -{formatMoney(form.fare * (selectedVehicle?.capacity || 14) * 0.08)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs py-1.5 border-t border-neutral-100 mt-1">
+                  <span className="font-semibold text-black">Net Payout to bank</span>
+                  <span className="font-black text-primary-500 stat-number">
+                    {formatMoney(form.fare * (selectedVehicle?.capacity || 14) * 0.92)}
+                  </span>
+                </div>
+                <p className="text-[10px] text-neutral-200 mt-2 leading-tight">
+                  * A standard 8% commission is applied to the gross earnings. Net payout is settled immediately to your linked bank account after the trip completes.
+                </p>
               </div>
             )}
           </div>
@@ -184,12 +199,6 @@ export function TripCreatePage() {
                 Publishing…
               </>
             ) : 'Publish Trip'}
-          </button>
-          <button
-            onClick={() => toast('Trip saved as draft')}
-            className="btn-secondary w-full"
-          >
-            Save as Draft
           </button>
         </div>
       </div>

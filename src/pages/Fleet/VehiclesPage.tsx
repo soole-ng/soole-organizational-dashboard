@@ -115,7 +115,15 @@ export function VehiclesPage() {
                         <p className="text-[10px] !text-white/80">{vehicle.model} · {vehicle.year} · {vehicle.capacity} seats</p>
                       </div>
                     </div>
-                    <StatusPill status={vehicle.status} size="sm" className="!text-white font-bold" />
+                    <span
+                      className={clsx(
+                        "font-black uppercase tracking-wider font-sans",
+                        vehicle.status === 'verified' ? 'text-emerald-400' : vehicle.status === 'pending' ? 'text-amber-400' : 'text-neutral-300'
+                      )}
+                      style={{ fontSize: '12px', lineHeight: '1.2' }}
+                    >
+                      {vehicle.status}
+                    </span>
                   </div>
 
                   {/* Card body */}

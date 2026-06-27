@@ -129,15 +129,8 @@ export function AIChatPage() {
       <TopBar title="AI Assistant" backHref="/" />
 
       {/* ── Chat sub-header: title + history icon ── */}
-      <div className="hidden lg:flex items-center justify-between px-6 py-3 border-b border-neutral-100 bg-white flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-primary-500 rounded-xl flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-accent" />
-          </div>
-          <span className="text-sm font-bold text-black">AI Assistant</span>
-        </div>
-
-        {/* History icon button — right side, opens dropdown */}
+      <div className="hidden lg:flex items-center gap-4 px-6 py-3 border-b border-neutral-100 bg-white flex-shrink-0">
+        {/* History icon button — left side, directly next to sidebar */}
         <div className="relative" ref={historyRef}>
           <button
             onClick={() => setShowHistory(v => !v)}
@@ -155,7 +148,7 @@ export function AIChatPage() {
 
           {/* Dropdown panel */}
           {showHistory && (
-            <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-float border border-neutral-100 z-50 overflow-hidden">
+            <div className="absolute left-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-float border border-neutral-100 z-50 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
                 <p className="text-sm font-bold text-black">Chat History</p>
                 <button
@@ -196,6 +189,13 @@ export function AIChatPage() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-primary-500 rounded-xl flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-accent" />
+          </div>
+          <span className="text-sm font-bold text-black">AI Assistant</span>
         </div>
       </div>
 
@@ -259,13 +259,11 @@ export function AIChatPage() {
                     </div>
                   )}
                   <div className={clsx(
-                    'max-w-[78%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
-                    msg.type === 'user'
-                      ? 'bg-primary-500 text-white rounded-br-sm'
-                      : 'bg-white text-primary-500 rounded-bl-sm border border-neutral-100 shadow-card'
+                    'max-w-[78%] px-4 py-3 rounded-2xl text-sm leading-relaxed border border-neutral-100 shadow-card bg-white text-black',
+                    msg.type === 'user' ? 'rounded-br-sm' : 'rounded-bl-sm'
                   )}>
-                    <p>{msg.text}</p>
-                    <p className={clsx('text-[10px] mt-1.5', msg.type === 'user' ? 'text-white/50 text-right' : 'text-neutral-200')}>
+                    <p className="!text-black">{msg.text}</p>
+                    <p className="text-[10px] mt-1.5 text-neutral-200">
                       {msg.timestamp}
                     </p>
                   </div>

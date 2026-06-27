@@ -51,7 +51,18 @@ export function TripCard({ trip, compact }: TripCardProps) {
               </div>
             </div>
           </div>
-          <StatusPill status={trip.status} size="sm" />
+          <span
+            className={clsx(
+              "font-black uppercase tracking-wider font-sans",
+              trip.status === 'completed' && 'text-emerald-500',
+              trip.status === 'boarding' && 'text-amber-500',
+              trip.status === 'scheduled' && 'text-blue-500',
+              !['completed', 'boarding', 'scheduled'].includes(trip.status) && 'text-neutral-400'
+            )}
+            style={{ fontSize: '12px', lineHeight: '1.2' }}
+          >
+            {trip.status === 'in_progress' ? 'In Progress' : trip.status}
+          </span>
         </div>
 
         {/* Departure time + seats */}

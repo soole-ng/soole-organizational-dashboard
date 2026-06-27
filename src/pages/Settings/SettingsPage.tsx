@@ -72,7 +72,7 @@ export function SettingsPage() {
                 
                 {/* Accordion Content */}
                 {isOpen && !to && (
-                  <div className="px-5 pb-5 pt-2 bg-primary-75/10">
+                  <div className="px-5 pb-5 pt-4 bg-white border-t border-neutral-100/50">
                     
                     {label === 'Business Profile' && (
                       <div className="space-y-4 max-w-2xl">
@@ -185,18 +185,18 @@ export function SettingsPage() {
                       <div className="space-y-6 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
                         {/* Speed Limit */}
                         <div>
-                          <label className="text-xs font-bold text-black block mb-1.5 uppercase tracking-wider">Maximum Fleet Speed Limit (km/h)</label>
+                          <label className="text-xs font-bold text-black block mb-1.5 uppercase tracking-wider">Fleet Speed Limit (km/h)</label>
                           <div className="flex items-center gap-3">
                             <input
-                              type="range"
-                              min={60} max={120} step={10}
+                              type="number"
+                              className="input-field bg-white text-black font-semibold border border-neutral-200 focus:border-primary-500 w-32"
                               value={speedLimit}
                               onChange={e => setSpeedLimit(Number(e.target.value))}
-                              className="flex-1 accent-primary-500 h-1.5 bg-primary-100 rounded-lg appearance-none cursor-pointer"
+                              placeholder="e.g. 100"
                             />
-                            <span className="text-sm font-black text-black stat-number w-16 text-right">{speedLimit} <span className="text-[10px] text-black font-bold">km/h</span></span>
+                            <span className="text-sm font-black text-black">km/h</span>
                           </div>
-                          <p className="text-[11px] text-black mt-2">Nigeria federal highway limit is 100 km/h. Alerts will be generated if vehicles exceed this limit.</p>
+                          <p className="text-[11px] text-black mt-2">Set your custom speed limit for the fleet. Alerts will be generated if vehicles exceed this limit.</p>
                         </div>
 
                         <hr className="border-neutral-100" />
@@ -235,25 +235,37 @@ export function SettingsPage() {
 
                     {label === 'Notifications' && (
                       <div className="space-y-2 max-w-2xl bg-white p-2 rounded-2xl border border-primary-100">
-                        {(Object.keys(alertChannels) as Array<keyof typeof alertChannels>).map(channel => (
-                          <label key={channel} className="flex items-center justify-between p-3 hover:bg-primary-75 rounded-xl transition-colors cursor-pointer">
-                            <span className="text-sm font-medium text-primary-500 capitalize">{channel === 'sms' ? 'SMS Text Messages' : channel.charAt(0).toUpperCase() + channel.slice(1) + ' Notifications'}</span>
-                            <button
-                              onClick={() => setAlertChannels(p => ({ ...p, [channel]: !p[channel] }))}
+                        {(Object.keys(alertChannels) as Array<keyof typeof alertChannels>).map(channel => {
+                          const isEmail = channel === 'email'
+                          return (
+                            <label
+                              key={channel}
                               className={clsx(
-                                'w-10 h-6 rounded-full transition-colors relative',
-                                alertChannels[channel] ? 'bg-secondary-300' : 'bg-neutral-50',
+                                'flex items-center justify-between p-3 rounded-xl transition-colors',
+                                isEmail ? 'opacity-40 cursor-not-allowed bg-neutral-50/50' : 'hover:bg-primary-75 cursor-pointer'
                               )}
-                              role="switch"
-                              aria-checked={alertChannels[channel]}
                             >
-                              <span className={clsx(
-                                'w-4 h-4 bg-white rounded-full absolute top-1 transition-transform shadow',
-                                alertChannels[channel] ? 'translate-x-5' : 'translate-x-1',
-                              )} />
-                            </button>
-                          </label>
-                        ))}
+                              <span className="text-sm font-medium text-primary-500 capitalize">
+                                {channel === 'sms' ? 'SMS Text Messages' : channel.charAt(0).toUpperCase() + channel.slice(1) + ' Notifications'}
+                              </span>
+                              <button
+                                disabled={isEmail}
+                                onClick={() => setAlertChannels(p => ({ ...p, [channel]: !p[channel] }))}
+                                className={clsx(
+                                  'w-10 h-6 rounded-full transition-colors relative',
+                                  alertChannels[channel] && !isEmail ? 'bg-secondary-300' : 'bg-neutral-50',
+                                )}
+                                role="switch"
+                                aria-checked={alertChannels[channel]}
+                              >
+                                <span className={clsx(
+                                  'w-4 h-4 bg-white rounded-full absolute top-1 transition-transform shadow',
+                                  alertChannels[channel] && !isEmail ? 'translate-x-5' : 'translate-x-1',
+                                )} />
+                              </button>
+                            </label>
+                          )
+                        })}
                       </div>
                     )}
 

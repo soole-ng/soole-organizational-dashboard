@@ -1,5 +1,4 @@
-import { forwardRef, useEffect, useState } from 'react'
-import { Car, Activity } from 'lucide-react'
+import { forwardRef, useEffect, useState, useRef } from 'react'
 import { clsx } from 'clsx'
 
 type VehicleLoc = {
@@ -25,6 +24,8 @@ interface MapContainerProps {
 export const MapContainer = forwardRef<any, MapContainerProps>(
   ({ basemap, selectedDriver, vehicles, onSelectDriver, markerColor }, ref) => {
     const [mapLoaded, setMapLoaded] = useState(false)
+    const markersRef = useRef<Record<string, any>>({})
+    const popupRef = useRef<any>(null)
 
     useEffect(() => {
       // Load MapLibre GL JS
@@ -62,6 +63,101 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
 
       return () => map.remove()
     }, [mapLoaded, basemap, ref])
+
+    // Effect to synchronise MapLibre native markers
+    useEffect(() => {
+      if (!mapLoaded || !ref || !(ref as any).current) return
+      const map = (ref as any).current
+      const ml = (window as any).maplibregl
+
+      // Clear any outdated markers
+      const currentIds = new Set(vehicles.map(v => v.id))
+      Object.keys(markersRef.current).forEach(id => {
+        if (!currentIds.has(id)) {
+          markersRef.current[id].remove()
+          delete markersRef.current[id]
+        }
+      })
+
+      // Add/update markers
+      vehicles.forEach(vehicle => {
+        const isSelected = selectedDriver?.id === vehicle.id
+        let marker = markersRef.current[vehicle.id]
+
+        if (!marker) {
+          const el = document.createElement('div')
+          el.className = 'custom-map-marker cursor-pointer'
+          el.innerHTML = `
+            <div class="w-8 h-8 rounded-full border-2 flex items-center justify-center shadow relative transition-all" style="background: ${markerColor(vehicle.status)}; border-color: #A7C957">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+            </div>
+          `
+          el.addEventListener('click', () => {
+            onSelectDriver(vehicle)
+          })
+
+          marker = new ml.Marker({ element: el })
+            .setLngLat([vehicle.lng, vehicle.lat])
+            .addTo(map)
+
+          markersRef.current[vehicle.id] = marker
+        } else {
+          marker.setLngLat([vehicle.lng, vehicle.lat])
+          const markerEl = marker.getElement()
+          const innerEl = markerEl.querySelector('div')
+          if (innerEl) {
+            innerEl.style.background = markerColor(vehicle.status)
+            if (isSelected) {
+              innerEl.style.boxShadow = '0 0 0 4px rgba(167, 201, 87, 0.6)'
+            } else {
+              innerEl.style.boxShadow = ''
+            }
+          }
+        }
+      })
+
+      // Update popup
+      if (popupRef.current) {
+        popupRef.current.remove()
+        popupRef.current = null
+      }
+
+      if (selectedDriver) {
+        const vehicle = vehicles.find(v => v.id === selectedDriver.id) || selectedDriver
+        const popupDiv = document.createElement('div')
+        popupDiv.className = 'p-3 bg-white text-black rounded-xl min-w-[200px] shadow-lg border border-neutral-100'
+        popupDiv.innerHTML = `
+          <p class="text-sm font-bold text-black">${vehicle.plate}</p>
+          <p class="text-xs text-neutral-400 font-medium">${vehicle.driver}</p>
+          <div class="mt-2 pt-2 border-t border-neutral-100 text-xs space-y-1">
+            <p class="flex items-center gap-1.5 font-bold text-primary-500">
+              <span class="w-2 h-2 rounded-full bg-secondary-300"></span>
+              ${vehicle.trip ?? 'Idle'}
+            </p>
+            ${vehicle.eta ? `<p class="text-neutral-500 font-medium">ETA: ${vehicle.eta}</p>` : ''}
+            <p class="text-neutral-500 font-bold">${vehicle.speed} km/h</p>
+          </div>
+        `
+
+        popupRef.current = new ml.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          className: 'custom-map-popup',
+          offset: [0, -15]
+        })
+          .setLngLat([vehicle.lng, vehicle.lat])
+          .setDOMContent(popupDiv)
+          .addTo(map)
+      }
+    }, [mapLoaded, vehicles, selectedDriver])
+
+    // Cleanup markers and popup on unmount
+    useEffect(() => {
+      return () => {
+        Object.values(markersRef.current).forEach(m => m.remove())
+        if (popupRef.current) popupRef.current.remove()
+      }
+    }, [])
 
     const getMapStyle = (style: string) => {
       const styles: Record<string, any> = {
@@ -164,49 +260,6 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
             </div>
           </div>
         )}
-
-        {/* Vehicle Markers Overlay */}
-        {mapLoaded && vehicles.map(vehicle => (
-          <div
-            key={vehicle.id}
-            className="absolute z-30 transform -translate-x-1/2 -translate-y-1/2"
-            style={{
-              left: `${((vehicle.lng + 180) / 360) * 100}%`,
-              top: `${((90 - vehicle.lat) / 180) * 100}%`,
-            }}
-          >
-            <button
-              onClick={() => onSelectDriver(vehicle)}
-              className={clsx(
-                'w-8 h-8 rounded-full border-2 flex items-center justify-center cursor-pointer shadow-float transition-all hover:scale-110 relative',
-                selectedDriver?.id === vehicle.id && 'ring-2 ring-accent-300 ring-offset-2',
-              )}
-              style={{
-                background: markerColor(vehicle.status),
-                borderColor: selectedDriver?.id === vehicle.id ? '#A7C957' : '#A7C957',
-              }}
-              title={vehicle.plate}
-            >
-              <Car className="w-4.5 h-4.5 text-white" strokeWidth={2} />
-            </button>
-
-            {/* Popup when selected */}
-            {selectedDriver?.id === vehicle.id && (
-              <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 bg-primary-500 text-white rounded-xl p-3 min-w-48 shadow-float border border-primary-400 whitespace-nowrap">
-                <p className="text-sm font-bold">{vehicle.plate}</p>
-                <p className="text-xs text-primary-200">{vehicle.driver}</p>
-                <div className="mt-2 pt-2 border-t border-primary-400 text-xs space-y-0.5">
-                  <p className="flex items-center gap-1.5">
-                    <Activity className="w-3 h-3 text-accent-300" />
-                    {vehicle.trip ?? 'Idle'}
-                  </p>
-                  {vehicle.eta && <p className="text-primary-200">ETA: {vehicle.eta}</p>}
-                  <p className="text-primary-200">{vehicle.speed} km/h</p>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
       </div>
     )
   }

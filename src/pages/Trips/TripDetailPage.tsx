@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useOutletContext } from 'react-router-dom'
-import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle } from 'lucide-react'
+import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle, Droplets } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { ManifestList } from './components/ManifestList'
@@ -166,6 +166,7 @@ export function TripDetailPage() {
 
   const isLive = trip.status === 'boarding' || trip.status === 'in_progress'
   const isScheduled = trip.status === 'scheduled'
+  const isCompleted = trip.status === 'completed'
 
   const passengers = mockPassengers(trip.id)
   const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
@@ -251,6 +252,31 @@ export function TripDetailPage() {
                 <span className="font-bold text-secondary-300 text-sm stat-number">NGN {trip.grossRevenue.toLocaleString()}</span>
               </div>
             </div>
+
+            {/* Completed trip summary stats — only for completed trips */}
+            {isCompleted && (() => {
+              const avgSpeed = calcAvgSpeed(distanceKm, durationMinutes)
+              const estFuelL = Math.round((distanceKm / 100) * 10) // ~10L per 100km for a bus
+              const completedStats = [
+                { icon: Navigation, label: 'Distance Covered', value: `${distanceKm} km`, color: 'text-secondary-300' },
+                { icon: Gauge,      label: 'Avg Speed',        value: `${avgSpeed} km/h`,  color: 'text-primary-400' },
+                { icon: Droplets,   label: 'Est. Fuel Used',   value: `${estFuelL} L`,     color: 'text-blue-400' },
+              ]
+              return (
+                <div className="bg-white rounded-xl border border-neutral-100 p-4">
+                  <p className="text-xs font-bold text-black uppercase tracking-wider mb-3">Trip Summary</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {completedStats.map(({ icon: Icon, label, value, color }) => (
+                      <div key={label} className="flex flex-col items-center text-center gap-1 bg-neutral-50 rounded-xl p-3">
+                        <Icon className={`w-4 h-4 ${color}`} />
+                        <p className="text-sm font-black text-black stat-number leading-tight">{value}</p>
+                        <p className="text-[10px] text-neutral-200 leading-none">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Live tracker — only when in_progress / boarding */}
             {isLive && (

@@ -91,8 +91,8 @@ export function AppShell() {
             <Outlet context={{ notifications, setNotifications }} />
           </div>
         ) : (
-          // All other pages: 20% padding left/right on desktop, full width within that
-          <div className="flex-1 pb-24 lg:pb-0 w-full lg:px-[20%]">
+          // All other pages: 5% padding left/right on desktop to give 20% more horizontal screen space
+          <div className="flex-1 pb-24 lg:pb-0 w-full lg:px-[5%]">
             <Outlet context={{ notifications, setNotifications }} />
           </div>
         )}

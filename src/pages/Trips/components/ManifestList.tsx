@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import { Phone, CheckCircle2, RefreshCw } from 'lucide-react'
+import { Phone, CheckCircle2, RefreshCw, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
 import type { Passenger } from '../../../types'
 import { formatTime } from '../../../lib/formatters'
+import { requestRefund } from '../../../lib/refundApi'
 import toast from 'react-hot-toast'
 
 interface ManifestListProps {
   passengers: Passenger[]
   /** The parent trip status — drives what actions are available */
   tripStatus: string
+  /** Trip ID — sent to backend on refund request */
+  tripId: string
 }
 
 /**
@@ -40,7 +43,7 @@ function getPortrait(name: string, index: number): string {
   return pool[index % pool.length]
 }
 
-export function ManifestList({ passengers: initial, tripStatus }: ManifestListProps) {
+export function ManifestList({ passengers: initial, tripStatus, tripId }: ManifestListProps) {
   // Filter out pending-payment passengers — they don't appear in the manifest
   const [passengers, setPassengers] = useState(
     initial.filter(p => p.paymentStatus !== 'pending')
@@ -62,15 +65,29 @@ export function ManifestList({ passengers: initial, tripStatus }: ManifestListPr
     if (pass) toast.success(`${pass.name} marked as boarded`)
   }
 
-  const processRefund = (id: string) => {
-    setPassengers(p =>
-      p.map(pass => pass.id === id
-        ? { ...pass, paymentStatus: 'refunded' as const }
-        : pass,
-      ),
-    )
+  const [refunding, setRefunding] = useState<string | null>(null)
+
+  const processRefund = async (id: string) => {
     const pass = passengers.find(p => p.id === id)
-    if (pass) toast.success(`Refund initiated for ${pass.name}`)
+    if (!pass) return
+    setRefunding(id)
+    try {
+      await requestRefund({
+        tripId,
+        passengerId: pass.id,
+        passengerName: pass.name,
+        amount: pass.fare ?? 0,
+        reason: 'Did not board — refund requested by operator',
+      })
+      setPassengers(p =>
+        p.map(pa => pa.id === id ? { ...pa, paymentStatus: 'refunded' as const } : pa)
+      )
+      toast.success(`Refund initiated for ${pass.name}`)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Refund request failed. Please try again.')
+    } finally {
+      setRefunding(null)
+    }
   }
 
   const boarded = passengers.filter(p => p.boardingStatus === 'boarded').length
@@ -90,7 +107,7 @@ export function ManifestList({ passengers: initial, tripStatus }: ManifestListPr
       {/* Contextual status note */}
       {isScheduled && (
         <p className="text-sm text-neutral-200 mb-3 px-0.5">
-          Passengers on a scheduled trip can only pay. Boarding opens when the trip status changes to <span className="font-semibold text-primary-400">In Progress</span>.
+          Passengers on a scheduled trip can only pay. Boarding opens once the driver starts the trip.
         </p>
       )}
       {isBoarding && (
@@ -162,11 +179,15 @@ export function ManifestList({ passengers: initial, tripStatus }: ManifestListPr
                 ) : canRefund ? (
                   <button
                     onClick={() => processRefund(pass.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-200 text-orange-500 text-sm font-semibold hover:bg-orange-100 transition-colors"
+                    disabled={refunding === pass.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-200 text-orange-500 text-sm font-semibold hover:bg-orange-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     aria-label={`Process refund for ${pass.name}`}
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    Refund
+                    {refunding === pass.id
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <RefreshCw className="w-3.5 h-3.5" />
+                    }
+                    {refunding === pass.id ? 'Sending…' : 'Refund'}
                   </button>
                 ) : isBoarding ? (
                   <button

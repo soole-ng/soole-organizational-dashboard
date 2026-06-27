@@ -206,82 +206,91 @@ export function TripDetailPage() {
       <TopBar title={trip.routeName} backHref="/trips" />
 
       <div className="flex-1 p-4 space-y-4 lg:pt-8 lg:px-8 w-full">
-        {/* Trip info card */}
-        <div className="card">
-          <div className="flex items-start justify-between gap-2 mb-4">
-            <div>
-              <h2 className="text-base font-bold text-primary-500">{trip.routeName}</h2>
-              <p className="text-xs text-neutral-200 mt-0.5">
-                {formatDate(trip.departureAt)} · {formatTime(trip.departureAt)}
-              </p>
-              <p className="text-[10px] text-neutral-200 mt-0.5">
-                {distanceKm} km · ~{Math.floor(durationMinutes / 60)}h {durationMinutes % 60}m route
-              </p>
-            </div>
-            <StatusPill status={trip.status} />
-          </div>
+        {/* Side-by-side layout on desktop, stacked on mobile */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-6 space-y-4 lg:space-y-0">
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-white rounded-xl p-3 border border-neutral-100">
-              <div className="flex items-center gap-1.5 text-xs text-neutral-200 mb-1">
-                <Bus className="w-3.5 h-3.5" /> Vehicle
+          {/* LEFT — Trip info + tracker + actions */}
+          <div className="space-y-4">
+            {/* Trip info card */}
+            <div className="card">
+              <div className="flex items-start justify-between gap-2 mb-4">
+                <div>
+                  <h2 className="text-base font-bold text-primary-500">{trip.routeName}</h2>
+                  <p className="text-xs text-neutral-200 mt-0.5">
+                    {formatDate(trip.departureAt)} · {formatTime(trip.departureAt)}
+                  </p>
+                  <p className="text-[10px] text-neutral-200 mt-0.5">
+                    {distanceKm} km · ~{Math.floor(durationMinutes / 60)}h {durationMinutes % 60}m route
+                  </p>
+                </div>
+                <StatusPill status={trip.status} />
               </div>
-              <p className="text-sm font-semibold text-primary-500">{trip.vehiclePlate}</p>
-            </div>
-            <div className="bg-white rounded-xl p-3 border border-neutral-100">
-              <div className="flex items-center gap-1.5 text-xs text-neutral-200 mb-1">
-                <User className="w-3.5 h-3.5" /> Driver
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="bg-white rounded-xl p-3 border border-neutral-100">
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-200 mb-1">
+                    <Bus className="w-3.5 h-3.5" /> Vehicle
+                  </div>
+                  <p className="text-sm font-semibold text-primary-500">{trip.vehiclePlate}</p>
+                </div>
+                <div className="bg-white rounded-xl p-3 border border-neutral-100">
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-200 mb-1">
+                    <User className="w-3.5 h-3.5" /> Driver
+                  </div>
+                  <p className="text-sm font-semibold text-primary-500 truncate">{trip.driverName}</p>
+                </div>
               </div>
-              <p className="text-sm font-semibold text-primary-500 truncate">{trip.driverName}</p>
+
+              <div className="text-center py-4 border-y border-neutral-100 mb-4">
+                <p className="text-5xl font-bold text-primary-500 stat-number">{paidPassengers.length}</p>
+                <p className="text-sm text-neutral-200 mt-1">of {trip.capacity} seats booked</p>
+              </div>
+
+              <div className="flex justify-between items-center text-xs mt-2 px-2">
+                <span className="text-neutral-200">Total Est. Revenue</span>
+                <span className="font-bold text-secondary-300 text-sm stat-number">NGN {trip.grossRevenue.toLocaleString()}</span>
+              </div>
             </div>
+
+            {/* Live tracker — only when in_progress / boarding */}
+            {isLive && (
+              <LiveTracker
+                trip={trip}
+                distanceKm={distanceKm}
+                durationMinutes={durationMinutes}
+                vehiclePlate={trip.vehiclePlate}
+                driverName={trip.driverName}
+                onSpeedViolation={handleSpeedViolation}
+              />
+            )}
+
+            {/* Action buttons — context-aware per status */}
+            {actions.length > 0 && (
+              <div className={clsx('grid gap-2', `grid-cols-${actions.length}`)}>
+                {actions.map(({ icon: Icon, label, action, danger }) => (
+                  <button
+                    key={label}
+                    onClick={action}
+                    className={clsx(
+                      'flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-xs font-medium transition-colors',
+                      danger
+                        ? 'text-danger-300 bg-white border-neutral-100 hover:bg-danger-50'
+                        : 'text-primary-400 bg-white border-neutral-100 hover:bg-primary-75',
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="text-center py-4 border-y border-neutral-100 mb-4">
-            <p className="text-5xl font-bold text-primary-500 stat-number">{paidPassengers.length}</p>
-            <p className="text-sm text-neutral-200 mt-1">of {trip.capacity} seats booked</p>
+          {/* RIGHT — Passengers manifest */}
+          <div className="card h-fit">
+            <ManifestList passengers={passengers} tripStatus={trip.status} tripId={trip.id} />
           </div>
 
-          <div className="flex justify-between items-center text-xs mt-2 px-2">
-            <span className="text-neutral-200">Total Est. Revenue</span>
-            <span className="font-bold text-secondary-300 text-sm stat-number">NGN {trip.grossRevenue.toLocaleString()}</span>
-          </div>
-        </div>
-
-        {/* Live tracker — only when boarding or in_progress */}
-        {isLive && (
-          <LiveTracker
-            trip={trip}
-            distanceKm={distanceKm}
-            durationMinutes={durationMinutes}
-            vehiclePlate={trip.vehiclePlate}
-            driverName={trip.driverName}
-            onSpeedViolation={handleSpeedViolation}
-          />
-        )}
-
-        {/* Action buttons — context-aware per status */}
-        {actions.length > 0 && (
-          <div className={clsx('grid gap-2', `grid-cols-${actions.length}`)}>
-            {actions.map(({ icon: Icon, label, action, danger }) => (
-              <button
-                key={label}
-                onClick={action}
-                className={clsx(
-                  'flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-xs font-medium transition-colors',
-                  danger
-                    ? 'text-danger-300 bg-white border-neutral-100 hover:bg-danger-50'
-                    : 'text-primary-400 bg-white border-neutral-100 hover:bg-primary-75',
-                )}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="card">
-          <ManifestList passengers={passengers} tripStatus={trip.status} />
         </div>
       </div>
     </div>

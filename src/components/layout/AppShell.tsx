@@ -81,12 +81,6 @@ export function AppShell() {
           isFullscreen ? 'overflow-hidden h-screen' : 'min-h-screen overflow-y-auto overflow-x-hidden'
         }`}
       >
-        {/* Mobile TopBar — hidden on desktop */}
-        <TopBar
-          unreadCount={unreadCount}
-          onOpenNotifications={handleOpenDrawer}
-        />
-
         {isFullscreen ? (
           // Live Map: full-bleed, no padding, no max-width constraint
           <div className="flex-1 w-full overflow-hidden">

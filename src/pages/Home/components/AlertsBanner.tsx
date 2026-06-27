@@ -59,22 +59,23 @@ function AlertItem({ alert, onDismiss }: { alert: Alert; onDismiss: () => void }
   )
 }
 
-export function AlertsBanner() {
-  const { data, loading } = useMockData()
-  const [dismissed, setDismissed] = useState<string[]>([])
+interface AlertsBannerProps {
+  notifications: any[]
+  setNotifications: (notifs: any[]) => void
+}
 
-  if (loading) {
-    return (
-      <div className="px-4 space-y-2">
-        {[1, 2].map(i => (
-          <div key={i} className="skeleton h-16 rounded-2xl" />
-        ))}
-      </div>
-    )
-  }
+export function AlertsBanner({ notifications = [], setNotifications }: AlertsBannerProps) {
+  if (!notifications) return null
 
-  const visible = data.alerts.filter(a => !dismissed.includes(a.id))
+  // Only show warning or danger type notifications (as active alerts)
+  const visible = notifications.filter(n => n.type === 'warning' || n.type === 'danger')
   if (visible.length === 0) return null
+
+  const handleDismiss = (id: string) => {
+    if (setNotifications) {
+      setNotifications(notifications.filter(n => n.id !== id))
+    }
+  }
 
   return (
     <div className="px-4 space-y-2">
@@ -85,7 +86,7 @@ export function AlertsBanner() {
         <AlertItem
           key={alert.id}
           alert={alert}
-          onDismiss={() => setDismissed(p => [...p, alert.id])}
+          onDismiss={() => handleDismiss(alert.id)}
         />
       ))}
     </div>

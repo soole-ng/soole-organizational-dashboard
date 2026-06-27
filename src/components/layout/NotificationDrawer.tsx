@@ -24,6 +24,7 @@ interface NotificationDrawerProps {
   onDismiss: (id: string) => void
   onMarkAllRead: () => void
   onMarkRead: (id: string) => void
+  onClearAll: () => void
 }
 
 function timeAgo(dateStr: string): string {
@@ -60,7 +61,7 @@ function NotifItem({ n, onDismiss, onMarkRead }: { n: Notification; onDismiss: (
         <div className="flex items-start justify-between gap-2 mb-0.5">
           <p className="text-sm font-semibold text-primary-500 leading-snug">{n.title}</p>
           {!n.read && (
-            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 bg-[#FF0000] !bg-[#FF0000]" />
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 bg-[#FF0000] !bg-[#FF0000] unread-dot" />
           )}
         </div>
         <p className="text-xs text-neutral-300 leading-relaxed mb-1.5">{n.message}</p>
@@ -97,7 +98,7 @@ function NotifItem({ n, onDismiss, onMarkRead }: { n: Notification; onDismiss: (
 }
 
 export function NotificationDrawer({
-  open, notifications, onClose, onDismiss, onMarkAllRead, onMarkRead,
+  open, notifications, onClose, onDismiss, onMarkAllRead, onMarkRead, onClearAll,
 }: NotificationDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null)
   const unreadCount = notifications.filter(n => !n.read).length
@@ -142,25 +143,37 @@ export function NotificationDrawer({
             <h2 className="text-base font-bold text-primary-500">Notifications</h2>
             <p className="text-xs text-neutral-200">{unreadCount} unread</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={onMarkAllRead}
               disabled={unreadCount === 0}
               className={clsx(
-                'text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors',
+                'text-[10px] font-bold px-2 py-1 rounded-full transition-colors border',
                 unreadCount > 0
-                  ? 'text-secondary-300 hover:text-secondary-400 hover:bg-primary-75'
-                  : 'text-neutral-100 cursor-not-allowed bg-transparent'
+                  ? 'text-secondary-300 border-secondary-100 hover:bg-secondary-50'
+                  : 'text-neutral-200 border-neutral-100 cursor-not-allowed bg-transparent'
               )}
             >
               Read All
             </button>
             <button
+              onClick={onClearAll}
+              disabled={notifications.length === 0}
+              className={clsx(
+                'text-[10px] font-bold px-2 py-1 rounded-full transition-colors border',
+                notifications.length > 0
+                  ? 'text-[#FF5500] border-orange-100 hover:bg-orange-50'
+                  : 'text-neutral-200 border-neutral-100 cursor-not-allowed bg-transparent'
+              )}
+            >
+              Clear All
+            </button>
+            <button
               onClick={onClose}
-              className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-neutral-50 text-primary-400 transition-colors"
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-neutral-50 text-primary-400 transition-colors"
               aria-label="Close notifications"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>

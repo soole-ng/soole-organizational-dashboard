@@ -14,15 +14,6 @@ import { NotificationDrawer, type Notification } from './NotificationDrawer'
 // Mock notification data — will be replaced by API calls
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
-    id: 'n1',
-    type: 'warning',
-    title: 'Low fuel — KJA 008 MN',
-    message: 'Estimated fuel below 25%. Chidi may need to refuel before the Lagos–Abuja trip.',
-    read: false,
-    createdAt: '2026-06-26T05:00:00Z',
-    action: { label: 'View vehicle', href: '/fleet/vehicles' },
-  },
-  {
     id: 'n2',
     type: 'danger',
     title: 'Document pending — Road Worthiness',
@@ -60,6 +51,10 @@ export function AppShell() {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
   }, [])
 
+  const handleClearAll = useCallback(() => {
+    setNotifications([])
+  }, [])
+
   const handleOpenDrawer = useCallback(() => {
     setDrawerOpen(true)
   }, [])
@@ -84,12 +79,12 @@ export function AppShell() {
         {isFullscreen ? (
           // Live Map: full-bleed, no padding, no max-width constraint
           <div className="flex-1 w-full overflow-hidden">
-            <Outlet />
+            <Outlet context={{ notifications, setNotifications }} />
           </div>
         ) : (
           // All other pages: 20% padding left/right on desktop, full width within that
           <div className="flex-1 pb-24 lg:pb-0 w-full lg:px-[20%]">
-            <Outlet />
+            <Outlet context={{ notifications, setNotifications }} />
           </div>
         )}
       </main>
@@ -105,6 +100,7 @@ export function AppShell() {
         onDismiss={handleDismiss}
         onMarkAllRead={handleMarkAllRead}
         onMarkRead={handleMarkRead}
+        onClearAll={handleClearAll}
       />
     </div>
     </OrgProvider>

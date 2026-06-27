@@ -1,13 +1,15 @@
 import { Plus } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router-dom'
 import { TopBar } from '../../components/layout/TopBar'
 import { HeroBand } from './components/HeroBand'
 import { AlertsBanner } from './components/AlertsBanner'
 import { UpcomingTrips } from './components/UpcomingTrips'
 import { QuickStats } from './components/QuickStats'
 import { useOrg } from '../../lib/OrgContext'
+
 export function HomePage() {
   const { org } = useOrg()
+  const { notifications, setNotifications } = useOutletContext<any>()
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -47,7 +49,7 @@ export function HomePage() {
       <div className="flex-1 lg:px-8 w-full">
         <div className="space-y-4 py-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 lg:py-8">
           <div className="lg:col-span-2 space-y-4">
-            <AlertsBanner />
+            <AlertsBanner notifications={notifications} setNotifications={setNotifications} />
             <UpcomingTrips />
           </div>
           <div className="space-y-4">

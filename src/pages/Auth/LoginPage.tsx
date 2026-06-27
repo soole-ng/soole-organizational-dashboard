@@ -149,13 +149,13 @@ export function LoginPage() {
                       <Phone className="w-3.5 h-3.5 text-black" />
                       Phone Number
                     </label>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 items-center">
                       {/* Country code selector */}
                       <div className="relative flex-shrink-0">
                         <button
                           type="button"
                           onClick={() => setShowCC(!showCC)}
-                          className="flex items-center gap-2 h-[56px] px-4 bg-primary-75 border border-neutral-100 rounded-2xl text-sm font-black text-black hover:border-primary-200 transition-colors"
+                          className="flex items-center gap-2 h-[60px] px-4 bg-white border border-neutral-100 rounded-2xl text-sm font-black text-black hover:border-primary-200 transition-colors"
                         >
                           <img src={country.flag} alt={country.name} className="w-6 h-4 object-cover rounded-sm" />
                           <span className="text-sm font-black text-black">{country.code}</span>
@@ -187,7 +187,7 @@ export function LoginPage() {
                         type="tel"
                         value={phone}
                         onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-                        className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-base text-black font-black placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+                        className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 py-0 text-base text-black font-black placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
                         placeholder="08031234567"
                         autoComplete="tel"
                         inputMode="tel"
@@ -214,7 +214,7 @@ export function LoginPage() {
                         type={showPw ? 'text' : 'password'}
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 pr-12 text-base text-black font-black placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+                        className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 py-0 pr-12 text-base text-black font-black placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
                         placeholder="••••••••••••"
                         autoComplete="current-password"
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}

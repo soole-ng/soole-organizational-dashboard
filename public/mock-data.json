@@ -531,11 +531,11 @@
     {
       "id": "a1",
       "type": "warning",
-      "title": "Low fuel estimate — KJA 008 MN",
-      "message": "Estimated fuel level is below 25% on KJA 008 MN. Verify with the driver before the Lagos–Abuja trip.",
+      "title": "Speed limit exceeded — LSD 234 KJ",
+      "message": "Vehicle LSD 234 KJ is travelling at 115 km/h, exceeding the designated fleet speed limit.",
       "action": {
-        "label": "View vehicle",
-        "href": "/fleet/vehicles/v2"
+        "label": "View on map",
+        "href": "/map"
       },
       "createdAt": "2026-06-26T05:00:00Z"
     },
@@ -659,7 +659,7 @@
   ],
   "aiAssistantSuggestions": [
     "How much did I make last month on the Lagos–Ibadan route?",
-    "Which vehicles are low on fuel?",
+    "Are there any speed limit violations?",
     "What's my revenue trend this week?",
     "Show me drivers with the most trips",
     "Which routes are most profitable?",

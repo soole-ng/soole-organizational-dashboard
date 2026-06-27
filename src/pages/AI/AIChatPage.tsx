@@ -249,7 +249,7 @@ export function AIChatPage() {
               </div>
             </div>
           ) : (
-            <div className="p-4 space-y-4 max-w-2xl mx-auto w-full pr-6">
+            <div className="p-4 space-y-4 max-w-2xl mx-auto w-full">
               {messages.map((msg, i) => (
                 <div key={i} className={clsx('flex gap-2', msg.type === 'user' ? 'justify-end' : 'justify-start')}>
                   {msg.type === 'assistant' && (
@@ -292,10 +292,9 @@ export function AIChatPage() {
           )}
         </div>
 
-        {/* ── Input area — centred, ~50% width, right margin maintained ── */}
-        <div className="bg-white px-4 pb-20 lg:pb-6 pt-3 flex justify-center flex-shrink-0 border-t border-neutral-50/50">
-          <div className="w-full max-w-xl lg:pr-6">
-
+        {/* ── Input area — centred ── */}
+        <div className="bg-white px-4 pb-24 lg:pb-6 pt-3 flex justify-center flex-shrink-0 border-t border-neutral-50/50">
+          <div className="w-full max-w-2xl">
             {/* Quick chips when conversation active */}
             {messages.length > 0 && (
               <div className="flex gap-2 overflow-x-auto scrollbar-thin pb-3">

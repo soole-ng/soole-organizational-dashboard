@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { Edit2, Copy, XCircle, Share2, Bus, User, Navigation, Fuel, Clock } from 'lucide-react'
+import { Edit2, Copy, XCircle, Bus, User, Navigation, Clock, Gauge, RefreshCw } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { ManifestList } from './components/ManifestList'
@@ -10,10 +10,14 @@ import { formatDate, formatTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 
-const FUEL_RATE: Record<string, number> = { diesel: 10, petrol: 12 }
+/** Estimate average speed in km/h from total distance and scheduled duration */
+function calcAvgSpeed(distanceKm: number, durationMinutes: number): number {
+  if (!durationMinutes) return 0
+  return Math.round((distanceKm / durationMinutes) * 60)
+}
 
-function LiveTracker({ trip, distanceKm, durationMinutes, fuelType }: {
-  trip: any; distanceKm: number; durationMinutes: number; fuelType: string
+function LiveTracker({ trip, distanceKm, durationMinutes }: {
+  trip: any; distanceKm: number; durationMinutes: number
 }) {
   const baseProgress = trip.status === 'boarding' ? 0.05 : trip.status === 'in_progress' ? 0.42 : 0
   const [progress, setProgress] = useState(baseProgress)
@@ -26,16 +30,21 @@ function LiveTracker({ trip, distanceKm, durationMinutes, fuelType }: {
     return () => clearInterval(timer)
   }, [trip.status])
 
-  const fuelRate = FUEL_RATE[fuelType] ?? 10
   const coveredKm = Math.round(distanceKm * progress)
   const remainingKm = distanceKm - coveredKm
-  const fuelUsed = ((coveredKm * fuelRate) / 100).toFixed(1)
-  const fuelLeft = (((remainingKm) * fuelRate) / 100).toFixed(1)
 
   const dep = new Date(trip.departureAt)
   const etaMs = dep.getTime() + durationMinutes * 60 * 1000
-  const remainingMin = Math.max(0, Math.round((etaMs - Date.now()) / 60000))
   const etaStr = new Date(etaMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const remainingMin = Math.max(0, Math.round((etaMs - Date.now()) / 60000))
+
+  const avgSpeed = calcAvgSpeed(distanceKm, durationMinutes)
+
+  const stats = [
+    { icon: Navigation, label: 'Covered', value: `${coveredKm} km`, color: 'text-secondary-300' },
+    { icon: Navigation, label: 'Remaining', value: `${remainingKm} km`, color: 'text-teal-400' },
+    { icon: Gauge, label: 'Avg Speed', value: `${avgSpeed} km/h`, color: 'text-primary-400' },
+  ]
 
   return (
     <div className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
@@ -51,6 +60,7 @@ function LiveTracker({ trip, distanceKm, durationMinutes, fuelType }: {
       <div>
         <div className="flex justify-between text-[10px] text-black mb-1 font-medium">
           <span>{trip.origin?.split('(')[0].trim() ?? 'Origin'}</span>
+          <span className="text-neutral-200 text-[10px]">{Math.round(progress * 100)}% complete</span>
           <span>{trip.destination?.split('(')[0].trim() ?? 'Destination'}</span>
         </div>
         <div className="h-2 bg-neutral-50 rounded-full overflow-hidden">
@@ -59,33 +69,26 @@ function LiveTracker({ trip, distanceKm, durationMinutes, fuelType }: {
             style={{ width: `${Math.round(progress * 100)}%` }}
           />
         </div>
-        <p className="text-[10px] text-neutral-200 text-center mt-1">
-          {Math.round(progress * 100)}% of {distanceKm} km complete
-        </p>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="bg-white rounded-xl p-3 border border-neutral-100 text-center">
-          <Navigation className="w-4 h-4 text-secondary-300 mx-auto mb-1" />
-          <p className="text-base font-black text-black stat-number">{coveredKm} km</p>
-          <p className="text-[10px] text-neutral-200">covered</p>
+      {/* ETA strip */}
+      <div className="flex items-center justify-between bg-neutral-50 rounded-xl px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <Clock className="w-3.5 h-3.5 text-warning" />
+          <span className="text-xs font-bold text-primary-500">ETA {etaStr}</span>
         </div>
-        <div className="bg-white rounded-xl p-3 border border-neutral-100 text-center">
-          <Navigation className="w-4 h-4 text-teal-300 mx-auto mb-1" />
-          <p className="text-base font-black text-black stat-number">{remainingKm} km</p>
-          <p className="text-[10px] text-neutral-200">remaining</p>
-        </div>
-        <div className="bg-white rounded-xl p-3 border border-neutral-100 text-center">
-          <Clock className="w-4 h-4 text-warning mx-auto mb-1" />
-          <p className="text-base font-black text-black stat-number">{etaStr}</p>
-          <p className="text-[10px] text-neutral-200">ETA · {remainingMin} min left</p>
-        </div>
-        <div className="bg-white rounded-xl p-3 border border-neutral-100 text-center">
-          <Fuel className="w-4 h-4 text-accent-400 mx-auto mb-1" />
-          <p className="text-base font-black text-black stat-number">{fuelUsed} L</p>
-          <p className="text-[10px] text-neutral-200">used · ~{fuelLeft} L left</p>
-        </div>
+        <span className="text-[11px] text-neutral-200">{remainingMin} min remaining</span>
+      </div>
+
+      {/* 3-column stats */}
+      <div className="grid grid-cols-3 gap-2">
+        {stats.map(({ icon: Icon, label, value, color }) => (
+          <div key={label} className="bg-white rounded-xl p-3 border border-neutral-100 flex flex-col items-center text-center gap-1">
+            <Icon className={clsx('w-4 h-4', color)} />
+            <p className="text-sm font-black text-black stat-number leading-tight">{value}</p>
+            <p className="text-[10px] text-neutral-200 leading-none">{label}</p>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -93,30 +96,45 @@ function LiveTracker({ trip, distanceKm, durationMinutes, fuelType }: {
 
 export function TripDetailPage() {
   const { id } = useParams()
-  const { data, loading } = useMockData()
+  const { data } = useMockData()
 
   const trip = data.trips.find((t: any) => t.id === id) ?? data.trips[0]
   const route = data.routes?.find((r: any) => r.id === trip?.routeId)
   const vehicle = data.vehicles?.find((v: any) => v.id === trip?.vehicleId)
 
-  const distanceKm: number = route?.distanceKm ?? 148
-  const durationMinutes: number = route?.durationMinutes ?? 165
-  const fuelType: string = vehicle?.fuelType ?? 'diesel'
-
-  if (loading || !trip) {
+  if (!trip) {
     return (
-      <div className="flex flex-col min-h-screen bg-white animate-pulse">
+      <div className="flex flex-col min-h-screen bg-white">
         <TopBar title="Trip" backHref="/trips" />
-        <div className="flex-1 p-4 space-y-3">
-          <div className="h-48 bg-neutral-50 rounded-xl" />
-          <div className="h-32 bg-neutral-50 rounded-xl" />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-neutral-200">Trip not found.</p>
         </div>
       </div>
     )
   }
 
+  const distanceKm: number = route?.distanceKm ?? 148
+  const durationMinutes: number = route?.durationMinutes ?? 165
+
   const pct = Math.round((trip.bookedSeats / trip.capacity) * 100)
   const isLive = trip.status === 'boarding' || trip.status === 'in_progress'
+  const isScheduled = trip.status === 'scheduled'
+  const isCompleted = trip.status === 'completed'
+
+  const passengers = mockPassengers(trip.id)
+  // Only paid passengers are counted as booked
+  const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
+
+  const handleEdit = () => toast('Edit trip details')
+  const handleDuplicate = () => toast.success('Trip duplicated')
+  const handleCancel = () => toast.error('Cancel this trip?')
+
+  // Build action buttons based on status
+  const actions = [
+    isScheduled && { icon: Edit2, label: 'Edit', action: handleEdit, danger: false },
+    { icon: Copy, label: 'Duplicate', action: handleDuplicate, danger: false },
+    isScheduled && { icon: XCircle, label: 'Cancel', action: handleCancel, danger: true },
+  ].filter(Boolean) as { icon: any; label: string; action: () => void; danger: boolean }[]
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -154,15 +172,15 @@ export function TripDetailPage() {
           </div>
 
           <div className="text-center py-4 border-y border-neutral-100 mb-4">
-            <p className="text-5xl font-bold text-primary-500 stat-number">{trip.bookedSeats}</p>
-            <p className="text-sm text-neutral-200 mt-1">of {trip.capacity} seats booked</p>
+            <p className="text-5xl font-bold text-primary-500 stat-number">{paidPassengers.length}</p>
+            <p className="text-sm text-neutral-200 mt-1">of {trip.capacity} seats paid &amp; booked</p>
             <div className="h-2 bg-neutral-50 rounded-full mt-3 overflow-hidden">
               <div
                 className={clsx(
                   'h-full rounded-full transition-all',
                   pct >= 90 ? 'bg-secondary-300' : pct >= 60 ? 'bg-warning' : 'bg-secondary-100',
                 )}
-                style={{ width: `${pct}%` }}
+                style={{ width: `${Math.round((paidPassengers.length / trip.capacity) * 100)}%` }}
               />
             </div>
           </div>
@@ -179,36 +197,35 @@ export function TripDetailPage() {
             trip={trip}
             distanceKm={distanceKm}
             durationMinutes={durationMinutes}
-            fuelType={fuelType}
           />
         )}
 
-        {/* Action buttons */}
-        <div className="grid grid-cols-4 gap-2">
-          {[
-            { icon: Edit2, label: 'Edit', action: () => toast('Open edit') },
-            { icon: Copy, label: 'Duplicate', action: () => toast('Trip duplicated') },
-            { icon: Share2, label: 'Share', action: () => { navigator.clipboard.writeText('https://soole.ng/book/t1'); toast.success('Link copied!') } },
-            { icon: XCircle, label: 'Cancel', action: () => toast.error('Cancel trip?'), danger: true },
-          ].map(({ icon: Icon, label, action, danger }) => (
-            <button
-              key={label}
-              onClick={action}
-              className={clsx(
-                'flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-xs font-medium transition-colors',
-                danger
-                  ? 'text-danger-300 bg-white border-neutral-100 hover:bg-danger-50'
-                  : 'text-primary-400 bg-white border-neutral-100 hover:bg-primary-75',
-              )}
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </button>
-          ))}
-        </div>
+        {/* Action buttons — context-aware */}
+        {actions.length > 0 && (
+          <div className={clsx('grid gap-2', `grid-cols-${actions.length}`)}>
+            {actions.map(({ icon: Icon, label, action, danger }) => (
+              <button
+                key={label}
+                onClick={action}
+                className={clsx(
+                  'flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-xs font-medium transition-colors',
+                  danger
+                    ? 'text-danger-300 bg-white border-neutral-100 hover:bg-danger-50'
+                    : 'text-primary-400 bg-white border-neutral-100 hover:bg-primary-75',
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="card">
-          <ManifestList passengers={mockPassengers(trip.id)} />
+          <ManifestList
+            passengers={passengers}
+            tripStatus={trip.status}
+          />
         </div>
       </div>
     </div>

@@ -20,27 +20,13 @@ const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
 ]
 
 export function TripsListPage() {
-  const { data, loading } = useMockData()
+  const { data } = useMockData()
   const [activeTab, setActiveTab] = useState('Today')
   const [statusFilter, setStatusFilter] = useState<StatusVariant | 'all'>('all')
 
   const filtered = data.trips.filter(t =>
     statusFilter === 'all' || t.status === statusFilter,
   )
-
-  if (loading) {
-    return (
-      <div className="flex flex-col min-h-screen bg-white animate-pulse">
-        <TopBar title="Trips" />
-        <div className="flex-1 p-4 space-y-3 lg:pt-8 lg:px-8 w-full">
-          <div className="h-12 bg-white rounded-2xl w-48 mb-4" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-32 bg-white rounded-2xl w-full" />)}
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">

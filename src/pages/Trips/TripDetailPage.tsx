@@ -184,21 +184,24 @@ export function TripDetailPage() {
 
   const [comments, setComments] = useState<TripComment[]>(seedComments)
   const [newComment, setNewComment] = useState('')
+  const [showAllComments, setShowAllComments] = useState(false)
+  const [modalComment, setModalComment] = useState('')
 
-  const submitComment = () => {
-    const text = newComment.trim()
-    if (!text) return
+  const submitComment = (text: string, fromModal = false) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
     setComments(prev => [
       ...prev,
       {
         id: `c${Date.now()}`,
         author: 'You',
         initials: 'ME',
-        text,
+        text: trimmed,
         timestamp: new Date().toISOString(),
       },
     ])
-    setNewComment('')
+    if (fromModal) setModalComment('')
+    else setNewComment('')
     toast.success('Comment added')
   }
 
@@ -358,9 +361,9 @@ export function TripDetailPage() {
                   <span className="ml-auto text-[10px] text-neutral-200 font-medium">{comments.length} note{comments.length !== 1 ? 's' : ''}</span>
                 </div>
 
-                {/* Comment list */}
-                <div className="space-y-3 mb-4 max-h-48 overflow-y-auto pr-1">
-                  {comments.map(c => (
+                {/* Preview: latest 3 comments */}
+                <div className="space-y-3 mb-3">
+                  {comments.slice(-3).map(c => (
                     <div key={c.id} className="flex gap-2.5">
                       <div className="w-7 h-7 rounded-full bg-primary-75 flex items-center justify-center flex-shrink-0">
                         <span className="text-[10px] font-black text-primary-500">{c.initials}</span>
@@ -370,24 +373,34 @@ export function TripDetailPage() {
                           <span className="text-xs font-semibold text-primary-500">{c.author}</span>
                           <span className="text-[10px] text-neutral-200">{formatTime(c.timestamp)}</span>
                         </div>
-                        <p className="text-xs text-neutral-300 leading-relaxed mt-0.5">{c.text}</p>
+                        <p className="text-xs text-neutral-300 leading-relaxed mt-0.5 line-clamp-2">{c.text}</p>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* New comment input */}
+                {/* View all button */}
+                {comments.length > 3 && (
+                  <button
+                    onClick={() => setShowAllComments(true)}
+                    className="w-full text-xs text-primary-400 font-semibold py-2 rounded-xl border border-neutral-100 hover:bg-primary-75 transition-colors mb-3"
+                  >
+                    View all {comments.length} comments
+                  </button>
+                )}
+
+                {/* Inline new comment input */}
                 <div className="flex gap-2">
                   <textarea
                     value={newComment}
                     onChange={e => setNewComment(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment() } }}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(newComment) } }}
                     placeholder="Add a note about this trip…"
                     rows={2}
                     className="flex-1 text-xs text-primary-500 placeholder-neutral-200 bg-neutral-50 border border-neutral-100 rounded-xl px-3 py-2 resize-none focus:outline-none focus:border-primary-200 transition-colors"
                   />
                   <button
-                    onClick={submitComment}
+                    onClick={() => submitComment(newComment)}
                     disabled={!newComment.trim()}
                     className="self-end w-9 h-9 rounded-xl bg-primary-500 flex items-center justify-center text-white hover:bg-primary-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     aria-label="Post comment"
@@ -406,6 +419,72 @@ export function TripDetailPage() {
 
         </div>
       </div>
+
+      {/* ── All Comments Modal ── */}
+      {showAllComments && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowAllComments(false)}
+        >
+          <div
+            className="bg-white w-full sm:max-w-lg sm:mx-4 rounded-t-3xl sm:rounded-3xl shadow-float flex flex-col max-h-[90vh]"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-neutral-100 flex-shrink-0">
+              <MessageSquare className="w-5 h-5 text-primary-400" />
+              <div>
+                <h2 className="text-sm font-bold text-primary-500">All Comments</h2>
+                <p className="text-[11px] text-neutral-200">{trip.routeName} &middot; {comments.length} note{comments.length !== 1 ? 's' : ''}</p>
+              </div>
+              <button
+                onClick={() => setShowAllComments(false)}
+                className="ml-auto w-8 h-8 flex items-center justify-center rounded-xl hover:bg-neutral-50 text-neutral-200 hover:text-primary-400 transition-colors text-lg font-light"
+                aria-label="Close"
+              >&#x2715;</button>
+            </div>
+
+            {/* Scrollable comment list */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+              {comments.map((c, i) => (
+                <div key={c.id} className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary-75 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[11px] font-black text-primary-500">{c.initials}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-primary-500">{c.author}</span>
+                      <span className="text-xs text-neutral-200">{formatTime(c.timestamp)}</span>
+                      <span className="text-[10px] text-neutral-200 ml-auto">#{i + 1}</span>
+                    </div>
+                    <p className="text-sm text-neutral-300 leading-relaxed mt-1">{c.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Modal post input */}
+            <div className="px-5 py-4 border-t border-neutral-100 flex gap-2 flex-shrink-0">
+              <textarea
+                value={modalComment}
+                onChange={e => setModalComment(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(modalComment, true) } }}
+                placeholder="Add a note…"
+                rows={2}
+                className="flex-1 text-sm text-primary-500 placeholder-neutral-200 bg-neutral-50 border border-neutral-100 rounded-xl px-3 py-2 resize-none focus:outline-none focus:border-primary-200 transition-colors"
+              />
+              <button
+                onClick={() => submitComment(modalComment, true)}
+                disabled={!modalComment.trim()}
+                className="self-end w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center text-white hover:bg-primary-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Post comment"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

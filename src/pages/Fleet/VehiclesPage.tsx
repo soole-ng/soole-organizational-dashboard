@@ -60,6 +60,7 @@ export function VehiclesPage() {
     year: '2023',
     capacity: '14',
     fuelType: 'petrol',
+    color: 'White',
   })
 
   const [uploads, setUploads] = useState<Record<string, boolean>>({
@@ -68,6 +69,8 @@ export function VehiclesPage() {
     insurance: false,
     exteriorFront: false,
     exteriorRear: false,
+    exteriorRight: false,
+    exteriorLeft: false,
   })
 
   const filtered = vehiclesList.filter(v => filter === 'all' || v.status === filter)
@@ -380,6 +383,22 @@ export function VehiclesPage() {
                 />
               </div>
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-black mb-1.5">Vehicle Color</label>
+              <select
+                className="input-field"
+                value={form.color}
+                onChange={e => setForm(p => ({ ...p, color: e.target.value }))}
+              >
+                <option value="White">White</option>
+                <option value="Black">Black</option>
+                <option value="Silver">Silver</option>
+                <option value="Grey">Grey</option>
+                <option value="Blue">Blue</option>
+                <option value="Red">Red</option>
+                <option value="Gold">Gold</option>
+              </select>
+            </div>
             <button
               onClick={() => {
                 if (!form.plate || !form.model || !form.year || !form.capacity) {
@@ -399,14 +418,16 @@ export function VehiclesPage() {
         {currentStep === 2 && (
           <div className="space-y-4">
             <p className="text-xs text-neutral-300 leading-relaxed bg-neutral-50 rounded-xl p-3 border border-neutral-100">
-              Attach clear photos of documents and vehicle exterior to complete verification. Tap each to attach.
+              Attach clear photos of documents and all 4 side views of the vehicle showing the plate number to complete verification. Tap each to attach.
             </p>
             {[
               { key: 'registration', label: 'Vehicle Registration License' },
               { key: 'roadWorthiness', label: 'Road Worthiness Certificate' },
               { key: 'insurance', label: 'Insurance Policy Document' },
-              { key: 'exteriorFront', label: 'Vehicle Exterior Photo (Front)' },
-              { key: 'exteriorRear', label: 'Vehicle Exterior Photo (Rear)' },
+              { key: 'exteriorFront', label: 'Vehicle Exterior Photo (Front View - showing plate number)' },
+              { key: 'exteriorRear', label: 'Vehicle Exterior Photo (Rear View - showing plate number)' },
+              { key: 'exteriorRight', label: 'Vehicle Exterior Photo (Right Side View)' },
+              { key: 'exteriorLeft', label: 'Vehicle Exterior Photo (Left Side View)' },
             ].map(d => (
               <button
                 key={d.key}
@@ -432,8 +453,8 @@ export function VehiclesPage() {
                 onClick={() => {
                   const allUploaded = Object.values(uploads).every(v => v)
                   if (!allUploaded) {
-                    toast.error('Please upload all required documents')
-                    return
+                     toast.error('Please upload all required documents and side photos')
+                     return
                   }
                   setCurrentStep(3)
                 }}
@@ -459,6 +480,7 @@ export function VehiclesPage() {
             </div>
             <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-4 text-left space-y-1.5 text-xs max-w-sm mx-auto">
               <div className="flex justify-between"><span className="text-neutral-200">Plate Number</span><span className="font-bold text-black uppercase">{form.plate}</span></div>
+              <div className="flex justify-between"><span className="text-neutral-200">Color</span><span className="font-bold text-black">{form.color}</span></div>
               <div className="flex justify-between"><span className="text-neutral-200">Model</span><span className="font-bold text-black">{form.model}</span></div>
               <div className="flex justify-between"><span className="text-neutral-200">Capacity</span><span className="font-bold text-black">{form.capacity} seats</span></div>
               <div className="flex justify-between"><span className="text-neutral-200">Fuel Type</span><span className="font-bold text-black capitalize">{form.fuelType}</span></div>

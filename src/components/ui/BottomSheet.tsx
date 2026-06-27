@@ -33,7 +33,7 @@ export function BottomSheet({ open, onClose, title, children, className }: Botto
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
+    <div className="fixed inset-0 z-50 flex flex-col justify-end md:justify-center items-center p-4">
       <div
         ref={overlayRef}
         className="absolute inset-0 bg-primary-500/60 backdrop-blur-sm"
@@ -42,15 +42,15 @@ export function BottomSheet({ open, onClose, title, children, className }: Botto
       />
       <div
         className={clsx(
-          'relative bg-white rounded-t-[28px] shadow-float w-full max-w-lg mx-auto',
-          'max-h-[90dvh] flex flex-col',
+          'relative bg-white rounded-3xl shadow-float w-full max-w-lg mx-auto',
+          'max-h-[90dvh] md:max-h-[85vh] flex flex-col',
           className,
         )}
         role="dialog"
         aria-modal="true"
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
-          <div className="w-10 h-1 bg-neutral-50 rounded-full mx-auto absolute left-1/2 -translate-x-1/2 top-3" />
+          <div className="w-10 h-1 bg-neutral-50 rounded-full mx-auto absolute left-1/2 -translate-x-1/2 top-3 md:hidden" />
           {title && <h2 className="text-base font-semibold text-primary-500">{title}</h2>}
           <button
             onClick={onClose}
@@ -60,7 +60,7 @@ export function BottomSheet({ open, onClose, title, children, className }: Botto
             <X className="w-4 h-4 text-neutral-200" />
           </button>
         </div>
-        <div className="overflow-y-auto flex-1 px-5 pb-6 safe-bottom">
+        <div className="overflow-y-auto flex-1 px-5 pb-6 safe-bottom scrollbar-thin">
           {children}
         </div>
       </div>

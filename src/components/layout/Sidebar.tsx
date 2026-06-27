@@ -36,6 +36,7 @@ const navGroups: NavGroup[] = [
       { to: '/', label: 'Home', icon: Home },
       { to: '/trips', label: 'Trips', icon: Route },
       { to: '/live-map', label: 'Live Map', icon: Map },
+      { to: '/ai', label: 'AI Assistant', icon: Sparkles },
     ],
   },
   {

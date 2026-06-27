@@ -28,7 +28,8 @@ function StarRating({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'md
         return (
           <Star
             key={i}
-            className={clsx(cls, isFilled ? 'text-accent fill-accent' : 'text-neutral-200 fill-white')}
+            className={clsx(cls, isFilled ? 'text-accent fill-accent' : 'fill-white')}
+            style={!isFilled ? { stroke: 'rgba(0, 0, 0, 0.4)' } : undefined}
           />
         )
       })}
@@ -206,7 +207,7 @@ export function DriversPage() {
                       {driver.status === 'pending' && (
                         <button
                           onClick={e => { e.stopPropagation(); toast.success(`Invite resent to ${driver.name}`) }}
-                          className="text-[10px] text-secondary-300 font-bold border border-secondary-300 rounded-lg px-2 py-1"
+                          className="text-[13px] text-secondary-300 font-bold border border-secondary-300 rounded-lg px-2 py-1"
                         >
                           Resend invite
                         </button>

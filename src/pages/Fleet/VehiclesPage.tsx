@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Users, CheckCircle2, Clock, XCircle, Car, Bus, UserPlus, X, History } from 'lucide-react'
+import { Plus, Users, CheckCircle2, Clock, XCircle, Car, Bus, X, History } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -139,38 +139,6 @@ export function VehiclesPage() {
 
                   {/* Card body */}
                   <div className="px-4 py-3 space-y-3">
-                    {/* Driver row */}
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        {vehicle.assignedDriverId ? (
-                          <img
-                            src={getDriverAvatar(vehicle.assignedDriverId)}
-                            alt={vehicle.assignedDriverName || 'Driver'}
-                            className="w-6 h-6 rounded-full object-cover border border-neutral-100"
-                          />
-                        ) : (
-                          <Users className="w-3.5 h-3.5 text-neutral-200" />
-                        )}
-                        {vehicle.assignedDriverName ? (
-                          <span className="text-black font-bold">{vehicle.assignedDriverName}</span>
-                        ) : (
-                          <button
-                            onClick={() => toast('Assign driver — coming soon!')}
-                            className="flex items-center gap-1 text-secondary-300 font-bold hover:text-secondary-400 transition-colors"
-                          >
-                            <UserPlus className="w-3.5 h-3.5" /> Assign Driver
-                          </button>
-                        )}
-                      </div>
-                      {vehicle.assignedDriverName && (
-                        <button
-                          onClick={() => toast('Change driver — coming soon!')}
-                          className="text-xs text-neutral-200 hover:text-primary-400 transition-colors font-bold"
-                        >
-                          Change →
-                        </button>
-                      )}
-                    </div>
 
                     {/* Documents */}
                     <div className="space-y-1.5 pt-2 border-t border-neutral-100">

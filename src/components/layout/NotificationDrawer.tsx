@@ -50,10 +50,7 @@ function NotifItem({ n, onDismiss, onMarkRead }: { n: Notification; onDismiss: (
   return (
     <div
       onClick={() => { if (!n.read) onMarkRead() }}
-      className={clsx(
-        'p-4 border-b border-neutral-50 flex gap-3 transition-colors cursor-pointer',
-        n.read ? 'bg-white hover:bg-neutral-50/50' : 'bg-primary-75/50 hover:bg-primary-75',
-      )}
+      className="p-4 border-b border-neutral-50 flex gap-3 transition-colors cursor-pointer bg-transparent hover:bg-neutral-50/30"
     >
       <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5', cfg.bg, 'border', cfg.border)}>
         <Icon className={clsx('w-4 h-4', cfg.iconCls)} />
@@ -63,7 +60,7 @@ function NotifItem({ n, onDismiss, onMarkRead }: { n: Notification; onDismiss: (
         <div className="flex items-start justify-between gap-2 mb-0.5">
           <p className="text-sm font-semibold text-primary-500 leading-snug">{n.title}</p>
           {!n.read && (
-            <span className={clsx('w-2 h-2 rounded-full flex-shrink-0 mt-1', cfg.dot)} />
+            <span className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5 bg-[#FF0000] !bg-[#FF0000]" />
           )}
         </div>
         <p className="text-xs text-neutral-300 leading-relaxed mb-1.5">{n.message}</p>

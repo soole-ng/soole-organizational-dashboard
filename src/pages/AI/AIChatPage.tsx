@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Send, Sparkles, TrendingUp, Fuel, Car, Navigation,
   CreditCard, ClipboardCheck, Bot, User, RotateCcw,
-  PanelRightOpen, PanelRightClose, X,
+  PanelLeftOpen, PanelLeftClose, X,
 } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { useMockData } from '../../lib/useMockData'
@@ -117,6 +117,57 @@ export function AIChatPage() {
       <TopBar title="AI Assistant" backHref="/" />
 
       <div className="flex-1 flex overflow-hidden">
+        {/* ── History sidebar (LEFT) ── */}
+        <div className={clsx(
+          'border-r border-neutral-100 bg-white transition-all duration-300 flex-shrink-0 flex flex-col overflow-hidden',
+          showHistory ? 'w-64' : 'w-0',
+        )}>
+          {showHistory && (
+            <>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 flex-shrink-0">
+                <p className="text-sm font-bold text-black">Chat History</p>
+                <button
+                  onClick={() => setShowHistory(false)}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-200 hover:text-black hover:bg-neutral-50 transition-colors"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto scrollbar-thin">
+                {historyGroups.map(group => (
+                  <div key={group.label}>
+                    <p className="text-[10px] font-bold text-neutral-200 uppercase tracking-wider px-4 py-2 bg-neutral-50/50">
+                      {group.label}
+                    </p>
+                    {group.items.map(session => (
+                      <button
+                        key={session.id}
+                        className="w-full text-left px-4 py-2.5 hover:bg-primary-75 transition-colors border-b border-neutral-50 group"
+                        onClick={() => toast(`Loading: "${session.title}"`)}
+                      >
+                        <p className="text-xs font-medium text-black truncate group-hover:text-primary-500 transition-colors">
+                          {session.title}
+                        </p>
+                        <p className="text-[10px] text-neutral-200 mt-0.5">{session.time}</p>
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              <div className="px-4 py-3 border-t border-neutral-100 flex-shrink-0">
+                <button
+                  onClick={() => { setMessages([]); toast.success('New chat started') }}
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary-500 text-white text-xs font-semibold hover:bg-primary-400 transition-colors"
+                >
+                  <X className="w-3 h-3" /> New Chat
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
         {/* ── Main chat column ── */}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
 
@@ -260,69 +311,18 @@ export function AIChatPage() {
                 <Send className="w-4 h-4" />
               </button>
 
-              {/* History toggle when sidebar is closed */}
+          {/* History toggle when sidebar is closed */}
               {!showHistory && (
                 <button
                   onClick={() => setShowHistory(true)}
                   className="w-12 h-12 bg-white border border-neutral-100 rounded-2xl flex items-center justify-center text-primary-400 hover:bg-primary-75 transition-colors flex-shrink-0 self-end"
                   title="Show chat history"
                 >
-                  <PanelRightOpen className="w-4 h-4" />
+                  <PanelLeftOpen className="w-4 h-4" />
                 </button>
               )}
             </div>
           </div>
-        </div>
-
-        {/* ── History sidebar ── */}
-        <div className={clsx(
-          'border-l border-neutral-100 bg-white transition-all duration-300 flex-shrink-0 flex flex-col overflow-hidden',
-          showHistory ? 'w-64' : 'w-0',
-        )}>
-          {showHistory && (
-            <>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 flex-shrink-0">
-                <p className="text-sm font-bold text-black">Chat History</p>
-                <button
-                  onClick={() => setShowHistory(false)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-200 hover:text-black hover:bg-neutral-50 transition-colors"
-                >
-                  <PanelRightClose className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto scrollbar-thin">
-                {historyGroups.map(group => (
-                  <div key={group.label}>
-                    <p className="text-[10px] font-bold text-neutral-200 uppercase tracking-wider px-4 py-2 bg-neutral-50/50">
-                      {group.label}
-                    </p>
-                    {group.items.map(session => (
-                      <button
-                        key={session.id}
-                        className="w-full text-left px-4 py-2.5 hover:bg-primary-75 transition-colors border-b border-neutral-50 group"
-                        onClick={() => toast(`Loading: "${session.title}"`)}
-                      >
-                        <p className="text-xs font-medium text-black truncate group-hover:text-primary-500 transition-colors">
-                          {session.title}
-                        </p>
-                        <p className="text-[10px] text-neutral-200 mt-0.5">{session.time}</p>
-                      </button>
-                    ))}
-                  </div>
-                ))}
-              </div>
-
-              <div className="px-4 py-3 border-t border-neutral-100 flex-shrink-0">
-                <button
-                  onClick={() => { setMessages([]); toast.success('New chat started') }}
-                  className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary-500 text-white text-xs font-semibold hover:bg-primary-400 transition-colors"
-                >
-                  <X className="w-3 h-3" /> New Chat
-                </button>
-              </div>
-            </>
-          )}
         </div>
       </div>
     </div>

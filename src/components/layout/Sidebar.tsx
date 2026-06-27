@@ -74,7 +74,7 @@ function NavItemLink({ item }: { item: NavItem }) {
               ? 'bg-accent-100 text-accent-400'
               : 'text-gray-800 hover:bg-accent-50 hover:text-accent-300'
             : isActive
-              ? 'bg-primary-75 text-primary-500 shadow-sm'
+              ? 'bg-accent-400 text-primary-500 shadow-sm'
               : 'text-gray-800 hover:bg-primary-75 hover:text-primary-500',
         )
       }

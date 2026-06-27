@@ -26,8 +26,10 @@ const DEFAULT_ORG: OrgProfile = {
   logoUrl: null,
   role: 'Owner',
   commissionPct: 8,
-  securityQuestion: '',
-  securityAnswer: '',
+  email: 'contact@speedway.ng',
+  phone: '+234 803 123 4567',
+  securityQuestion: 'What is your favourite food?',
+  securityAnswer: 'Ojota',
 }
 
 const OrgContext = createContext<OrgContextValue>({

@@ -25,7 +25,7 @@ export function SettingsPage() {
   const [confirmSecretAnswer, setConfirmSecretAnswer] = useState('')
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
 
-  const activeSecQuestion = org.securityQuestion || 'What was the name of your first school?'
+  const activeSecQuestion = org.securityQuestion || 'What is your favourite food?'
   const activeSecAnswer = org.securityAnswer || 'Ojota'
 
   const executeSecuredAction = (action: () => void) => {
@@ -480,7 +480,7 @@ export function SettingsPage() {
                       // eslint-disable-next-line react-hooks/rules-of-hooks
                       const [secretAnswer, setSecretAnswer] = useState('')
 
-                      const activeSecQuestion = org.securityQuestion || 'What was the name of your first school?'
+                      const activeSecQuestion = org.securityQuestion || 'What is your favourite food?'
                       const activeSecAnswer = org.securityAnswer || 'Ojota'
 
                       const handleClose = () => {

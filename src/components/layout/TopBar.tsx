@@ -3,11 +3,12 @@
  * Shows Soole branding, current page, notification bell with badge, PWA install prompt.
  * ≤ 400 lines
  */
-import { Bell, ChevronLeft } from 'lucide-react'
+import { Power, ChevronLeft } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { useState, useEffect } from 'react'
 import { useOrg } from '../../lib/OrgContext'
+import toast from 'react-hot-toast'
 
 interface TopBarProps {
   title?: string
@@ -126,18 +127,19 @@ export function TopBar({
           </button>
         )}
 
-        {/* Notification Bell */}
+        {/* Sign Out Button */}
         <button
-          onClick={onOpenNotifications}
-          className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all"
-          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+          onClick={() => {
+            const confirmLogout = window.confirm('Are you sure you want to sign out?')
+            if (confirmLogout) {
+              toast.success('Signed out successfully')
+              navigate('/login')
+            }
+          }}
+          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-danger-300"
+          aria-label="Sign out"
         >
-          <Bell className="w-5 h-5 text-primary-500" strokeWidth={1.8} />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 min-w-[14px] h-[14px] bg-danger text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 border border-white">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
+          <Power className="w-5 h-5" strokeWidth={1.8} />
         </button>
       </div>
     </header>

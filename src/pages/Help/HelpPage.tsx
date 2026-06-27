@@ -25,11 +25,6 @@ const FAQS: FAQItem[] = [
     answer: 'Go to Fleet > Drivers. Click on the driver with the "Invite Pending" or "Review" status. Verify their driver\'s license and phone number, then toggle their status to Active. They will immediately receive an SMS notification to start taking trips.',
   },
   {
-    category: 'Fleet & Drivers',
-    question: 'What do vehicle alerts (like "Low fuel") mean?',
-    answer: 'Our PWA integrates with onboard vehicle telematics. If a vehicle\'s fuel drops below 25%, or if documents are nearing expiration, an alert is triggered. You can dismiss alerts from the homepage banner once the issue has been resolved by the driver.',
-  },
-  {
     category: 'Payments & Wallet',
     question: 'When are payouts processed?',
     answer: 'Payouts are automatically processed every Wednesday to your registered settlement bank account. The minimum payout threshold is NGN 10,000. You can view pending payouts and transaction histories on the Money page.',
@@ -43,7 +38,7 @@ const FAQS: FAQItem[] = [
 
 export function HelpPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [activeFaq, setActiveFaq] = useState<FAQItem | null>(null)
   const [activeCategory, setActiveCategory] = useState<string>('All')
 
   const categories = ['All', 'Trips & Dispatch', 'Fleet & Drivers', 'Payments & Wallet', 'Technical Support']
@@ -151,7 +146,7 @@ export function HelpPage() {
                 key={cat}
                 onClick={() => {
                   setActiveCategory(cat)
-                  setOpenFaq(null)
+                  setActiveFaq(null)
                 }}
                 className={`text-xs font-semibold px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
                   activeCategory === cat 
@@ -164,27 +159,21 @@ export function HelpPage() {
             ))}
           </div>
 
-          {/* FAQs Accordion */}
+          {/* FAQs Accordion Replacement: Clicking triggers a centered modal */}
           <div className="card p-0 overflow-hidden divide-y divide-neutral-50">
             {filteredFaqs.length > 0 ? (
               filteredFaqs.map((faq, index) => {
-                const isOpen = openFaq === index
                 return (
                   <div key={index} className="transition-colors hover:bg-primary-75/30">
                     <button
-                      onClick={() => setOpenFaq(isOpen ? null : index)}
+                      onClick={() => setActiveFaq(faq)}
                       className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left focus:outline-none"
                     >
                       <span className="text-sm font-semibold text-primary-500">{faq.question}</span>
-                      <span className="text-neutral-100 flex-shrink-0">
-                        {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      <span className="text-xs text-neutral-200 font-medium flex items-center gap-1">
+                        Read full <ExternalLink className="w-3.5 h-3.5" />
                       </span>
                     </button>
-                    {isOpen && (
-                      <div className="px-5 pb-4 text-xs text-neutral-200 leading-relaxed bg-primary-75/10">
-                        <p>{faq.answer}</p>
-                      </div>
-                    )}
                   </div>
                 )
               })
@@ -195,6 +184,43 @@ export function HelpPage() {
             )}
           </div>
         </div>
+
+        {/* Centered FAQ Detail Read Popup Modal */}
+        {activeFaq && (
+          <div
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+            onClick={() => setActiveFaq(null)}
+          >
+            <div
+              className="bg-white w-full max-w-lg rounded-3xl shadow-float flex flex-col p-6 space-y-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                <div>
+                  <span className="text-[9px] font-bold bg-primary-75 text-primary-500 uppercase px-2.5 py-1 rounded-full">{activeFaq.category}</span>
+                </div>
+                <button
+                  onClick={() => setActiveFaq(null)}
+                  className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-neutral-50 text-neutral-200 hover:text-primary-400 transition-colors"
+                >&#x2715;</button>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-primary-500 leading-snug">{activeFaq.question}</h3>
+                <p className="text-xs text-neutral-200 leading-relaxed bg-neutral-50 p-4 rounded-2xl border border-neutral-100 whitespace-pre-wrap">{activeFaq.answer}</p>
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <button
+                  onClick={() => setActiveFaq(null)}
+                  className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+                >
+                  Done Reading
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Soole Brand & PWA Details */}
         <div className="bg-white border border-neutral-50 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">

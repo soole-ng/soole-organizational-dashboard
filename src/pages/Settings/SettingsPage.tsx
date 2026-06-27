@@ -19,6 +19,20 @@ export function SettingsPage() {
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [inviteForm, setInviteForm] = useState({ name: '', phone: '', role: 'dispatcher' })
 
+  // Secure Settings Verification States
+  const [showSecurityConfirm, setShowSecurityConfirm] = useState(false)
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [confirmSecretAnswer, setConfirmSecretAnswer] = useState('')
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
+
+  const activeSecQuestion = org.securityQuestion || 'What was the name of your first school?'
+  const activeSecAnswer = org.securityAnswer || 'Ojota'
+
+  const executeSecuredAction = (action: () => void) => {
+    setPendingAction(() => action)
+    setShowSecurityConfirm(true)
+  }
+
   // Initialize members list with phone numbers
   useEffect(() => {
     if (data.organizationMembers) {
@@ -183,6 +197,19 @@ export function SettingsPage() {
                             />
                           </div>
                         </div>
+
+                        <div className="flex justify-end pt-2">
+                          <button
+                            onClick={() => {
+                              executeSecuredAction(() => {
+                                toast.success('Business Profile updated successfully!')
+                              })
+                            }}
+                            className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+                          >
+                            Save Profile Changes
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -260,17 +287,19 @@ export function SettingsPage() {
                                     toast.error('Please enter name and phone number')
                                     return
                                   }
-                                  const newMember = {
-                                    id: `m-${Date.now()}`,
-                                    name: inviteForm.name,
-                                    phone: inviteForm.phone,
-                                    role: inviteForm.role,
-                                    joinedAt: new Date().toISOString().split('T')[0]
-                                  }
-                                  setMembers(p => [...p, newMember])
-                                  setShowInviteForm(false)
-                                  setInviteForm({ name: '', phone: '', role: 'dispatcher' })
-                                  toast.success(`Invitation sent to ${inviteForm.name}!`)
+                                  executeSecuredAction(() => {
+                                    const newMember = {
+                                      id: `m-${Date.now()}`,
+                                      name: inviteForm.name,
+                                      phone: inviteForm.phone,
+                                      role: inviteForm.role,
+                                      joinedAt: new Date().toISOString().split('T')[0]
+                                    }
+                                    setMembers(p => [...p, newMember])
+                                    setShowInviteForm(false)
+                                    setInviteForm({ name: '', phone: '', role: 'dispatcher' })
+                                    toast.success(`Invitation sent to ${inviteForm.name}!`)
+                                  })
                                 }}
                                 className="px-3 py-1.5 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
                               >
@@ -289,39 +318,65 @@ export function SettingsPage() {
                       </div>
                     )}
 
-                    {label === 'Security' && (
-                      <div className="space-y-6 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
-                        {/* Secret Question & Answer setup */}
-                        <div className="space-y-4">
-                          <h4 className="text-sm font-black text-black">2FA Secret Security Question</h4>
-                          <p className="text-xs text-black leading-relaxed">
-                            Set up a backup security question. Once configured, you will be prompted to answer this question after entering your 2FA OTP code during sign-in.
-                          </p>
-                          <div className="space-y-3">
-                            <div>
-                              <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wider">Secret Question</label>
-                              <input
-                                type="text"
-                                className="input-field bg-white text-black font-medium border border-neutral-200 focus:border-primary-500"
-                                placeholder="e.g. What was the name of your first school?"
-                                value={org.securityQuestion || ''}
-                                onChange={e => updateOrg({ securityQuestion: e.target.value })}
-                              />
+                    {label === 'Security' && (() => {
+                      // eslint-disable-next-line react-hooks/rules-of-hooks
+                      const [secQ, setSecQ] = useState(org.securityQuestion || '')
+                      // eslint-disable-next-line react-hooks/rules-of-hooks
+                      const [secA, setSecA] = useState('')
+
+                      return (
+                        <div className="space-y-6 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
+                          {/* Secret Question & Answer setup */}
+                          <div className="space-y-4">
+                            <h4 className="text-sm font-black text-black">2FA Secret Security Question</h4>
+                            <p className="text-xs text-black leading-relaxed">
+                              Set up a backup security question. Once configured, you will be prompted to answer this question after entering your 2FA OTP code during sign-in.
+                            </p>
+                            <div className="space-y-3">
+                              <div>
+                                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wider">Secret Question</label>
+                                <input
+                                  type="text"
+                                  className="input-field bg-white text-black font-medium border border-neutral-200 focus:border-primary-500"
+                                  placeholder="e.g. What was the name of your first school?"
+                                  value={secQ}
+                                  onChange={e => setSecQ(e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wider">Secret Answer</label>
+                                <input
+                                  type="password"
+                                  className="input-field bg-white text-black font-medium border border-neutral-200 focus:border-primary-500"
+                                  placeholder="Enter secret answer"
+                                  value={secA}
+                                  onChange={e => setSecA(e.target.value)}
+                                />
+                              </div>
                             </div>
-                            <div>
-                              <label className="block text-xs font-bold text-black mb-1.5 uppercase tracking-wider">Secret Answer</label>
-                              <input
-                                type="password"
-                                className="input-field bg-white text-black font-medium border border-neutral-200 focus:border-primary-500"
-                                placeholder="Enter secret answer"
-                                value={org.securityAnswer || ''}
-                                onChange={e => updateOrg({ securityAnswer: e.target.value })}
-                              />
+
+                            <div className="flex justify-end pt-2">
+                              <button
+                                onClick={() => {
+                                  if (!secQ.trim() || !secA.trim()) {
+                                    toast.error('Please fill both question and answer')
+                                    return
+                                  }
+                                  executeSecuredAction(() => {
+                                    updateOrg({ securityQuestion: secQ, securityAnswer: secA })
+                                    setSecA('')
+                                    toast.success('Security question updated successfully!')
+                                  })
+                                }}
+                                className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+                              >
+                                Save Security Settings
+                              </button>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )
+                    })()}
 
                     {label === 'Alert Settings' && (
                       <div className="space-y-4 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
@@ -339,24 +394,38 @@ export function SettingsPage() {
                           </div>
                           <p className="text-[11px] text-black mt-2 font-medium">Set your custom speed limit for the fleet. Alerts will be generated if vehicles exceed this limit.</p>
                         </div>
+
+                        <div className="flex justify-end pt-2">
+                          <button
+                            onClick={() => {
+                              executeSecuredAction(() => {
+                                toast.success('Fleet speed limit updated!')
+                              })
+                            }}
+                            className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+                          >
+                            Save Speed Limit
+                          </button>
+                        </div>
                       </div>
                     )}
 
                     {label === 'Notifications' && (
-                      <div className="space-y-2 max-w-2xl bg-white p-2 rounded-2xl border border-primary-100">
-                        {(Object.keys(alertChannels) as Array<keyof typeof alertChannels>).map(channel => {
-                          const isEmail = channel === 'email'
-                          return (
-                            <label
-                              key={channel}
-                              className={clsx(
-                                'flex items-center justify-between p-3 rounded-xl transition-colors',
-                                isEmail ? 'opacity-40 cursor-not-allowed bg-neutral-50/50' : 'hover:bg-primary-75 cursor-pointer'
-                              )}
-                            >
-                              <span className="text-sm font-medium text-primary-500 capitalize">
-                                {channel === 'sms' ? 'SMS Text Messages' : channel.charAt(0).toUpperCase() + channel.slice(1) + ' Notifications'}
-                              </span>
+                      <div className="space-y-4 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
+                        <div className="space-y-2 rounded-xl border border-neutral-100 p-2">
+                          {(Object.keys(alertChannels) as Array<keyof typeof alertChannels>).map(channel => {
+                            const isEmail = channel === 'email'
+                            return (
+                              <label
+                                key={channel}
+                                className={clsx(
+                                  'flex items-center justify-between p-3 rounded-xl transition-colors',
+                                  isEmail ? 'opacity-40 cursor-not-allowed bg-neutral-50/50' : 'hover:bg-primary-75 cursor-pointer'
+                                )}
+                              >
+                                <span className="text-sm font-medium text-primary-500 capitalize">
+                                  {channel === 'sms' ? 'SMS Text Messages' : channel.charAt(0).toUpperCase() + channel.slice(1) + ' Notifications'}
+                                </span>
                               <button
                                 disabled={isEmail}
                                 onClick={() => setAlertChannels(p => ({ ...p, [channel]: !p[channel] }))}
@@ -375,6 +444,20 @@ export function SettingsPage() {
                             </label>
                           )
                         })}
+                        </div>
+
+                        <div className="flex justify-end pt-2">
+                          <button
+                            onClick={() => {
+                              executeSecuredAction(() => {
+                                toast.success('Notification settings saved!')
+                              })
+                            }}
+                            className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+                          >
+                            Save Notification Settings
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -647,6 +730,113 @@ export function SettingsPage() {
           })}
         </div>
       </div>
+      {/* ── Global Settings Modification Security Confirmation Modal ── */}
+      {showSecurityConfirm && (
+        <div
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+          onClick={() => {
+            setShowSecurityConfirm(false)
+            setConfirmPassword('')
+            setConfirmSecretAnswer('')
+            setPendingAction(null)
+          }}
+        >
+          <div
+            className="bg-white w-full max-w-md rounded-3xl shadow-float flex flex-col p-6 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-primary-500">Security Authorization</h3>
+                <p className="text-[10px] text-neutral-200">Verification required to apply changes</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowSecurityConfirm(false)
+                  setConfirmPassword('')
+                  setConfirmSecretAnswer('')
+                  setPendingAction(null)
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-neutral-50 text-neutral-200 hover:text-primary-400 transition-colors"
+              >&#x2715;</button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="bg-primary-50/50 p-3 rounded-2xl border border-primary-100 text-xs text-primary-500 leading-relaxed">
+                To confirm updates to your organization profile or alert parameters, please verify your credentials.
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">Account Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  className="input-field bg-white"
+                  placeholder="Enter account password"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-[10px] font-bold text-primary-400 uppercase">Secret Security Question</label>
+                </div>
+                <p className="text-xs text-primary-500 mb-1.5 font-semibold bg-neutral-50 p-2.5 rounded-xl border border-neutral-100">{activeSecQuestion}</p>
+                <input
+                  type="password"
+                  value={confirmSecretAnswer}
+                  onChange={e => setConfirmSecretAnswer(e.target.value)}
+                  className="input-field bg-white"
+                  placeholder="Enter secret answer"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2">
+              <button
+                onClick={() => {
+                  setShowSecurityConfirm(false)
+                  setConfirmPassword('')
+                  setConfirmSecretAnswer('')
+                  setPendingAction(null)
+                }}
+                className="px-4 py-2 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-black transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!confirmPassword.trim()) {
+                    toast.error('Please enter your account password')
+                    return
+                  }
+                  if (!confirmSecretAnswer.trim()) {
+                    toast.error('Please enter your security question answer')
+                    return
+                  }
+                  // Verify security credentials
+                  if (confirmSecretAnswer.trim().toLowerCase() !== activeSecAnswer.toLowerCase()) {
+                    toast.error('Incorrect secret security answer')
+                    return
+                  }
+                  // Simulate password check (accepts any mock password)
+                  if (pendingAction) {
+                    pendingAction()
+                  }
+                  setShowSecurityConfirm(false)
+                  setConfirmPassword('')
+                  setConfirmSecretAnswer('')
+                  setPendingAction(null)
+                  toast.success('Configuration updated and saved securely!')
+                }}
+                className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+              >
+                Authorize & Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -116,8 +116,8 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
         </p>
       )}
 
-      {/* Responsive grid — 1 column on mobile, 2 columns on small screens, 3 columns on larger screens */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+      {/* Responsive grid — 2 columns on mobile, 3 columns on larger screens */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
         {passengers.map((pass, idx) => {
           const isPaid = pass.paymentStatus === 'paid'
           const isRefunded = pass.paymentStatus === 'refunded'

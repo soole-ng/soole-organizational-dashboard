@@ -208,7 +208,7 @@ export function TripDetailPage() {
 
       <div className="flex-1 p-4 pt-4 lg:pt-6 lg:px-6 w-full">
         {/* Side-by-side layout on desktop, stacked on mobile */}
-        <div className="lg:grid lg:gap-6 space-y-4 lg:space-y-0" style={{ gridTemplateColumns: '1.2fr 3fr' }}>
+        <div className="lg:grid lg:gap-6 space-y-4 lg:space-y-0" style={{ gridTemplateColumns: '2fr 3fr' }}>
 
           {/* LEFT — Trip info + tracker + actions (sticky so it doesn't scroll away) */}
           <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">

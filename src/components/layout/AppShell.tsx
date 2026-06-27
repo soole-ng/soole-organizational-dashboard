@@ -14,6 +14,15 @@ import { NotificationDrawer, type Notification } from './NotificationDrawer'
 // Mock notification data — will be replaced by API calls
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
+    id: 'n1-speed',
+    type: 'warning',
+    title: 'Speed limit exceeded — LSD 234 KJ',
+    message: 'Akin Bello is estimated to be travelling at ~115 km/h, exceeding the 100 km/h fleet limit on the Lagos → Ibadan route.',
+    read: false,
+    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    action: { label: 'View on map', href: '/live-map' },
+  },
+  {
     id: 'n2',
     type: 'danger',
     title: 'Document pending — Road Worthiness',

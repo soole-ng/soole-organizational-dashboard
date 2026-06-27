@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { Edit2, Copy, XCircle, Bus, User, Navigation, Clock, Gauge, RefreshCw } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useParams, useOutletContext } from 'react-router-dom'
+import { Edit2, Copy, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { ManifestList } from './components/ManifestList'
@@ -10,25 +10,65 @@ import { formatDate, formatTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 
-/** Estimate average speed in km/h from total distance and scheduled duration */
+/** Fleet-wide hard speed limit in km/h */
+const SPEED_LIMIT_KMH = 100
+
+/** Estimate scheduled average speed in km/h */
 function calcAvgSpeed(distanceKm: number, durationMinutes: number): number {
   if (!durationMinutes) return 0
   return Math.round((distanceKm / durationMinutes) * 60)
 }
 
-function LiveTracker({ trip, distanceKm, durationMinutes }: {
-  trip: any; distanceKm: number; durationMinutes: number
-}) {
+interface LiveTrackerProps {
+  trip: any
+  distanceKm: number
+  durationMinutes: number
+  vehiclePlate: string
+  driverName: string
+  onSpeedViolation: (speed: number, plate: string, driver: string) => void
+}
+
+function LiveTracker({
+  trip, distanceKm, durationMinutes, vehiclePlate, driverName, onSpeedViolation,
+}: LiveTrackerProps) {
   const baseProgress = trip.status === 'boarding' ? 0.05 : trip.status === 'in_progress' ? 0.42 : 0
   const [progress, setProgress] = useState(baseProgress)
 
+  // Track previous values to estimate real-time speed between ticks
+  const prevProgressRef = useRef(baseProgress)
+  const prevTimestampRef = useRef(Date.now())
+  const violationFiredRef = useRef(false)
+
   useEffect(() => {
     if (trip.status !== 'boarding' && trip.status !== 'in_progress') return
+
+    const TICK_MS = 3000
+    const PROGRESS_INCREMENT = 0.001
+
     const timer = setInterval(() => {
-      setProgress(p => Math.min(p + 0.001, 0.99))
-    }, 3000)
+      const now = Date.now()
+      const elapsedHours = (now - prevTimestampRef.current) / 3_600_000
+
+      setProgress(p => {
+        const next = Math.min(p + PROGRESS_INCREMENT, 0.99)
+
+        // Compute km covered since last tick and derive instantaneous speed
+        const kmSinceLast = (next - prevProgressRef.current) * distanceKm
+        const estimatedSpeedKmh = elapsedHours > 0 ? kmSinceLast / elapsedHours : 0
+
+        if (estimatedSpeedKmh > SPEED_LIMIT_KMH && !violationFiredRef.current) {
+          violationFiredRef.current = true
+          onSpeedViolation(Math.round(estimatedSpeedKmh), vehiclePlate, driverName)
+        }
+
+        prevProgressRef.current = next
+        prevTimestampRef.current = now
+        return next
+      })
+    }, TICK_MS)
+
     return () => clearInterval(timer)
-  }, [trip.status])
+  }, [trip.status, distanceKm, driverName, vehiclePlate, onSpeedViolation])
 
   const coveredKm = Math.round(distanceKm * progress)
   const remainingKm = distanceKm - coveredKm
@@ -90,6 +130,12 @@ function LiveTracker({ trip, distanceKm, durationMinutes }: {
           </div>
         ))}
       </div>
+
+      {/* Speed limit note */}
+      <div className="flex items-center gap-1.5 px-1">
+        <AlertTriangle className="w-3 h-3 text-neutral-200 flex-shrink-0" />
+        <p className="text-[10px] text-neutral-200">Fleet speed limit: {SPEED_LIMIT_KMH} km/h — violations trigger an alert</p>
+      </div>
     </div>
   )
 }
@@ -97,10 +143,12 @@ function LiveTracker({ trip, distanceKm, durationMinutes }: {
 export function TripDetailPage() {
   const { id } = useParams()
   const { data } = useMockData()
+  const ctx = useOutletContext<any>()
+  const notifications = ctx?.notifications ?? []
+  const setNotifications = ctx?.setNotifications
 
   const trip = data.trips.find((t: any) => t.id === id) ?? data.trips[0]
   const route = data.routes?.find((r: any) => r.id === trip?.routeId)
-  const vehicle = data.vehicles?.find((v: any) => v.id === trip?.vehicleId)
 
   if (!trip) {
     return (
@@ -116,25 +164,44 @@ export function TripDetailPage() {
   const distanceKm: number = route?.distanceKm ?? 148
   const durationMinutes: number = route?.durationMinutes ?? 165
 
-  const pct = Math.round((trip.bookedSeats / trip.capacity) * 100)
   const isLive = trip.status === 'boarding' || trip.status === 'in_progress'
   const isScheduled = trip.status === 'scheduled'
-  const isCompleted = trip.status === 'completed'
 
   const passengers = mockPassengers(trip.id)
-  // Only paid passengers are counted as booked
   const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
 
   const handleEdit = () => toast('Edit trip details')
   const handleDuplicate = () => toast.success('Trip duplicated')
   const handleCancel = () => toast.error('Cancel this trip?')
 
-  // Build action buttons based on status
   const actions = [
     isScheduled && { icon: Edit2, label: 'Edit', action: handleEdit, danger: false },
     { icon: Copy, label: 'Duplicate', action: handleDuplicate, danger: false },
     isScheduled && { icon: XCircle, label: 'Cancel', action: handleCancel, danger: true },
   ].filter(Boolean) as { icon: any; label: string; action: () => void; danger: boolean }[]
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const handleSpeedViolation = useCallback((speed: number, plate: string, driver: string) => {
+    // Show immediate toast alert
+    toast.error(`⚠ Speed limit exceeded! ${plate} is travelling at ~${speed} km/h`, {
+      duration: 8000,
+      style: { maxWidth: 380 },
+    })
+
+    // Push into the global notification bell (if context available)
+    if (setNotifications) {
+      const newNotif = {
+        id: `speed-${plate}-${Date.now()}`,
+        type: 'warning' as const,
+        title: `Speed limit exceeded — ${plate}`,
+        message: `${driver} is estimated to be travelling at ~${speed} km/h, exceeding the ${SPEED_LIMIT_KMH} km/h fleet limit on the ${trip.routeName} route.`,
+        read: false,
+        createdAt: new Date().toISOString(),
+        action: { label: 'View on map', href: '/live-map' },
+      }
+      setNotifications((prev: any[]) => [newNotif, ...prev])
+    }
+  }, [setNotifications, trip.routeName])
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -178,7 +245,11 @@ export function TripDetailPage() {
               <div
                 className={clsx(
                   'h-full rounded-full transition-all',
-                  pct >= 90 ? 'bg-secondary-300' : pct >= 60 ? 'bg-warning' : 'bg-secondary-100',
+                  paidPassengers.length / trip.capacity >= 0.9
+                    ? 'bg-secondary-300'
+                    : paidPassengers.length / trip.capacity >= 0.6
+                    ? 'bg-warning'
+                    : 'bg-secondary-100',
                 )}
                 style={{ width: `${Math.round((paidPassengers.length / trip.capacity) * 100)}%` }}
               />
@@ -191,16 +262,19 @@ export function TripDetailPage() {
           </div>
         </div>
 
-        {/* Live tracker — shown when boarding or in_progress */}
+        {/* Live tracker — only when boarding or in_progress */}
         {isLive && (
           <LiveTracker
             trip={trip}
             distanceKm={distanceKm}
             durationMinutes={durationMinutes}
+            vehiclePlate={trip.vehiclePlate}
+            driverName={trip.driverName}
+            onSpeedViolation={handleSpeedViolation}
           />
         )}
 
-        {/* Action buttons — context-aware */}
+        {/* Action buttons — context-aware per status */}
         {actions.length > 0 && (
           <div className={clsx('grid gap-2', `grid-cols-${actions.length}`)}>
             {actions.map(({ icon: Icon, label, action, danger }) => (
@@ -222,10 +296,7 @@ export function TripDetailPage() {
         )}
 
         <div className="card">
-          <ManifestList
-            passengers={passengers}
-            tripStatus={trip.status}
-          />
+          <ManifestList passengers={passengers} tripStatus={trip.status} />
         </div>
       </div>
     </div>

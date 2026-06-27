@@ -1,5 +1,6 @@
 import { Navigation, AlertCircle } from 'lucide-react'
 import { clsx } from 'clsx'
+import { DriverAvatar } from '../../../components/ui/DriverAvatar'
 
 type VehicleLoc = {
   id: string
@@ -85,20 +86,22 @@ export function DriverSidebar({
                     : 'bg-white border-transparent hover:bg-primary-75 hover:border-primary-100',
                 )}
               >
-                {/* Status Indicator & Plate */}
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ background: markerColor(driver.status) }}
-                  />
-                  <p className="font-bold text-sm text-primary-500 truncate">{driver.plate}</p>
+                <div className="flex items-center gap-3">
+                  <div className="relative flex-shrink-0">
+                    <DriverAvatar driverId={driver.id} name={driver.driver} size="sm" />
+                    <span
+                      className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white"
+                      style={{ background: markerColor(driver.status) }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm text-primary-500 truncate">{driver.plate}</p>
+                    <p className="text-xs text-neutral-300 truncate">{driver.driver}</p>
+                  </div>
                 </div>
 
-                {/* Driver Name */}
-                <p className="text-xs text-neutral-300 truncate px-5">{driver.driver}</p>
-
                 {/* Trip Status */}
-                <div className="mt-2 px-5 pt-2 border-t border-neutral-50 text-xs space-y-1">
+                <div className="mt-2 pl-11 pt-2 border-t border-neutral-50 text-xs space-y-1">
                   {driver.trip ? (
                     <>
                       <p className="flex items-center gap-1.5 text-secondary-300 font-medium">

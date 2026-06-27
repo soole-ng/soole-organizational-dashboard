@@ -1,6 +1,6 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
-  Send, Sparkles, TrendingUp, Fuel, Car, Navigation,
+  Send, Sparkles, TrendingUp, Car, Navigation,
   CreditCard, ClipboardCheck, Bot, User, RotateCcw,
   History, X,
 } from 'lucide-react'
@@ -24,7 +24,6 @@ interface HistorySession {
 
 const mockResponses: Record<string, string> = {
   'revenue':   'Your total revenue this week is NGN 451,000 gross. After 8% commission, net earnings are NGN 414,920. Best day was Saturday with NGN 95,000 — up 18% vs last week.',
-  'fuel':      'Estimated fuel level on KJA 008 MN (Toyota Hiace) is below 25%. We recommend confirming with the driver before the Lagos–Abuja trip at 7:30 AM.',
   'driver':    'You have 4 drivers: 3 verified, 1 pending (Ibrahim Musa). Top performer this week: Funke Adeleke (4.9★, 67 trips). No incidents reported.',
   'route':     'Most profitable routes: 1) Lagos–Abuja — NGN 154K gross, 2) Lagos–Ibadan — NGN 60K, 3) Lagos–Benin — NGN 45K. Average occupancy 76%.',
   'verif':     'Pending: KJA 008 MN rear photo and road worthiness review. ABJ 445 EF insurance and rear photo still required. Complete within 7 days.',
@@ -35,7 +34,7 @@ const mockResponses: Record<string, string> = {
 
 const quickSuggestions = [
   { icon: TrendingUp,     label: 'Revenue this week',     query: 'What is my revenue this week?' },
-  { icon: Fuel,           label: 'Fuel levels',           query: 'What are the fuel levels?' },
+  { icon: Bot,            label: 'Occupancy rates',       query: 'What is my average occupancy rate?' },
   { icon: Car,            label: 'Driver performance',    query: 'How are my drivers performing?' },
   { icon: Navigation,     label: 'Top routes',            query: 'What are my most profitable routes?' },
   { icon: ClipboardCheck, label: 'Verifications pending', query: 'What verifications are pending?' },
@@ -45,7 +44,7 @@ const quickSuggestions = [
 const chatHistory: HistorySession[] = [
   { id: 'h1', title: 'Revenue this week',        dateLabel: 'Today',     time: '10:32 AM' },
   { id: 'h2', title: 'Driver performance query',  dateLabel: 'Today',     time: '09:14 AM' },
-  { id: 'h3', title: 'Fuel levels check',         dateLabel: 'Yesterday', time: '04:45 PM' },
+  { id: 'h3', title: 'Occupancy rates check',     dateLabel: 'Yesterday', time: '04:45 PM' },
   { id: 'h4', title: 'Top routes analysis',       dateLabel: 'Yesterday', time: '11:02 AM' },
   { id: 'h5', title: 'Next payout schedule',      dateLabel: 'Jun 25',    time: '02:30 PM' },
   { id: 'h6', title: 'Occupancy stats review',    dateLabel: 'Jun 24',    time: '09:55 AM' },

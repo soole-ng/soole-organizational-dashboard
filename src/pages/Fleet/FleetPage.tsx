@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom'
-import { Users, Car, ChevronRight, AlertTriangle, TrendingUp, Activity, Fuel } from 'lucide-react'
+import { Users, Car, ChevronRight, AlertTriangle, TrendingUp, Activity } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { useMockData } from '../../lib/useMockData'
 import { clsx } from 'clsx'
+import { DriverAvatar } from '../../components/ui/DriverAvatar'
 
 export function FleetPage() {
   const { data, loading } = useMockData()
 
   const pendingDrivers = data.drivers.filter(d => d.status === 'pending').length
-  const lowFuelVehicles = data.vehicles.filter(v => v.fuelLevel <= 0.25).length
   const pendingDocs = data.vehicles.reduce((acc, v) =>
     acc + v.documents.filter(d => d.status === 'pending' || d.status === 'uploaded').length, 0)
   const verifiedDrivers = data.drivers.filter(d => d.status === 'verified').length
@@ -18,7 +18,7 @@ export function FleetPage() {
     .filter(d => (d.avgRating ?? 0) > 0)
     .reduce((a, d, _, arr) => a + (d.avgRating ?? 0) / arr.length, 0)
 
-  const hasAlerts = pendingDrivers > 0 || lowFuelVehicles > 0 || pendingDocs > 0
+  const hasAlerts = pendingDrivers > 0 || pendingDocs > 0
 
   if (loading) {
     return (
@@ -49,7 +49,6 @@ export function FleetPage() {
               <p className="text-xs font-bold text-warning mb-1">Action Required</p>
               <div className="space-y-0.5 text-xs text-warning">
                 {pendingDrivers > 0 && <p>• {pendingDrivers} driver invite{pendingDrivers > 1 ? 's' : ''} still pending</p>}
-                {lowFuelVehicles > 0 && <p>• {lowFuelVehicles} vehicle{lowFuelVehicles > 1 ? 's' : ''} need refuelling</p>}
                 {pendingDocs > 0 && <p>• {pendingDocs} document{pendingDocs > 1 ? 's' : ''} under review</p>}
               </div>
             </div>
@@ -85,14 +84,11 @@ export function FleetPage() {
           <p className="text-xs font-bold text-neutral-200 uppercase tracking-wider mb-3">Driver Status</p>
           <div className="flex gap-2 overflow-x-auto scrollbar-thin pb-1">
             {data.drivers.map(driver => {
-              const initials = driver.name.split(' ').map(n => n[0]).join('').slice(0, 2)
               const statusColor = driver.status === 'verified' ? 'bg-secondary-300' : driver.status === 'pending' ? 'bg-warning' : 'bg-danger'
               return (
                 <div key={driver.id} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-14">
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-full bg-white border-2 border-primary-100 flex items-center justify-center text-xs font-bold text-primary-500">
-                      {initials}
-                    </div>
+                    <DriverAvatar driverId={driver.id} name={driver.name} size="md" />
                     <span className={clsx('absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white', statusColor)} />
                   </div>
                   <p className="text-[9px] text-neutral-200 text-center truncate w-full font-medium">{driver.name.split(' ')[0]}</p>
@@ -130,7 +126,6 @@ export function FleetPage() {
               <p className="text-sm font-bold text-primary-500">Vehicles</p>
               <p className="text-xs text-neutral-200 mt-0.5">
                 {verifiedVehicles} verified · {totalSeats} total seats
-                {lowFuelVehicles > 0 && <span className="text-danger font-semibold"> · {lowFuelVehicles} low fuel</span>}
               </p>
             </div>
             <div className="flex items-center gap-2">

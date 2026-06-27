@@ -107,12 +107,12 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
       {/* Contextual status note */}
       {isScheduled && (
         <p className="text-sm text-neutral-200 mb-3 px-0.5">
-          Passengers on a scheduled trip can only pay. Boarding opens once the driver starts the trip.
+          Passengers can pay to secure their seat. Boarding will open when the driver departs.
         </p>
       )}
       {isBoarding && (
-        <p className="text-sm text-secondary-300 font-medium mb-3 px-0.5">
-          The trip is in progress — tap the circle to mark a passenger as boarded.
+        <p className="text-sm text-neutral-200 mb-3 px-0.5">
+          Passengers confirmed from the system are shown below. Tap the circle to mark anyone not yet boarded.
         </p>
       )}
 
@@ -164,7 +164,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
                 {!isRefunded && (
                   <a
                     href={`tel:${pass.phone}`}
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-neutral-100 text-primary-400 hover:bg-primary-100 transition-colors"
+                    className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-300 hover:border-primary-200 hover:text-primary-400 transition-colors"
                     aria-label={`Call ${pass.name}`}
                   >
                     <Phone className="w-4 h-4" />
@@ -192,10 +192,10 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
                 ) : isBoarding ? (
                   <button
                     onClick={() => markBoarded(pass.id)}
-                    className="w-9 h-9 rounded-full bg-primary-500 flex items-center justify-center hover:bg-primary-400 transition-colors active:scale-95"
+                    className="w-9 h-9 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:border-secondary-200 hover:bg-secondary-50 transition-colors active:scale-95"
                     aria-label={`Mark ${pass.name} as boarded`}
                   >
-                    <CheckCircle2 className="w-5 h-5 text-white" />
+                    <CheckCircle2 className="w-5 h-5 text-neutral-200" />
                   </button>
                 ) : (
                   // Scheduled or in_progress — no action available

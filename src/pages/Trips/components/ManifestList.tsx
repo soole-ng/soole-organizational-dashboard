@@ -63,12 +63,12 @@ export function ManifestList({ passengers: initial, tripStatus }: ManifestListPr
       {/* Contextual status note */}
       {isScheduled && (
         <p className="text-[11px] text-neutral-200 mb-3 px-0.5">
-          ⏳ Boarding opens automatically when the trip status changes to <span className="font-semibold text-primary-400">Boarding</span>. This trip can still be edited or cancelled.
+          Passengers on a scheduled trip can only pay. Boarding opens when the trip status changes to <span className="font-semibold text-primary-400">Boarding</span>.
         </p>
       )}
       {isBoarding && (
         <p className="text-[11px] text-secondary-300 font-medium mb-3 px-0.5">
-          🟢 Boarding is open — tap the circle to mark a passenger as boarded.
+          Boarding is open — tap the circle to mark a passenger as boarded.
         </p>
       )}
 

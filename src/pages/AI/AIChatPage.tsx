@@ -124,7 +124,7 @@ export function AIChatPage() {
   const historyGroups = groupHistory(chatHistory)
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-full bg-white">
       <TopBar title="AI Assistant" backHref="/" />
 
       {/* ── Chat sub-header: title + history icon ── */}
@@ -293,7 +293,7 @@ export function AIChatPage() {
         </div>
 
         {/* ── Input area — centred, ~50% width, right margin maintained ── */}
-        <div className="bg-white px-4 pb-6 pt-3 flex justify-center">
+        <div className="bg-white px-4 pb-20 lg:pb-6 pt-3 flex justify-center flex-shrink-0 border-t border-neutral-50/50">
           <div className="w-full max-w-xl pr-6">
 
             {/* Quick chips when conversation active */}

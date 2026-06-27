@@ -85,7 +85,7 @@ export function AppShell() {
     return () => window.removeEventListener('open-notifications', handleOpen)
   }, [])
 
-  const isFullscreen = pathname === '/live-map'
+  const isFullscreen = pathname === '/live-map' || pathname === '/ai'
 
   return (
     <OrgProvider>

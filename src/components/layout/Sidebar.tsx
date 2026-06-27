@@ -159,7 +159,7 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
           {/* Start Website Tour */}
           <button
             onClick={() => {

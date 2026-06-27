@@ -136,7 +136,7 @@ export function TopBar({
         )}
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-3">
         {actions}
 
         {/* PWA Install button — only shows when installable */}

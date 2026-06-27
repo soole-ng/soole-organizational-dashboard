@@ -427,6 +427,13 @@ export function VehiclesPage() {
                 { key: 'insurance', label: 'Insurance Policy Document' },
                 { key: 'exteriorFront', label: 'Vehicle Exterior Photo (Front View - showing plate number)' },
                 { key: 'exteriorRear', label: 'Vehicle Exterior Photo (Rear View - showing plate number)' },
+            <div className="space-y-2">
+              {[
+                { key: 'registration', label: 'Vehicle Registration License' },
+                { key: 'roadWorthiness', label: 'Road Worthiness Certificate' },
+                { key: 'insurance', label: 'Insurance Policy Document' },
+                { key: 'exteriorFront', label: 'Vehicle Exterior Photo (Front View - showing plate number)' },
+                { key: 'exteriorRear', label: 'Vehicle Exterior Photo (Rear View - showing plate number)' },
                 { key: 'exteriorRight', label: 'Vehicle Exterior Photo (Right Side View)' },
                 { key: 'exteriorLeft', label: 'Vehicle Exterior Photo (Left Side View)' },
               ].map(d => (
@@ -441,11 +448,36 @@ export function VehiclesPage() {
                     </p>
                   </div>
 
+                  {/* Hidden inputs to trigger native file explorer & native camera */}
+                  <input
+                    type="file"
+                    id={`file-upload-${d.key}`}
+                    className="hidden"
+                    onChange={e => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setUploads(p => ({ ...p, [d.key]: true }))
+                        toast.success(`${d.label} file attached!`)
+                      }
+                    }}
+                  />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    id={`camera-capture-${d.key}`}
+                    className="hidden"
+                    onChange={e => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        setUploads(p => ({ ...p, [d.key]: true }))
+                        toast.success(`${d.label} photo captured!`)
+                      }
+                    }}
+                  />
+
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button
                       onClick={() => {
-                        setUploads(p => ({ ...p, [d.key]: true }))
-                        toast.success(`${d.label} file selected!`)
+                        document.getElementById(`file-upload-${d.key}`)?.click()
                       }}
                       className="w-8 h-8 flex items-center justify-center bg-white hover:bg-neutral-50 rounded-xl text-primary-500 border border-neutral-100 transition-colors"
                       title="Upload File"
@@ -454,8 +486,7 @@ export function VehiclesPage() {
                     </button>
                     <button
                       onClick={() => {
-                        setUploads(p => ({ ...p, [d.key]: true }))
-                        toast.success(`Camera active. Capturing ${d.label}... Done!`)
+                        document.getElementById(`camera-capture-${d.key}`)?.click()
                       }}
                       className="w-8 h-8 flex items-center justify-center bg-white hover:bg-neutral-50 rounded-xl text-primary-500 border border-neutral-100 transition-colors"
                       title="Use Camera"

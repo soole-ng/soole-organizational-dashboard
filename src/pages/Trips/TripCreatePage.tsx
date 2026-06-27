@@ -49,147 +49,148 @@ export function TripCreatePage() {
     <div className="flex flex-col min-h-screen bg-white">
       <TopBar title="New Trip" backHref="/trips" />
 
-      <div className="flex-1 p-4 space-y-4 lg:pt-8 lg:px-8 w-full">
-        <div className="card space-y-4">
+      <div className="flex-1 p-3 space-y-3 lg:pt-6 lg:px-8 w-full max-w-2xl mx-auto">
+        <div className="card p-4 space-y-3">
           <h2 className="text-sm font-semibold text-primary-500 hidden lg:block">Create a trip</h2>
 
-          {/* Pickup Location */}
-          <div>
-            <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5" /> Pickup Location
-            </label>
-            <div className="relative">
-              <select
-                value={form.pickupLocation}
-                onChange={e => set('pickupLocation', e.target.value)}
-                className="input-field appearance-none pr-10"
-              >
-                {locations.map(loc => (
-                  <option key={loc.id} value={loc.name}>
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+          {/* Pickup & Dropoff side-by-side on desktop */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Pickup Location */}
+            <div>
+              <label className="block text-xs font-semibold text-primary-400 mb-1 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" /> Pickup Location
+              </label>
+              <div className="relative">
+                <select
+                  value={form.pickupLocation}
+                  onChange={e => set('pickupLocation', e.target.value)}
+                  className="input-field py-2 text-xs appearance-none pr-10"
+                >
+                  {locations.map(loc => (
+                    <option key={loc.id} value={loc.name}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Dropoff Location */}
+            <div>
+              <label className="block text-xs font-semibold text-primary-400 mb-1 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" /> Dropoff Location
+              </label>
+              <div className="relative">
+                <select
+                  value={form.dropoffLocation}
+                  onChange={e => set('dropoffLocation', e.target.value)}
+                  className="input-field py-2 text-xs appearance-none pr-10"
+                >
+                  {locations.filter(s => s.name !== form.pickupLocation).map(loc => (
+                    <option key={loc.id} value={loc.name}>
+                      {loc.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+              </div>
             </div>
           </div>
 
-          {/* Dropoff Location */}
-          <div>
-            <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5" /> Dropoff Location
-            </label>
-            <div className="relative">
-              <select
-                value={form.dropoffLocation}
-                onChange={e => set('dropoffLocation', e.target.value)}
-                className="input-field appearance-none pr-10"
-              >
-                {locations.filter(s => s.name !== form.pickupLocation).map(loc => (
-                  <option key={loc.id} value={loc.name}>
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Vehicle selection */}
+            <div>
+              <label className="block text-xs font-semibold text-primary-400 mb-1">Vehicle</label>
+              <div className="relative">
+                <select
+                  value={form.vehicleId}
+                  onChange={e => set('vehicleId', e.target.value)}
+                  className="input-field py-2 text-xs appearance-none pr-10"
+                >
+                  {mockVehiclesList.filter(v => v.status === 'verified').map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.plate} — {v.model} ({v.capacity} seats)
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+              </div>
+              {selectedVehicle?.assignedDriverName && (
+                <p className="text-[10px] text-secondary-300 mt-0.5 font-medium">
+                  Driver: {selectedVehicle.assignedDriverName}
+                </p>
+              )}
             </div>
-            <p className="text-[11px] text-neutral-200 mt-1">
-              {form.pickupLocation} → {form.dropoffLocation}
-            </p>
-          </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-primary-400 mb-1.5">Vehicle</label>
-            <div className="relative">
-              <select
-                value={form.vehicleId}
-                onChange={e => set('vehicleId', e.target.value)}
-                className="input-field appearance-none pr-10"
-              >
-                {mockVehiclesList.filter(v => v.status === 'verified').map(v => (
-                  <option key={v.id} value={v.id}>
-                    {v.plate} — {v.model} ({v.capacity} seats)
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+            {/* Departure */}
+            <div>
+              <label className="block text-xs font-semibold text-primary-400 mb-1">Departure Date & Time</label>
+              <input
+                type="datetime-local"
+                value={form.departureAt}
+                onChange={e => set('departureAt', e.target.value)}
+                className="input-field py-2 text-xs"
+              />
             </div>
-            {selectedVehicle?.assignedDriverName && (
-              <p className="text-[11px] text-secondary-300 mt-1 font-medium">
-                Driver: {selectedVehicle.assignedDriverName}
-              </p>
-            )}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure Date & Time</label>
-            <input
-              type="datetime-local"
-              value={form.departureAt}
-              onChange={e => set('departureAt', e.target.value)}
-              className="input-field"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-semibold text-primary-400">Fare per seat</label>
               <button
                 onClick={() => setShowCalc(!showCalc)}
-                className="flex items-center gap-1 text-xs text-secondary-300 font-medium"
+                className="flex items-center gap-1 text-[11px] text-secondary-300 font-medium"
               >
-                <Calculator className="w-3.5 h-3.5" /> Calculator
+                <Calculator className="w-3 h-3" /> Calculator
               </button>
             </div>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-neutral-200">NGN</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-medium text-neutral-200">NGN</span>
               <input
                 type="number"
                 value={form.fare}
                 onChange={e => set('fare', Number(e.target.value))}
-                className="input-field pl-14 stat-number"
+                className="input-field py-2 text-xs pl-14 stat-number"
               />
             </div>
 
             {showCalc && (
-              <div className="mt-3 p-4 bg-white border border-neutral-100 rounded-xl shadow-sm">
-                <p className="text-xs font-bold text-black mb-2">Estimated Earnings & Commission</p>
-                <div className="flex justify-between items-center text-xs py-1">
+              <div className="mt-2.5 p-3 bg-white border border-neutral-100 rounded-xl shadow-sm">
+                <p className="text-[11px] font-bold text-black mb-1">Estimated Earnings & Commission</p>
+                <div className="flex justify-between items-center text-[11px] py-0.5">
                   <span className="text-neutral-300">Fare per seat</span>
                   <span className="font-semibold text-black stat-number">{formatMoney(form.fare)}</span>
                 </div>
-                <div className="flex justify-between items-center text-xs py-1 border-t border-neutral-50 mt-1">
+                <div className="flex justify-between items-center text-[11px] py-0.5 border-t border-neutral-50 mt-0.5">
                   <span className="text-neutral-300">Total potential gross (if full)</span>
                   <span className="font-bold text-black stat-number">
                     {formatMoney(form.fare * (selectedVehicle?.capacity || 14))}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-xs py-1 text-danger">
+                <div className="flex justify-between items-center text-[11px] py-0.5 text-danger">
                   <span className="text-neutral-300">Soole Commission (8%)</span>
                   <span className="font-semibold stat-number">
                     -{formatMoney(form.fare * (selectedVehicle?.capacity || 14) * 0.08)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-xs py-1.5 border-t border-neutral-100 mt-1">
+                <div className="flex justify-between items-center text-[11px] py-1 border-t border-neutral-100 mt-0.5">
                   <span className="font-semibold text-black">Net Payout to bank</span>
                   <span className="font-black text-primary-500 stat-number">
                     {formatMoney(form.fare * (selectedVehicle?.capacity || 14) * 0.92)}
                   </span>
                 </div>
-                <p className="text-[10px] text-neutral-200 mt-2 leading-tight">
-                  * A standard 8% commission is applied to the gross earnings. Net payout is settled immediately to your linked bank account after the trip completes.
-                </p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="pt-1">
           <button
             onClick={handlePublish}
             disabled={publishing}
             className={clsx(
-              'btn-primary w-full flex items-center justify-center gap-2',
+              'btn-primary py-2.5 text-xs w-full flex items-center justify-center gap-2',
               publishing && 'opacity-70',
             )}
           >

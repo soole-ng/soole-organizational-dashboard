@@ -417,43 +417,68 @@ export function VehiclesPage() {
         {/* Step 2: Upload Documents checklists */}
         {currentStep === 2 && (
           <div className="space-y-4">
-            <p className="text-xs text-neutral-300 leading-relaxed bg-neutral-50 rounded-xl p-3 border border-neutral-100">
-              Attach clear photos of documents and all 4 side views of the vehicle showing the plate number to complete verification. Tap each to attach.
+            <p className="text-xs text-primary-500 leading-relaxed bg-white rounded-xl p-3 border border-neutral-100">
+              Attach clear photos of documents and all 4 side views of the vehicle showing the plate number to complete verification. 
             </p>
-            {[
-              { key: 'registration', label: 'Vehicle Registration License' },
-              { key: 'roadWorthiness', label: 'Road Worthiness Certificate' },
-              { key: 'insurance', label: 'Insurance Policy Document' },
-              { key: 'exteriorFront', label: 'Vehicle Exterior Photo (Front View - showing plate number)' },
-              { key: 'exteriorRear', label: 'Vehicle Exterior Photo (Rear View - showing plate number)' },
-              { key: 'exteriorRight', label: 'Vehicle Exterior Photo (Right Side View)' },
-              { key: 'exteriorLeft', label: 'Vehicle Exterior Photo (Left Side View)' },
-            ].map(d => (
-              <button
-                key={d.key}
-                onClick={() => setUploads(p => ({ ...p, [d.key]: !p[d.key] }))}
-                className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-neutral-50 hover:bg-neutral-50/50 transition-colors text-left bg-white"
-              >
-                <div>
-                  <p className="text-xs font-bold text-black">{d.label}</p>
-                  <p className="text-[10px] text-neutral-200 mt-0.5">
-                    {uploads[d.key] ? 'Attached successfully' : 'Tap to attach document'}
-                  </p>
+            <div className="space-y-2">
+              {[
+                { key: 'registration', label: 'Vehicle Registration License' },
+                { key: 'roadWorthiness', label: 'Road Worthiness Certificate' },
+                { key: 'insurance', label: 'Insurance Policy Document' },
+                { key: 'exteriorFront', label: 'Vehicle Exterior Photo (Front View - showing plate number)' },
+                { key: 'exteriorRear', label: 'Vehicle Exterior Photo (Rear View - showing plate number)' },
+                { key: 'exteriorRight', label: 'Vehicle Exterior Photo (Right Side View)' },
+                { key: 'exteriorLeft', label: 'Vehicle Exterior Photo (Left Side View)' },
+              ].map(d => (
+                <div
+                  key={d.key}
+                  className="p-3 rounded-2xl border border-neutral-100 bg-white flex items-center justify-between gap-4 shadow-sm"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-black truncate">{d.label}</p>
+                    <p className="text-[10px] text-neutral-200 mt-0.5">
+                      {uploads[d.key] ? '📁 Attached successfully' : 'Tap to attach document'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => {
+                        setUploads(p => ({ ...p, [d.key]: true }))
+                        toast.success(`${d.label} file selected!`)
+                      }}
+                      className="w-8 h-8 flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 rounded-xl text-primary-500 border border-neutral-50 transition-colors"
+                      title="Upload File"
+                    >
+                      📁
+                    </button>
+                    <button
+                      onClick={() => {
+                        setUploads(p => ({ ...p, [d.key]: true }))
+                        toast.success(`Camera active. Capturing ${d.label}... Done!`)
+                      }}
+                      className="w-8 h-8 flex items-center justify-center bg-neutral-50 hover:bg-neutral-100 rounded-xl text-primary-500 border border-neutral-50 transition-colors"
+                      title="Use Camera"
+                    >
+                      📸
+                    </button>
+                    {uploads[d.key] ? (
+                      <span className="w-5 h-5 rounded-full bg-secondary-300 flex items-center justify-center text-white text-[10px] font-bold">✓</span>
+                    ) : (
+                      <span className="w-5 h-5 rounded-full bg-neutral-50 border border-neutral-100" />
+                    )}
+                  </div>
                 </div>
-                {uploads[d.key] ? (
-                  <span className="w-5 h-5 rounded-full bg-secondary-300 flex items-center justify-center text-white text-[10px] font-bold">✓</span>
-                ) : (
-                  <span className="w-5 h-5 rounded-full bg-neutral-50 border border-neutral-100 flex-shrink-0" />
-                )}
-              </button>
-            ))}
+              ))}
+            </div>
+
             <div className="grid grid-cols-2 gap-3 mt-2">
               <button onClick={() => setCurrentStep(1)} className="btn-secondary w-full">Back</button>
               <button
                 onClick={() => {
                   const allUploaded = Object.values(uploads).every(v => v)
                   if (!allUploaded) {
-                     toast.error('Please upload all required documents and side photos')
+                     toast.error('Please upload or snap all required documents and side photos')
                      return
                   }
                   setCurrentStep(3)

@@ -294,7 +294,7 @@ export function AIChatPage() {
 
         {/* ── Input area — centred, ~50% width, right margin maintained ── */}
         <div className="bg-white px-4 pb-20 lg:pb-6 pt-3 flex justify-center flex-shrink-0 border-t border-neutral-50/50">
-          <div className="w-full max-w-xl pr-6">
+          <div className="w-full max-w-xl lg:pr-6">
 
             {/* Quick chips when conversation active */}
             {messages.length > 0 && (

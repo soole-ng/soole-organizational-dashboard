@@ -207,7 +207,7 @@ export function HelpPage() {
 
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-primary-500 leading-snug">{activeFaq.question}</h3>
-                <p className="text-xs text-neutral-200 leading-relaxed bg-neutral-50 p-4 rounded-2xl border border-neutral-100 whitespace-pre-wrap">{activeFaq.answer}</p>
+                <p className="text-xs text-primary-500 leading-relaxed bg-white p-4 rounded-2xl border border-neutral-100 whitespace-pre-wrap">{activeFaq.answer}</p>
               </div>
 
               <div className="flex justify-end pt-1">

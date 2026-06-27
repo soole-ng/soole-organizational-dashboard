@@ -143,7 +143,7 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
 
   return (
     <>
-    <aside className="hidden lg:flex flex-col w-52 bg-white border-r border-neutral-50 min-h-screen fixed left-0 top-0 z-40">
+    <aside className="hidden lg:flex flex-col w-76 bg-white border-r border-neutral-50 min-h-screen fixed left-0 top-0 z-40">
 
       {/* ── Top header strip: Soole icon + Actions ── */}
       <div className="flex items-center justify-between px-4 py-3 bg-primary-500 border-b border-primary-400">

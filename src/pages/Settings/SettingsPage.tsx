@@ -198,7 +198,7 @@ export function SettingsPage() {
                                 <p className="text-sm font-bold text-black truncate">{m.name}</p>
                                 <p className="text-xs text-neutral-200 truncate">{m.phone}</p>
                               </div>
-                              <span className={clsx('text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase border border-neutral-100/50', m.role === 'admin' ? 'bg-[#042011] text-white' : 'bg-primary-75 text-primary-500')}>
+                              <span className={clsx('text-[10px] font-bold uppercase tracking-wider', m.role === 'admin' ? 'text-primary-500' : 'text-primary-400')}>
                                 {m.role}
                               </span>
                             </div>
@@ -378,10 +378,152 @@ export function SettingsPage() {
                       </div>
                     )}
 
-                    {['Payout Settings', 'Refund Policy'].includes(label) && (
+                    {label === 'Payout Settings' && (() => {
+                      // Custom inline state & modal logic for bank details
+                      // eslint-disable-next-line react-hooks/rules-of-hooks
+                      const [bankDetails, setBankDetails] = useState({
+                        bankName: 'Guaranty Trust Bank (GTB)',
+                        accountName: org.name || 'Speedway Transport Limited',
+                        accountNumber: '0123456789'
+                      })
+                      // eslint-disable-next-line react-hooks/rules-of-hooks
+                      const [showBankModal, setShowBankModal] = useState(false)
+                      // eslint-disable-next-line react-hooks/rules-of-hooks
+                      const [tempDetails, setTempDetails] = useState({ ...bankDetails })
+
+                      return (
+                        <div className="space-y-4 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
+                          <h4 className="text-xs font-bold text-black uppercase tracking-wider">Settlement Account</h4>
+                          <p className="text-xs text-neutral-200 leading-relaxed">
+                            Trip payouts are deposited automatically to this account according to your schedule.
+                          </p>
+
+                          <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100 space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-[10px] font-bold text-neutral-200 uppercase">Bank Name</span>
+                              <span className="text-xs font-semibold text-primary-500">{bankDetails.bankName}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[10px] font-bold text-neutral-200 uppercase">Account Name</span>
+                              <span className="text-xs font-semibold text-primary-500">{bankDetails.accountName}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[10px] font-bold text-neutral-200 uppercase">Account Number</span>
+                              <span className="text-xs font-mono font-bold text-primary-500">{bankDetails.accountNumber}</span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setTempDetails({ ...bankDetails })
+                              setShowBankModal(true)
+                            }}
+                            className="px-4 py-2 border border-neutral-100 hover:bg-neutral-50 text-xs font-bold rounded-xl text-primary-500 transition-colors w-full"
+                          >
+                            Edit Bank Details
+                          </button>
+
+                          {/* Edit Bank Details Popup */}
+                          {showBankModal && (
+                            <div
+                              className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
+                              onClick={() => setShowBankModal(false)}
+                            >
+                              <div
+                                className="bg-white w-full sm:max-w-md sm:mx-4 rounded-t-3xl sm:rounded-3xl shadow-float flex flex-col p-6 space-y-4"
+                                onClick={e => e.stopPropagation()}
+                              >
+                                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                                  <h3 className="text-sm font-bold text-primary-500">Edit Bank Details</h3>
+                                  <button
+                                    onClick={() => setShowBankModal(false)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-neutral-50 text-neutral-200 hover:text-primary-400 transition-colors"
+                                  >&#x2715;</button>
+                                </div>
+
+                                <div className="space-y-3">
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">Select Bank</label>
+                                    <div className="relative">
+                                      <select
+                                        value={tempDetails.bankName}
+                                        onChange={e => setTempDetails(p => ({ ...p, bankName: e.target.value }))}
+                                        className="input-field bg-white appearance-none pr-10"
+                                      >
+                                        <option value="Guaranty Trust Bank (GTB)">Guaranty Trust Bank (GTB)</option>
+                                        <option value="Access Bank">Access Bank</option>
+                                        <option value="Zenith Bank">Zenith Bank</option>
+                                        <option value="United Bank for Africa (UBA)">United Bank for Africa (UBA)</option>
+                                        <option value="First Bank of Nigeria">First Bank of Nigeria</option>
+                                      </select>
+                                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">Account Number</label>
+                                    <input
+                                      type="text"
+                                      value={tempDetails.accountNumber}
+                                      onChange={e => {
+                                        const num = e.target.value.replace(/\D/g, '').slice(0, 10)
+                                        setTempDetails(p => ({ ...p, accountNumber: num }))
+                                      }}
+                                      className="input-field bg-white font-mono"
+                                      placeholder="0123456789"
+                                      maxLength={10}
+                                    />
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">Account Name</label>
+                                    <input
+                                      type="text"
+                                      value={tempDetails.accountName}
+                                      onChange={e => setTempDetails(p => ({ ...p, accountName: e.target.value }))}
+                                      className="input-field bg-white"
+                                      placeholder="Speedway Transport Ltd"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-2 justify-end pt-2">
+                                  <button
+                                    onClick={() => setShowBankModal(false)}
+                                    className="px-4 py-2 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-black transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      if (tempDetails.accountNumber.length < 10) {
+                                        toast.error('Account number must be 10 digits')
+                                        return
+                                      }
+                                      if (!tempDetails.accountName.trim()) {
+                                        toast.error('Account name cannot be empty')
+                                        return
+                                      }
+                                      setBankDetails({ ...tempDetails })
+                                      setShowBankModal(false)
+                                      toast.success('Payout bank details updated!')
+                                    }}
+                                    className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+                                  >
+                                    Save Details
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })()}
+
+                    {label === 'Refund Policy' && (
                       <div className="py-6 text-center max-w-2xl bg-white rounded-2xl border border-primary-100">
                         <RefreshCw className="w-6 h-6 text-primary-200 mx-auto mb-2" />
-                        <p className="text-xs text-neutral-200 max-w-xs mx-auto">This module is currently being configured. Please contact Soole support to update your {label.toLowerCase()}.</p>
+                        <p className="text-xs text-neutral-200 max-w-xs mx-auto">This module is currently being configured. Please contact Soole support to update your refund policy.</p>
                       </div>
                     )}
                   </div>

@@ -114,6 +114,9 @@ export default {
         card: '20px',
         btn: '32px',
       },
+      spacing: {
+        '76': '19rem',
+      },
       boxShadow: {
         card: '0 2px 12px rgba(4,32,17,0.07)',
         'card-hover': '0 4px 20px rgba(4,32,17,0.13)',

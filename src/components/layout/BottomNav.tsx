@@ -5,7 +5,7 @@
  * ≤ 400 lines
  */
 import { NavLink } from 'react-router-dom'
-import { Home, Route, Users, Wallet, Sparkles, Bell } from 'lucide-react'
+import { Home, Route, Users, Wallet, Bell, Map, MessageSquare } from 'lucide-react'
 import { clsx } from 'clsx'
 
 import { useOrg } from '../../lib/OrgContext'
@@ -18,8 +18,10 @@ interface BottomNavProps {
 const tabs = [
   { to: '/',      label: 'Home',   icon: Home },
   { to: '/trips', label: 'Trips',  icon: Route },
+  { to: '/live-map', label: 'Map',  icon: Map },
   { to: '/fleet', label: 'Fleet',  icon: Users },
   { to: '/money', label: 'Money',  icon: Wallet },
+  { to: '/ai',    label: 'AI',     icon: MessageSquare },
 ]
 
 export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavProps) {
@@ -37,10 +39,10 @@ export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavPro
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-neutral-50 bottom-nav lg:hidden"
+      className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-neutral-50 bottom-nav lg:hidden shadow-lg"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="flex">
+      <div className="flex justify-around items-center h-16">
         {filteredTabs.map(({ to, label, icon: Icon, accent }: any) => (
           <NavLink
             key={to}
@@ -48,10 +50,10 @@ export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavPro
             end={to === '/'}
             className={({ isActive }) =>
               clsx(
-                'flex-1 flex flex-col items-center gap-1 pt-2.5 pb-2 text-[10px] font-medium transition-colors min-w-0',
+                'flex-1 flex flex-col items-center gap-1 py-1 text-[10px] font-semibold transition-colors min-w-0',
                 accent
                   ? isActive ? 'text-accent-500' : 'text-neutral-200'
-                  : isActive ? 'text-primary-500' : 'text-neutral-200',
+                  : isActive ? 'text-primary-500 font-bold' : 'text-neutral-200 hover:text-neutral-300',
               )
             }
           >
@@ -59,7 +61,7 @@ export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavPro
               <>
                 <span
                   className={clsx(
-                    'w-11 h-7 flex items-center justify-center rounded-full transition-colors',
+                    'w-12 h-8 flex items-center justify-center rounded-full transition-colors',
                     accent
                       ? isActive && 'bg-accent-100'
                       : isActive && 'bg-primary-75',
@@ -70,42 +72,11 @@ export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavPro
                     strokeWidth={isActive ? 2.5 : 1.8}
                   />
                 </span>
-                <span className="truncate w-full text-center">{label}</span>
+                <span className="truncate w-full text-center text-[10px]">{label}</span>
               </>
             )}
           </NavLink>
         ))}
-
-        {/* Tour tab — triggers the tour guide */}
-        <button
-          onClick={() => {
-            window.dispatchEvent(new CustomEvent('start-soole-tour'))
-          }}
-          className="flex-1 flex flex-col items-center gap-1 pt-2.5 pb-2 text-[10px] font-medium text-neutral-200 transition-colors min-w-0"
-          aria-label="Start Website Tour"
-        >
-          <span className="w-11 h-7 flex items-center justify-center rounded-full">
-            <Sparkles className="w-5 h-5 text-accent-400" strokeWidth={1.8} />
-          </span>
-          <span className="truncate w-full text-center">Tour</span>
-        </button>
-
-        {/* Bell tab — not a nav route, opens drawer */}
-        <button
-          onClick={onOpenNotifications}
-          className="flex-1 flex flex-col items-center gap-1 pt-2.5 pb-2 text-[10px] font-medium text-neutral-200 transition-colors min-w-0"
-          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount})` : ''}`}
-        >
-          <span className="relative w-11 h-7 flex items-center justify-center rounded-full">
-            <Bell className="w-5 h-5" strokeWidth={1.8} />
-            {unreadCount > 0 && (
-              <span className="absolute top-0 right-1.5 min-w-[13px] h-[13px] bg-danger text-white text-[8px] font-bold rounded-full flex items-center justify-center px-0.5 border border-white">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </span>
-          <span className="truncate w-full text-center">Alerts</span>
-        </button>
       </div>
     </nav>
   )

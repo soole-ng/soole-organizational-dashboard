@@ -79,6 +79,12 @@ export function AppShell() {
     setDrawerOpen(true)
   }, [])
 
+  useEffect(() => {
+    const handleOpen = () => setDrawerOpen(true)
+    window.addEventListener('open-notifications', handleOpen)
+    return () => window.removeEventListener('open-notifications', handleOpen)
+  }, [])
+
   const isFullscreen = pathname === '/live-map'
 
   return (

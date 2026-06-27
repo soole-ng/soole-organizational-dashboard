@@ -3,8 +3,8 @@
  * Shows Soole branding, current page, notification bell with badge, PWA install prompt.
  * ≤ 400 lines
  */
-import { Power, ChevronLeft } from 'lucide-react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Power, ChevronLeft, Bell, Sparkles } from 'lucide-react'
+import { useNavigate, useLocation, useOutletContext } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { useState, useEffect } from 'react'
 import { useOrg } from '../../lib/OrgContext'
@@ -38,7 +38,7 @@ export function TopBar({
   backHref,
   actions,
   transparent,
-  unreadCount = 0,
+  unreadCount,
   onOpenNotifications,
 }: TopBarProps) {
   const navigate = useNavigate()
@@ -47,6 +47,17 @@ export function TopBar({
   const resolvedTitle = title ?? pageTitles[pathname] ?? 'Soole'
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [installed, setInstalled] = useState(false)
+
+  // Retrieve notifications from outlet context if props aren't explicitly passed
+  let outletContext: any = null
+  try {
+    outletContext = useOutletContext()
+  } catch (e) {
+    // Ignore error if not rendered in Router context (e.g. testing)
+  }
+  
+  const contextNotifications = outletContext?.notifications || []
+  const resolvedUnreadCount = unreadCount ?? contextNotifications.filter((n: any) => !n.read).length
 
   // Capture the PWA install prompt
   useEffect(() => {
@@ -70,6 +81,18 @@ export function TopBar({
     const { outcome } = await installPrompt.userChoice
     if (outcome === 'accepted') setInstalled(true)
     setInstallPrompt(null)
+  }
+
+  const handleOpenAlerts = () => {
+    if (onOpenNotifications) {
+      onOpenNotifications()
+    } else {
+      window.dispatchEvent(new CustomEvent('open-notifications'))
+    }
+  }
+
+  const handleTriggerTour = () => {
+    window.dispatchEvent(new CustomEvent('start-soole-tour'))
   }
 
   return (
@@ -127,6 +150,29 @@ export function TopBar({
           </button>
         )}
 
+        {/* Alerts (Bell) Button */}
+        <button
+          onClick={handleOpenAlerts}
+          className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-primary-500"
+          aria-label="Notifications"
+        >
+          <Bell className="w-5 h-5" strokeWidth={1.8} />
+          {resolvedUnreadCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 min-w-[13px] h-[13px] bg-danger text-white text-[8px] font-bold rounded-full flex items-center justify-center px-0.5 border border-white">
+              {resolvedUnreadCount > 9 ? '9+' : resolvedUnreadCount}
+            </span>
+          )}
+        </button>
+
+        {/* Tour (Sparkles) Button */}
+        <button
+          onClick={handleTriggerTour}
+          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-accent-400"
+          aria-label="Start Website Tour"
+        >
+          <Sparkles className="w-5 h-5" strokeWidth={1.8} />
+        </button>
+
         {/* Sign Out Button */}
         <button
           onClick={() => {
@@ -136,7 +182,7 @@ export function TopBar({
               navigate('/login')
             }
           }}
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-danger-300"
+          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-danger-300 animate-pulse-subtle"
           aria-label="Sign out"
         >
           <Power className="w-5 h-5" strokeWidth={1.8} />

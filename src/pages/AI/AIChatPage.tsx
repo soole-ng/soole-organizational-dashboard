@@ -28,7 +28,7 @@ const mockResponses: Record<string, string> = {
   'route':     'Most profitable routes: 1) Lagos–Abuja — NGN 154K gross, 2) Lagos–Ibadan — NGN 60K, 3) Lagos–Benin — NGN 45K. Average occupancy 76%.',
   'verif':     'Pending: KJA 008 MN rear photo and road worthiness review. ABJ 445 EF insurance and rear photo still required. Complete within 7 days.',
   'occupancy': 'Average occupancy this week: 76%. Sienna 85%, Hiace 73%, Coaster 62%. Lagos–Abuja is consistently the most-booked route.',
-  'payout':    'Next payout: 1 July 2026 — NGN 47,300 pending. Previous: 24 June (NGN 38,000 ✓), 17 June (NGN 52,400 ✓). Weekly average: NGN 46,233.',
+  'payout':    'Soole supports instant payouts. You can withdraw your earnings directly to your linked bank account at any time from the Money tab.',
   'trip':      'Today: 3 trips scheduled. Lagos–Ibadan 6 AM (boarding now), Lagos–Abuja 7:30 AM (11/14 booked), Ibadan–Lagos 2 PM (18/30 booked). Expected revenue: NGN 269,000.',
 }
 
@@ -38,7 +38,7 @@ const quickSuggestions = [
   { icon: Car,            label: 'Driver performance',    query: 'How are my drivers performing?' },
   { icon: Navigation,     label: 'Top routes',            query: 'What are my most profitable routes?' },
   { icon: ClipboardCheck, label: 'Verifications pending', query: 'What verifications are pending?' },
-  { icon: CreditCard,     label: 'Next payout',           query: 'When is my next payout?' },
+  { icon: CreditCard,     label: 'Payout information',    query: 'How do payouts work?' },
 ]
 
 const chatHistory: HistorySession[] = [
@@ -46,7 +46,7 @@ const chatHistory: HistorySession[] = [
   { id: 'h2', title: 'Driver performance query',  dateLabel: 'Today',     time: '09:14 AM' },
   { id: 'h3', title: 'Occupancy rates check',     dateLabel: 'Yesterday', time: '04:45 PM' },
   { id: 'h4', title: 'Top routes analysis',       dateLabel: 'Yesterday', time: '11:02 AM' },
-  { id: 'h5', title: 'Next payout schedule',      dateLabel: 'Jun 25',    time: '02:30 PM' },
+  { id: 'h5', title: 'Payout information query',  dateLabel: 'Jun 25',    time: '02:30 PM' },
   { id: 'h6', title: 'Occupancy stats review',    dateLabel: 'Jun 24',    time: '09:55 AM' },
   { id: 'h7', title: 'Trip planning Lagos–Abuja', dateLabel: 'Jun 23',    time: '03:12 PM' },
 ]

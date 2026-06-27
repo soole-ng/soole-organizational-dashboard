@@ -5,7 +5,6 @@ import { HeroBand } from './components/HeroBand'
 import { AlertsBanner } from './components/AlertsBanner'
 import { UpcomingTrips } from './components/UpcomingTrips'
 import { QuickStats } from './components/QuickStats'
-import { HomeRoutes } from './components/HomeRoutes'
 import { useOrg } from '../../lib/OrgContext'
 export function HomePage() {
   const { org } = useOrg()
@@ -50,7 +49,6 @@ export function HomePage() {
           <div className="lg:col-span-2 space-y-4">
             <AlertsBanner />
             <UpcomingTrips />
-            <HomeRoutes />
           </div>
           <div className="space-y-4">
             <QuickStats />

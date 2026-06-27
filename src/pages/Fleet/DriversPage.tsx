@@ -130,7 +130,7 @@ export function DriversPage() {
         </div>
       </div>
 
-      <div className="flex-1 p-4 space-y-3 lg:pt-8 lg:px-8 max-w-5xl mx-auto w-full">
+      <div className="flex-1 p-4 space-y-3 lg:pt-8 lg:px-8 max-w-7xl mx-auto w-full">
         <DesktopPageHeader
           title="Drivers"
           subtitle={`${filtered.length} drivers · ${verified} verified · Avg ${avgRating > 0 ? avgRating.toFixed(1) : '—'}★`}
@@ -152,7 +152,7 @@ export function DriversPage() {
             action={{ label: '+ Invite Driver', onClick: () => setShowAddSheet(true) }}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map(driver => (
               <div
                 key={driver.id}

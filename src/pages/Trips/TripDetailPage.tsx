@@ -366,63 +366,15 @@ export function TripDetailPage() {
               </div>
             )}
 
-            {/* Comments — completed trips only */}
+            {/* Comments Button — completed trips only */}
             {isCompleted && (
-              <div className="bg-white rounded-xl border border-neutral-100 p-4">
-                <div className="flex items-center gap-2 mb-4">
-                  <MessageSquare className="w-4 h-4 text-primary-400" />
-                  <p className="text-xs font-bold text-black uppercase tracking-wider">Comments</p>
-                  <span className="ml-auto text-[10px] text-neutral-200 font-medium">{comments.length} note{comments.length !== 1 ? 's' : ''}</span>
-                </div>
-
-                {/* Preview: latest 3 comments */}
-                <div className="space-y-3 mb-3">
-                  {comments.slice(-3).map(c => (
-                    <div key={c.id} className="flex gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-primary-75 flex items-center justify-center flex-shrink-0">
-                        <span className="text-[10px] font-black text-primary-500">{c.initials}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-xs font-semibold text-primary-500">{c.author}</span>
-                          <span className="text-[10px] text-neutral-200">{formatTime(c.timestamp)}</span>
-                        </div>
-                        <p className="text-xs text-neutral-300 leading-relaxed mt-0.5 line-clamp-2">{c.text}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* View all button */}
-                {comments.length > 3 && (
-                  <button
-                    onClick={() => setShowAllComments(true)}
-                    className="w-full text-xs text-primary-400 font-semibold py-2 rounded-xl border border-neutral-100 hover:bg-primary-75 transition-colors mb-3"
-                  >
-                    View all {comments.length} comments
-                  </button>
-                )}
-
-                {/* Inline new comment input */}
-                <div className="flex gap-2">
-                  <textarea
-                    value={newComment}
-                    onChange={e => setNewComment(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(newComment) } }}
-                    placeholder="Add a note about this trip…"
-                    rows={2}
-                    className="flex-1 text-xs text-primary-500 placeholder-neutral-200 bg-neutral-50 border border-neutral-100 rounded-xl px-3 py-2 resize-none focus:outline-none focus:border-primary-200 transition-colors"
-                  />
-                  <button
-                    onClick={() => submitComment(newComment)}
-                    disabled={!newComment.trim()}
-                    className="self-end w-9 h-9 rounded-xl bg-primary-500 flex items-center justify-center text-white hover:bg-primary-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    aria-label="Post comment"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+              <button
+                onClick={() => setShowAllComments(true)}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-neutral-100 bg-white hover:bg-neutral-50 text-primary-500 font-semibold transition-all duration-150"
+              >
+                <MessageSquare className="w-4 h-4 text-primary-400" />
+                <span>Comments & Ratings ({comments.length + (data.drivers?.find((d: any) => d.id === trip.driverId)?.reviews?.filter((r: any) => r.tripId === trip.id)?.length ?? 0)})</span>
+              </button>
             )}
           </div>
 
@@ -434,7 +386,7 @@ export function TripDetailPage() {
         </div>
       </div>
 
-      {/* ── All Comments Modal ── */}
+      {/* ── All Comments & Ratings Modal ── */}
       {showAllComments && (
         <div
           className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
@@ -448,8 +400,8 @@ export function TripDetailPage() {
             <div className="flex items-center gap-3 px-5 py-4 border-b border-neutral-100 flex-shrink-0">
               <MessageSquare className="w-5 h-5 text-primary-400" />
               <div>
-                <h2 className="text-sm font-bold text-primary-500">All Comments</h2>
-                <p className="text-[11px] text-neutral-200">{trip.routeName} &middot; {comments.length} note{comments.length !== 1 ? 's' : ''}</p>
+                <h2 className="text-sm font-bold text-primary-500">Comments & Ratings</h2>
+                <p className="text-[11px] text-neutral-200">{trip.routeName} &middot; Passenger Feedback</p>
               </div>
               <button
                 onClick={() => setShowAllComments(false)}
@@ -458,32 +410,74 @@ export function TripDetailPage() {
               >&#x2715;</button>
             </div>
 
-            {/* Scrollable comment list */}
+            {/* Scrollable comment & rating list */}
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-              {comments.map((c, i) => (
-                <div key={c.id} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary-75 flex items-center justify-center flex-shrink-0">
-                    <span className="text-[11px] font-black text-primary-500">{c.initials}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-primary-500">{c.author}</span>
-                      <span className="text-xs text-neutral-200">{formatTime(c.timestamp)}</span>
-                      <span className="text-[10px] text-neutral-200 ml-auto">#{i + 1}</span>
+              {/* Render passenger ratings & reviews */}
+              {(() => {
+                const driverObj = data.drivers?.find((d: any) => d.id === trip.driverId)
+                const tripReviews = driverObj?.reviews?.filter((r: any) => r.tripId === trip.id) ?? []
+                
+                return (
+                  <>
+                    {tripReviews.length > 0 && (
+                      <div className="space-y-3">
+                        <p className="text-[10px] font-bold text-neutral-200 uppercase tracking-widest">Passenger Reviews & Ratings</p>
+                        {tripReviews.map((rev: any) => (
+                          <div key={rev.id} className="bg-neutral-50 rounded-xl p-3 border border-neutral-100 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-primary-500">{rev.passengerName}</span>
+                              <div className="flex items-center gap-0.5">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={clsx(
+                                      "w-3 h-3",
+                                      i < Math.floor(rev.rating)
+                                        ? "fill-amber-400 text-amber-400"
+                                        : "text-neutral-100"
+                                    )}
+                                  />
+                                ))}
+                                <span className="text-[10px] font-bold text-neutral-200 ml-1">{rev.rating}</span>
+                              </div>
+                            </div>
+                            <p className="text-xs text-neutral-300 leading-relaxed italic">"{rev.comment}"</p>
+                            <span className="text-[9px] text-neutral-200 block text-right">{rev.date}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Render internal notes / logs */}
+                    <div className="space-y-3 pt-2">
+                      <p className="text-[10px] font-bold text-neutral-200 uppercase tracking-widest">Internal Operations Notes</p>
+                      {comments.map((c) => (
+                        <div key={c.id} className="flex gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary-75 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[11px] font-black text-primary-500">{c.initials}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-2 flex-wrap">
+                              <span className="text-sm font-semibold text-primary-500">{c.author}</span>
+                              <span className="text-xs text-neutral-200">{formatTime(c.timestamp)}</span>
+                            </div>
+                            <p className="text-sm text-neutral-300 leading-relaxed mt-1">{c.text}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <p className="text-sm text-neutral-300 leading-relaxed mt-1">{c.text}</p>
-                  </div>
-                </div>
-              ))}
+                  </>
+                )
+              })()}
             </div>
 
-            {/* Modal post input */}
+            {/* Modal post input for operations notes */}
             <div className="px-5 py-4 border-t border-neutral-100 flex gap-2 flex-shrink-0">
               <textarea
                 value={modalComment}
                 onChange={e => setModalComment(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(modalComment, true) } }}
-                placeholder="Add a note…"
+                placeholder="Add an internal note…"
                 rows={2}
                 className="flex-1 text-sm text-primary-500 placeholder-neutral-200 bg-neutral-50 border border-neutral-100 rounded-xl px-3 py-2 resize-none focus:outline-none focus:border-primary-200 transition-colors"
               />

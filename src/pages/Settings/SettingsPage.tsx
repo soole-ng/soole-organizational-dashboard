@@ -37,7 +37,6 @@ export function SettingsPage() {
     { icon: Wallet, label: 'Payout Settings', desc: 'Bank account and payout schedule' },
     { icon: Bell, label: 'Notifications', desc: 'Alerts and notification channels' },
     { icon: AlertTriangle, label: 'Alert Settings', desc: 'Speed limits and custom fleet safety alerts' },
-    { icon: Shield, label: 'Security', desc: 'Password, 2FA and active sessions' },
     { icon: RefreshCw, label: 'Refund Policy', desc: 'Set your cancellation and refund rules' },
     { icon: HelpCircle, label: 'Help & Support', desc: 'FAQs, chat and contact Soole', to: '/help' },
   ]

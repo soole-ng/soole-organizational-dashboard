@@ -12,7 +12,7 @@ const reportTypes = [
   { icon: Navigation, label: 'Route Report', desc: 'Top routes by occupancy and revenue', color: 'bg-white text-primary-400' },
 ]
 
-const dateRanges = ['Today', 'This Week', 'This Month', 'Custom']
+const dateRanges = ['Today', 'This Week']
 
 export function ReportsPage() {
   const { data, loading } = useMockData()
@@ -85,9 +85,7 @@ export function ReportsPage() {
                 NGN {totalNet.toLocaleString()}
               </p>
             </div>
-            <button className="flex items-center gap-1.5 text-xs text-secondary-300 font-semibold border border-secondary-100 rounded-full px-3 py-1.5">
-              <Download className="w-3.5 h-3.5" /> Export PDF
-            </button>
+            {/* Export PDF hidden */}
           </div>
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={weeklyRevData} barSize={20} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
@@ -121,10 +119,7 @@ export function ReportsPage() {
                   <p className="text-sm font-semibold text-primary-500">{label}</p>
                   <p className="text-xs text-neutral-200 mt-0.5 leading-relaxed">{desc}</p>
                 </div>
-                <div className="flex gap-1.5 flex-shrink-0">
-                  <button className="text-[10px] text-secondary-300 font-semibold border border-secondary-100 rounded-lg px-2 py-1">PDF</button>
-                  <button className="text-[10px] text-secondary-300 font-semibold border border-secondary-100 rounded-lg px-2 py-1">XLS</button>
-                </div>
+                {/* PDF/XLS buttons hidden */}
               </button>
             ))}
           </div>

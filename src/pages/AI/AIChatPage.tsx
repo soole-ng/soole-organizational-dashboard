@@ -148,8 +148,8 @@ export function AIChatPage() {
 
           {/* Dropdown panel */}
           {showHistory && (
-            <div className="absolute left-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-float border border-neutral-100 z-50 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
+            <div className="absolute left-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-float z-50 overflow-hidden chat-history-dropdown">
+              <div className="flex items-center justify-between px-4 py-3">
                 <p className="text-sm font-bold text-black">Chat History</p>
                 <button
                   onClick={() => setShowHistory(false)}
@@ -161,16 +161,16 @@ export function AIChatPage() {
               <div className="max-h-72 overflow-y-auto scrollbar-thin">
                 {historyGroups.map(group => (
                   <div key={group.label}>
-                    <p className="text-[10px] font-bold text-neutral-200 uppercase tracking-wider px-4 py-2 bg-neutral-50/60">
+                    <p className="text-[10px] font-bold text-black uppercase tracking-wider px-4 py-2 bg-neutral-50/20">
                       {group.label}
                     </p>
                     {group.items.map(session => (
                       <button
                         key={session.id}
-                        className="w-full text-left px-4 py-2.5 hover:bg-primary-75 transition-colors border-b border-neutral-50 group"
+                        className="w-full text-left px-4 py-2.5 hover:bg-primary-75 transition-colors group"
                         onClick={() => { toast(`Loading: "${session.title}"`); setShowHistory(false) }}
                       >
-                        <p className="text-xs font-medium text-black truncate group-hover:text-primary-500 transition-colors">
+                        <p className="text-xs font-bold text-black truncate group-hover:text-primary-500 transition-colors">
                           {session.title}
                         </p>
                         <p className="text-[10px] text-neutral-200 mt-0.5">{session.time}</p>
@@ -179,12 +179,12 @@ export function AIChatPage() {
                   </div>
                 ))}
               </div>
-              <div className="px-4 py-3 border-t border-neutral-100">
+              <div className="px-4 py-3">
                 <button
                   onClick={() => { setMessages([]); setShowHistory(false); toast.success('New chat started') }}
                   className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-primary-500 text-white text-xs font-semibold hover:bg-primary-400 transition-colors"
                 >
-                  <X className="w-3 h-3" /> New Chat
+                  <X className="w-3.5 h-3.5" /> New Chat
                 </button>
               </div>
             </div>

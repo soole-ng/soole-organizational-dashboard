@@ -171,3 +171,7 @@
 .maplibregl-popup-content * {
   color: black !important;
 }
+.chat-history-dropdown {
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}

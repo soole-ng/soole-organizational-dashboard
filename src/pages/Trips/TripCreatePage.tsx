@@ -20,6 +20,7 @@ export function TripCreatePage() {
   const [publishing, setPublishing] = useState(false)
   const [mockVehiclesList, setMockVehiclesList] = useState<any[]>([])
   const [locations, setLocations] = useState<any[]>([])
+  const [mockDriversList, setMockDriversList] = useState<any[]>([])
 
   const [pickupSearch, setPickupSearch] = useState('Lagos')
   const [dropoffSearch, setDropoffSearch] = useState('Ibadan')
@@ -32,6 +33,7 @@ export function TripCreatePage() {
       .then(data => {
         setMockVehiclesList(data.vehicles || [])
         setLocations(data.locations || [])
+        setMockDriversList(data.drivers || [])
       })
       .catch(console.error)
   }, [])
@@ -182,23 +184,37 @@ export function TripCreatePage() {
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
               </div>
-              {selectedVehicle?.assignedDriverName && (
-                <p className="text-[11px] text-secondary-300 mt-1 font-medium">
-                  Driver: {selectedVehicle.assignedDriverName}
-                </p>
-              )}
             </div>
 
-            {/* Departure */}
+            {/* Driver selection */}
             <div>
-              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure Date & Time</label>
-              <input
-                type="datetime-local"
-                value={form.departureAt}
-                onChange={e => set('departureAt', e.target.value)}
-                className="input-field py-2.5"
-              />
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Driver</label>
+              <div className="relative">
+                <select
+                  value={form.driverId}
+                  onChange={e => set('driverId', e.target.value)}
+                  className="input-field py-2.5 appearance-none pr-10"
+                >
+                  {mockDriversList.filter(d => d.status === 'verified' || d.status === 'active').map(d => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.phone})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+              </div>
             </div>
+          </div>
+
+          {/* Departure */}
+          <div>
+            <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure Date & Time</label>
+            <input
+              type="datetime-local"
+              value={form.departureAt}
+              onChange={e => set('departureAt', e.target.value)}
+              className="input-field py-2.5"
+            />
           </div>
 
           <div>

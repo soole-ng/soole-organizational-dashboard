@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, History, Car } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useMockData } from '../../lib/useMockData'
@@ -7,8 +8,6 @@ import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 import { VehicleIcon, docStatusIcon } from '../../components/ui/VehicleIcons'
 import { VehicleHistoryModal } from './components/VehicleHistoryModal'
-import { AddVehicleSheet } from './components/AddVehicleSheet'
-
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'All', value: 'all' },
   { label: 'Verified', value: 'verified' },
@@ -23,8 +22,6 @@ export function VehiclesPage() {
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
   
-  const [showAddSheet, setShowAddSheet] = useState(false)
-  const [currentStep, setCurrentStep] = useState(1)
   const [vehiclesList, setVehiclesList] = useState<any[]>([])
 
   useEffect(() => {
@@ -99,12 +96,12 @@ export function VehiclesPage() {
           title="Vehicles"
           subtitle={`${filtered.length} vehicles · ${totalSeats} total seats`}
           actions={
-            <button
-              onClick={() => { setShowAddSheet(true); setCurrentStep(1); }}
+            <Link
+              to="/fleet/vehicles/new"
               className="flex items-center gap-2 bg-[#042011] text-white font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-400 transition-colors"
             >
               + Add Vehicle
-            </button>
+            </Link>
           }
         />
 
@@ -182,12 +179,13 @@ export function VehiclesPage() {
         )}
       </div>
 
-      <button
+      <Link
+        to="/fleet/vehicles/new"
         className="lg:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 rounded-full flex items-center justify-center shadow-float text-white z-30"
         aria-label="Add vehicle"
       >
         <Plus className="w-6 h-6" />
-      </button>
+      </Link>
 
       {/* Vehicle History Modal */}
       {historyVehicle && (
@@ -198,18 +196,7 @@ export function VehiclesPage() {
         />
       )}
 
-      {/* Add Vehicle Sheet */}
-      <AddVehicleSheet
-        open={showAddSheet}
-        onClose={() => setShowAddSheet(false)}
-        currentStep={currentStep}
-        setCurrentStep={setCurrentStep}
-        onSuccess={(newVehicle) => {
-          setVehiclesList(prev => [newVehicle, ...prev])
-          setShowAddSheet(false)
-          setCurrentStep(1)
-        }}
-      />
+
     </div>
   )
 }

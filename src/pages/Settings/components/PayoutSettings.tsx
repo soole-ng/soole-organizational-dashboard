@@ -26,11 +26,27 @@ export function PayoutSettings() {
   const [deleteOtp, setDeleteOtp] = useState('')
   const [deleteSecretAnswer, setDeleteSecretAnswer] = useState('')
 
+  const [isValidating, setIsValidating] = useState(false)
+  const [resolvedName, setResolvedName] = useState('')
+
   const activeQuestions = org.securityQuestions || [
     { question: 'What is your favourite food?', answer: 'Ojota' }
   ]
   const activeSecQuestion = activeQuestions[activeQuestionIdx]?.question || 'What is your favourite food?'
   const activeSecAnswer = activeQuestions[activeQuestionIdx]?.answer || 'Ojota'
+
+  const triggerVerification = (bank: string, accNum: string) => {
+    if (accNum.length === 10 && bank) {
+      setIsValidating(true)
+      setTimeout(() => {
+        setIsValidating(false)
+        const resolved = `Speedway Transport Ltd (${bank.split(' ')[0]})`
+        setResolvedName(resolved)
+        setTempDetails(p => ({ ...p, accountName: resolved }))
+        toast.success('Account verified successfully!')
+      }, 1000)
+    }
+  }
 
   const handleCloseAdd = () => {
     setShowAddModal(false)
@@ -38,6 +54,8 @@ export function PayoutSettings() {
     setOtpCode('')
     setSecretAnswer('')
     setTempDetails({ bankName: '', accountNumber: '', accountName: '' })
+    setIsValidating(false)
+    setResolvedName('')
   }
 
   const handleCloseDelete = () => {
@@ -156,24 +174,7 @@ export function PayoutSettings() {
               >&#x2715;</button>
             </div>
 
-            {modalStep === 1 && (() => {
-              const [isValidating, setIsValidating] = useState(false)
-              const [resolvedName, setResolvedName] = useState(tempDetails.accountName)
-
-              const triggerVerification = (bank: string, accNum: string) => {
-                if (accNum.length === 10 && bank) {
-                  setIsValidating(true)
-                  setTimeout(() => {
-                    setIsValidating(false)
-                    const resolved = `Speedway Transport Ltd (${bank.split(' ')[0]})`
-                    setResolvedName(resolved)
-                    setTempDetails(p => ({ ...p, accountName: resolved }))
-                    toast.success('Account verified successfully!')
-                  }, 1000)
-                }
-              }
-
-              return (
+            {modalStep === 1 && (
                 <div className="space-y-3">
                   <div>
                     <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">Account Number</label>
@@ -268,7 +269,7 @@ export function PayoutSettings() {
                   </div>
                 </div>
               )
-            })()}
+            }
 
             {modalStep === 2 && (
               <div className="space-y-4 bg-white">

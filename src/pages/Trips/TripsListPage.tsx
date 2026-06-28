@@ -1,11 +1,10 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Route, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { TripCard } from './components/TripCard'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useMockData } from '../../lib/useMockData'
-import { Route } from 'lucide-react'
 import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 
@@ -21,11 +20,44 @@ const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
 export function TripsListPage() {
   const { data } = useMockData()
   const [activeTab, setActiveTab] = useState('Today')
-  const [statusFilter, setStatusFilter] = useState<StatusVariant | 'all'>('all')
+  const [statusFilter, setStatusFilter] = useState<StatusVariant | 'all'>('boarding')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 12
 
-  const filtered = data.trips.filter(t =>
-    statusFilter === 'all' || t.status === statusFilter,
-  )
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    setCurrentPage(1)
+  }
+
+  const handleStatusChange = (status: StatusVariant | 'all') => {
+    setStatusFilter(status)
+    setCurrentPage(1)
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+    setCurrentPage(1)
+  }
+
+  const filtered = data.trips.filter(t => {
+    const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
+    
+    let matchesSearch = true;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      matchesSearch = 
+        t.origin.toLowerCase().includes(q) ||
+        t.destination.toLowerCase().includes(q) ||
+        t.driverName.toLowerCase().includes(q) ||
+        t.vehiclePlate.toLowerCase().includes(q);
+    }
+    
+    return matchesStatus && matchesSearch;
+  })
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedTrips = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -36,7 +68,7 @@ export function TripsListPage() {
           {tabs.map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => handleTabChange(tab)}
               className={clsx(
                 'flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition-colors pb-2.5',
                 activeTab === tab
@@ -52,7 +84,7 @@ export function TripsListPage() {
           {statusFilters.map(sf => (
             <button
               key={sf.value}
-              onClick={() => setStatusFilter(sf.value)}
+              onClick={() => handleStatusChange(sf.value)}
               className={clsx(
                 'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border',
                 statusFilter === sf.value
@@ -66,8 +98,20 @@ export function TripsListPage() {
         </div>
       </div>
 
-      <div className="flex-1 p-4 space-y-3 lg:pt-8 lg:px-8 w-full">
-        <DesktopPageHeader title="Trips" subtitle={`${filtered.length} trips`} />
+      <div className="flex-1 p-4 space-y-4 lg:pt-8 lg:px-8 w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <DesktopPageHeader title="Trips" subtitle={`${filtered.length} trips`} />
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200" />
+            <input
+              type="text"
+              placeholder="Search origin, driver, or plate..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300 transition-all"
+            />
+          </div>
+        </div>
 
         {filtered.length === 0 ? (
           <EmptyState
@@ -77,9 +121,52 @@ export function TripsListPage() {
             action={{ label: '+ New Trip', onClick: () => {} }}
           />
         ) : (
-          <div id="tour-trips-list" className="grid grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map(trip => <TripCard key={trip.id} trip={trip} />)}
-          </div>
+          <>
+            <div id="tour-trips-list" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+              {paginatedTrips.map(trip => <TripCard key={trip.id} trip={trip} />)}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between pt-6 mt-6 border-t border-neutral-50 gap-4">
+                <p className="text-xs text-neutral-300 font-medium">
+                  Showing <span className="text-black font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-black font-bold">{Math.min(currentPage * itemsPerPage, filtered.length)}</span> of <span className="text-black font-bold">{filtered.length}</span> trips
+                </p>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 border border-neutral-100 rounded-lg hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-neutral-400" />
+                  </button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={clsx(
+                          'w-8 h-8 rounded-lg text-xs font-bold transition-colors flex items-center justify-center',
+                          currentPage === i + 1 
+                            ? 'bg-primary-500 text-white shadow-sm' 
+                            : 'text-neutral-400 hover:bg-neutral-50 border border-transparent hover:border-neutral-100'
+                        )}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 border border-neutral-100 rounded-lg hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4 text-neutral-400" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

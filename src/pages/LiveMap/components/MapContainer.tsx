@@ -70,6 +70,8 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
       }
     }, [])
 
+    const [mapInstance, setMapInstance] = useState<any>(null)
+
     useEffect(() => {
       if (!mapLoaded) return
 
@@ -90,10 +92,18 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
         if (ref) {
           (ref as any).current = map
         }
+        setMapInstance(map)
       })
 
       return () => map.remove()
-    }, [mapLoaded, basemap, ref])
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mapLoaded])
+
+    useEffect(() => {
+      if (mapInstance) {
+        mapInstance.setStyle(getMapStyle(basemap))
+      }
+    }, [basemap, mapInstance])
 
     // Effect to synchronise MapLibre native markers
     useEffect(() => {

@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Plus, Eye, EyeOff } from 'lucide-react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { TopBar } from '../../components/layout/TopBar'
 import { HeroBand } from './components/HeroBand'
@@ -7,8 +7,9 @@ import { QuickStats } from './components/QuickStats'
 import { useOrg } from '../../lib/OrgContext'
 
 export function HomePage() {
-  const { org } = useOrg()
+  const { org, updateOrg } = useOrg()
   const { notifications, setNotifications } = useOutletContext<any>()
+  const isHidden = org.isBalanceHidden || false
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -33,11 +34,18 @@ export function HomePage() {
           {[
             { label: 'Trips Today', value: '3', sub: '+1 vs yesterday' },
             { label: 'Bookings Today', value: '34', sub: '10 seats remaining' },
-            { label: "Today's Revenue", value: 'NGN 269K', sub: '+18% vs last week' },
-            { label: 'Wallet Balance', value: 'NGN 47.3K', sub: 'Total Amount' },
+            { label: "Today's Revenue", value: isHidden ? '****' : 'NGN 269K', sub: '+18% vs last week' },
+            { label: 'Wallet Balance', value: isHidden ? '****' : 'NGN 47.3K', sub: 'Total Amount' },
           ].map(s => (
             <div key={s.label} className="bg-primary-400 rounded-2xl p-4">
-              <p className="text-primary-100 text-xs mb-2">{s.label}</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-primary-100 text-xs">{s.label}</p>
+                {s.label === 'Wallet Balance' && (
+                  <button onClick={() => updateOrg({ isBalanceHidden: !isHidden })} className="text-primary-100 hover:text-white">
+                    {isHidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                )}
+              </div>
               <p className="text-3xl sm:text-4xl font-black text-white stat-number">{s.value}</p>
               <p className="text-primary-200 text-[11px] mt-1">{s.sub}</p>
             </div>

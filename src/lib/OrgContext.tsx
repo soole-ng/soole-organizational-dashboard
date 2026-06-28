@@ -27,6 +27,7 @@ interface OrgProfile {
   phone?: string
   securityQuestions?: SecurityQuestion[]
   bankAccounts?: BankAccount[]
+  isBalanceHidden?: boolean
 }
 
 interface OrgContextValue {
@@ -54,7 +55,8 @@ const DEFAULT_ORG: OrgProfile = {
       accountNumber: '0123456789',
       isPrimary: true
     }
-  ]
+  ],
+  isBalanceHidden: false
 }
 
 const OrgContext = createContext<OrgContextValue>({

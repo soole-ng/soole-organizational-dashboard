@@ -7,6 +7,7 @@ interface MoneyDisplayProps {
   className?: string
   showSign?: boolean
   muted?: boolean
+  hidden?: boolean
 }
 
 const sizeMap = {
@@ -18,10 +19,10 @@ const sizeMap = {
   '2xl': 'text-4xl font-bold',
 }
 
-export function MoneyDisplay({ amount, size = 'md', className, showSign, muted }: MoneyDisplayProps) {
+export function MoneyDisplay({ amount, size = 'md', className, showSign, muted, hidden }: MoneyDisplayProps) {
   const isNegative = amount < 0
   const formatted = formatMoney(Math.abs(amount))
-  const sign = showSign ? (isNegative ? '−' : '+') : (isNegative ? '−' : '')
+  const sign = showSign && !hidden ? (isNegative ? '−' : '+') : (isNegative && !hidden ? '−' : '')
 
   return (
     <span
@@ -34,7 +35,7 @@ export function MoneyDisplay({ amount, size = 'md', className, showSign, muted }
         className,
       )}
     >
-      {sign}{formatted}
+      {hidden ? '****' : `${sign}${formatted}`}
     </span>
   )
 }

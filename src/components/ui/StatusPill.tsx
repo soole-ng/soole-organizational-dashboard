@@ -9,7 +9,7 @@ const config: Record<StatusVariant, { label: string; color: string }> = {
   pending:     { label: 'Pending',     color: '#FF5500' },
   scheduled:   { label: 'Scheduled',   color: '#0070FF' },
   sent:        { label: 'Sent',        color: '#0070FF' },
-  boarding:    { label: 'Trip in Progress', color: '#FF5500' },
+  boarding:    { label: 'Active', color: '#FF5500' },
   in_progress: { label: '',            color: '#FF5500' },
   rejected:    { label: 'Rejected',    color: '#FF5500' },
   failed:      { label: 'Failed',      color: '#FF5500' },

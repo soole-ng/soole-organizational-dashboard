@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Settings, Download, Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X, ChevronDown } from 'lucide-react'
+import { Settings, Download, Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X, ChevronDown, Eye, EyeOff, Filter } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay'
 import { StatusPill } from '../../components/ui/StatusPill'
@@ -18,7 +18,8 @@ export function MoneyPage() {
   const [extraTransactions, setExtraTransactions] = useState<any[]>([])
   const [extraPayouts, setExtraPayouts] = useState<any[]>([])
 
-  const { org } = useOrg()
+  const { org, updateOrg } = useOrg()
+  const isHidden = org.isBalanceHidden || false
   const bankAccounts = org.bankAccounts || []
   const primaryAccount = bankAccounts.find(a => a.isPrimary) || bankAccounts[0]
 
@@ -30,6 +31,11 @@ export function MoneyPage() {
   const [selectedAccountId, setSelectedAccountId] = useState('')
   const [activeQuestionIdx, setActiveQuestionIdx] = useState(0)
 
+  // Filter states
+  const [showFilterModal, setShowFilterModal] = useState(false)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+
   const activeQuestions = org.securityQuestions || [
     { question: 'What is your favourite food?', answer: 'Ojota' }
   ]
@@ -38,7 +44,16 @@ export function MoneyPage() {
 
   const selectedAccount = bankAccounts.find(a => a.id === selectedAccountId) || primaryAccount
 
-  const allTransactions = [...extraTransactions, ...data.transactions]
+  let allTransactions = [...extraTransactions, ...data.transactions]
+  if (startDate && endDate) {
+    const start = new Date(startDate).getTime()
+    const end = new Date(endDate).getTime() + 86400000 // include the end day
+    allTransactions = allTransactions.filter(t => {
+      const time = new Date(t.date).getTime()
+      return time >= start && time <= end
+    })
+  }
+
   const allPayouts = [...extraPayouts, ...data.payouts]
 
   const handleWithdrawClick = () => {
@@ -124,9 +139,19 @@ export function MoneyPage() {
       {/* Main Stats Banner */}
       <div className="bg-primary-500 px-4 pt-4 pb-6 lg:px-8 w-full lg:rounded-b-2xl">
         <div className="flex items-start justify-between mb-6">
-          <div>
-            <p className="text-primary-200 text-xs mb-1">Available balance</p>
-            <MoneyDisplay amount={balance} size="2xl" className="text-white text-3xl sm:text-5xl font-black" />
+          <div className="flex items-center justify-between w-full">
+            <div>
+              <p className="text-primary-200 text-xs mb-1">Available balance</p>
+              <div className="flex items-center gap-3">
+                <MoneyDisplay amount={balance} size="2xl" hidden={isHidden} className="text-white text-3xl sm:text-5xl font-black" />
+                <button 
+                  onClick={() => updateOrg({ isBalanceHidden: !isHidden })}
+                  className="p-2 bg-primary-400 hover:bg-primary-300 rounded-full text-white transition-colors"
+                >
+                  {isHidden ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -135,7 +160,9 @@ export function MoneyPage() {
             <Calendar className="w-3.5 h-3.5 text-accent-300" />
             <span className="font-medium text-primary-100">Instant Transfer Available</span>
           </div>
-          <p className="text-2xl sm:text-3xl font-black text-white stat-number">NGN {balance.toLocaleString()}</p>
+          <p className="text-2xl sm:text-3xl font-black text-white stat-number">
+            {isHidden ? '****' : `NGN ${balance.toLocaleString()}`}
+          </p>
           <p className="text-[11px] text-primary-200 mt-1">
             Ready for withdrawal · {primaryAccount?.bankName || 'GTBank'} ****{primaryAccount?.accountNumber?.slice(-4) || '4521'}
           </p>
@@ -150,7 +177,9 @@ export function MoneyPage() {
               { label: 'Available Balance', value: `NGN ${(balance / 1000).toFixed(1)}K` },
             ].map(s => (
               <div key={s.label}>
-                <p className="text-xl sm:text-3xl font-black text-white stat-number">{s.value}</p>
+                <p className="text-xl sm:text-3xl font-black text-white stat-number">
+                  {isHidden ? '****' : s.value}
+                </p>
                 <p className="text-[11px] text-primary-200 mt-1 font-medium">{s.label}</p>
               </div>
             ))}
@@ -176,7 +205,15 @@ export function MoneyPage() {
       <div className="flex-1 p-4 space-y-4 lg:pt-8 lg:px-8 w-full">
         <DesktopPageHeader title="Money" subtitle="Wallet, transactions & payouts" />
 
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between mb-4">
+          {activeTab === 'Transactions' ? (
+            <button 
+              onClick={() => setShowFilterModal(true)}
+              className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold hover:text-black transition-colors bg-white border border-neutral-100 rounded-lg px-3 py-1.5 shadow-sm"
+            >
+              <Filter className="w-3.5 h-3.5" /> {startDate && endDate ? `${startDate} - ${endDate}` : 'Filter Date'}
+            </button>
+          ) : <div />}
           <button className="flex items-center gap-1.5 text-xs text-secondary-300 font-semibold hover:underline">
             <Download className="w-3.5 h-3.5" /> Export CSV
           </button>
@@ -208,6 +245,7 @@ export function MoneyPage() {
                       amount={tx.net}
                       size="sm"
                       showSign
+                      hidden={isHidden}
                       className={clsx('font-bold', tx.net > 0 ? 'text-secondary-300' : 'text-danger')}
                     />
                   </div>
@@ -222,7 +260,7 @@ export function MoneyPage() {
             {allPayouts.map(payout => (
               <div key={payout.id} className="card">
                 <div className="flex items-center justify-between mb-2">
-                  <MoneyDisplay amount={payout.amount} size="lg" className="font-bold text-lg" />
+                  <MoneyDisplay amount={payout.amount} size="lg" hidden={isHidden} className="font-bold text-lg" />
                   <StatusPill status={payout.status} />
                 </div>
                 <div className="space-y-1 text-xs text-neutral-200">
@@ -242,6 +280,67 @@ export function MoneyPage() {
           </div>
         )}
       </div>
+
+      {/* Date Filter Modal */}
+      {showFilterModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-card w-full max-w-sm p-6 shadow-float relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setShowFilterModal(false)}
+              className="absolute top-4 right-4 p-2 bg-neutral-50 hover:bg-neutral-100 rounded-full text-neutral-400 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <h3 className="text-xl font-bold text-black mb-1">Filter Transactions</h3>
+            <p className="text-sm text-neutral-300 mb-6">Select a date range to filter your transaction history.</p>
+
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              setShowFilterModal(false)
+              if (startDate && endDate) {
+                toast.success('Transactions filtered!')
+              } else {
+                toast.error('Please select both start and end dates.')
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-black mb-1.5">Start Date</label>
+                <input 
+                  type="date" 
+                  required
+                  className="input-field" 
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-black mb-1.5">End Date</label>
+                <input 
+                  type="date" 
+                  required
+                  className="input-field" 
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button" 
+                  className="btn-secondary flex-1"
+                  onClick={() => { setStartDate(''); setEndDate(''); setShowFilterModal(false); }}
+                >
+                  Clear
+                </button>
+                <button type="submit" className="btn-primary flex-1">
+                  Apply Filter
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Instant Payout Verification Modal */}
       {showModal && (

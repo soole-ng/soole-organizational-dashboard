@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams, useOutletContext } from 'react-router-dom'
+import { useParams, useOutletContext, useNavigate } from 'react-router-dom'
 import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle, Droplets, MessageSquare, Star } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
@@ -39,6 +39,7 @@ const seedComments: TripComment[] = [
 
 export function TripDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const { data, loading } = useMockData()
   const ctx = useOutletContext<any>()
   const notifications = ctx?.notifications ?? []
@@ -130,6 +131,7 @@ export function TripDetailPage() {
   const handleCancel = () => toast.error('Cancel this trip?')
 
   const actions = [
+    isLive && { icon: Navigation, label: 'View on Map', action: () => navigate('/live-map'), danger: false },
     isScheduled && { icon: Edit2, label: 'Edit', action: handleEdit, danger: false },
     isScheduled && { icon: XCircle, label: 'Cancel', action: handleCancel, danger: true },
   ].filter(Boolean) as { icon: any; label: string; action: () => void; danger: boolean }[]

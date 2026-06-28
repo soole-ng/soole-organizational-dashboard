@@ -141,7 +141,7 @@ export function LiveMapPage() {
             'w-72 bg-white shadow-float z-20 flex flex-col overflow-hidden',
             'absolute left-0 top-0 bottom-0 transition-transform duration-300',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full',
-            'lg:translate-x-0 lg:relative lg:static lg:w-80'
+            sidebarOpen ? 'lg:relative lg:static lg:w-80' : 'lg:w-80 lg:absolute'
           )}
         >
           <DriverSidebar
@@ -173,7 +173,7 @@ export function LiveMapPage() {
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className={clsx(
-            'fixed right-4 bottom-28 z-30 lg:hidden',
+            'fixed right-4 bottom-28 z-30',
             'w-10 h-10 bg-white rounded-full shadow-float flex items-center justify-center text-primary-500 transition-all border border-neutral-100/50'
           )}
           title={sidebarOpen ? "Close Driver List" : "Open Driver List"}

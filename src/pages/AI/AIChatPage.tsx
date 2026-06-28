@@ -5,7 +5,6 @@ import {
   History, X,
 } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
-import { useMockData } from '../../lib/useMockData'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 
@@ -73,7 +72,6 @@ function groupHistory(sessions: HistorySession[]) {
 }
 
 export function AIChatPage() {
-  const { data } = useMockData()
   const [messages, setMessages] = useState<Message[]>([])
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -120,7 +118,6 @@ export function AIChatPage() {
     }
   }
 
-  const verifiedDrivers = data.drivers.filter((d: any) => d.status === 'verified').length
   const historyGroups = groupHistory(chatHistory)
 
   return (
@@ -212,19 +209,6 @@ export function AIChatPage() {
               <p className="text-xs text-neutral-200 text-center max-w-xs mb-6 leading-relaxed">
                 Ask anything about your fleet, revenue, drivers, routes, and daily operations.
               </p>
-
-              {/* Live context chips */}
-              <div className="flex gap-2 flex-wrap justify-center mb-6">
-                {[
-                  `${verifiedDrivers} drivers active`,
-                  `${data.trips.length} trips today`,
-                  'NGN 47.3K balance',
-                ].map(c => (
-                  <span key={c} className="text-[10px] font-semibold px-3 py-1 rounded-full border border-primary-400 bg-white text-primary-400">
-                    {c}
-                  </span>
-                ))}
-              </div>
 
               {/* Suggestion grid */}
               <div className="w-full max-w-sm">

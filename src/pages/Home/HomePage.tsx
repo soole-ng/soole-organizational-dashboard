@@ -25,7 +25,7 @@ export function HomePage() {
             <p className="text-primary-200 text-sm">Good morning,</p>
             <h1 className="text-3xl font-bold text-white">{org.name}</h1>
           </div>
-          <Link to="/trips/new" onClick={guardAction as any} id="tour-new-trip" className="flex items-center gap-2 bg-white text-primary-500 font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-75 transition-colors">
+          <Link to="/trips/new" onClick={guardAction as any} id="tour-new-trip" className="flex items-center gap-2 bg-secondary-500 text-white font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-secondary-600 transition-colors">
             <Plus className="w-4 h-4" />
             New Trip
           </Link>

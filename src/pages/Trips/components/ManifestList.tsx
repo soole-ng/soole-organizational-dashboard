@@ -5,6 +5,7 @@ import type { Passenger } from '../../../types'
 import { formatTime } from '../../../lib/formatters'
 import { requestRefund } from '../../../lib/refundApi'
 import toast from 'react-hot-toast'
+import { useOrg } from '../../../lib/OrgContext'
 
 interface ManifestListProps {
   passengers: Passenger[]
@@ -44,6 +45,7 @@ function getPortrait(name: string, index: number): string {
 }
 
 export function ManifestList({ passengers: initial, tripStatus, tripId }: ManifestListProps) {
+  const { guardAction } = useOrg()
   // Filter out pending-payment passengers — they don't appear in the manifest
   const [passengers, setPassengers] = useState(
     initial.filter(p => p.paymentStatus !== 'pending')
@@ -55,39 +57,43 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
   const isScheduled = tripStatus === 'scheduled'
 
   const markBoarded = (id: string) => {
-    setPassengers(p =>
-      p.map(pass => pass.id === id
-        ? { ...pass, boardingStatus: 'boarded' as const, boardedAt: new Date().toISOString() }
-        : pass,
-      ),
-    )
-    const pass = passengers.find(p => p.id === id)
-    if (pass) toast.success(`${pass.name} marked as boarded`)
+    guardAction(undefined, () => {
+      setPassengers(p =>
+        p.map(pass => pass.id === id
+          ? { ...pass, boardingStatus: 'boarded' as const, boardedAt: new Date().toISOString() }
+          : pass,
+        ),
+      )
+      const pass = passengers.find(p => p.id === id)
+      if (pass) toast.success(`${pass.name} marked as boarded`)
+    })
   }
 
   const [refunding, setRefunding] = useState<string | null>(null)
 
   const processRefund = async (id: string) => {
-    const pass = passengers.find(p => p.id === id)
-    if (!pass) return
-    setRefunding(id)
-    try {
-      await requestRefund({
-        tripId,
-        passengerId: pass.id,
-        passengerName: pass.name,
-        amount: pass.fare ?? 0,
-        reason: 'Did not board — refund requested by operator',
-      })
-      setPassengers(p =>
-        p.map(pa => pa.id === id ? { ...pa, paymentStatus: 'refunded' as const } : pa)
-      )
-      toast.success(`Refund initiated for ${pass.name}`)
-    } catch (err: any) {
-      toast.error(err?.message ?? 'Refund request failed. Please try again.')
-    } finally {
-      setRefunding(null)
-    }
+    guardAction(undefined, async () => {
+      const pass = passengers.find(p => p.id === id)
+      if (!pass) return
+      setRefunding(id)
+      try {
+        await requestRefund({
+          tripId,
+          passengerId: pass.id,
+          passengerName: pass.name,
+          amount: pass.fare ?? 0,
+          reason: 'Did not board — refund requested by operator',
+        })
+        setPassengers(p =>
+          p.map(pa => pa.id === id ? { ...pa, paymentStatus: 'refunded' as const } : pa)
+        )
+        toast.success(`Refund initiated for ${pass.name}`)
+      } catch (err: any) {
+        toast.error(err?.message ?? 'Refund request failed. Please try again.')
+      } finally {
+        setRefunding(null)
+      }
+    })
   }
 
   const boarded = passengers.filter(p => p.boardingStatus === 'boarded').length

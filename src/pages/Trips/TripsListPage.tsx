@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Plus, Route, Search, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { TripCard } from './components/TripCard'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { useMockData } from '../../lib/useMockData'
+import { useOrg } from '../../lib/OrgContext'
+import { useQuery } from '@tanstack/react-query'
+import { tripsApi } from '../../api/trips'
 import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 
@@ -18,7 +20,12 @@ const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
 ]
 
 export function TripsListPage() {
-  const { data } = useMockData()
+  const { data: trips = [], isLoading } = useQuery({
+    queryKey: ['trips'],
+    queryFn: tripsApi.getTrips
+  })
+  const { guardAction } = useOrg()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('Today')
   const [statusFilter, setStatusFilter] = useState<StatusVariant | 'all'>('boarding')
   const [searchQuery, setSearchQuery] = useState('')
@@ -40,7 +47,7 @@ export function TripsListPage() {
     setCurrentPage(1)
   }
 
-  const filtered = data.trips.filter(t => {
+  const filtered = trips.filter((t: any) => {
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
     
     let matchesSearch = true;
@@ -63,7 +70,15 @@ export function TripsListPage() {
     <div className="flex flex-col min-h-screen bg-white">
       <TopBar title="Trips" />
 
-      <div className="bg-white border-b border-neutral-50">
+      {isLoading && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-primary-100 border-t-primary-500 rounded-full animate-spin" />
+        </div>
+      )}
+
+      {!isLoading && (
+        <>
+          <div className="bg-white border-b border-neutral-50">
         <div className="flex overflow-x-auto scrollbar-thin px-4 gap-1 pt-3">
           {tabs.map(tab => (
             <button
@@ -118,7 +133,7 @@ export function TripsListPage() {
             icon={Route}
             title="No trips found"
             description="You have no trips matching this filter. Create a new trip to get started."
-            action={{ label: '+ New Trip', onClick: () => {} }}
+            action={{ label: '+ New Trip', onClick: () => guardAction(undefined, () => navigate('/trips/new')) }}
           />
         ) : (
           <>
@@ -172,6 +187,7 @@ export function TripsListPage() {
 
       <Link
         to="/trips/new"
+        onClick={guardAction as any}
         className="lg:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 rounded-full flex items-center justify-center shadow-float text-white z-30"
         aria-label="New trip"
       >
@@ -181,11 +197,14 @@ export function TripsListPage() {
       <div className="hidden lg:block">
         <Link
           to="/trips/new"
+          onClick={guardAction as any}
           className="fixed bottom-8 right-8 flex items-center gap-2 bg-primary-500 text-white font-semibold rounded-btn px-5 py-3 shadow-float hover:bg-primary-400 transition-colors"
         >
           <Plus className="w-4 h-4" /> New Trip
         </Link>
       </div>
+      </>
+      )}
     </div>
   )
 }

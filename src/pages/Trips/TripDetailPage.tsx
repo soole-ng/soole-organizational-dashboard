@@ -9,6 +9,7 @@ import { mockPassengers } from '../../lib/mockData'
 import { formatDate, formatTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
+import { useOrg } from '../../lib/OrgContext'
 import { LiveTracker } from './components/LiveTracker'
 import { CommentsModal } from './components/CommentsModal'
 
@@ -41,6 +42,7 @@ export function TripDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { data, loading } = useMockData()
+  const { guardAction } = useOrg()
   const ctx = useOutletContext<any>()
   const notifications = ctx?.notifications ?? []
   const setNotifications = ctx?.setNotifications
@@ -127,8 +129,8 @@ export function TripDetailPage() {
   const passengers = mockPassengers(trip.id).slice(0, trip.capacity)
   const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
 
-  const handleEdit = () => toast('Edit trip details')
-  const handleCancel = () => toast.error('Cancel this trip?')
+  const handleEdit = () => guardAction(undefined, () => toast('Edit trip details'))
+  const handleCancel = () => guardAction(undefined, () => toast.error('Cancel this trip?'))
 
   const actions = [
     isLive && { icon: Navigation, label: 'View on Map', action: () => navigate('/live-map'), danger: false },

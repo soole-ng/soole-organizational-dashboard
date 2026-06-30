@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, Copy, Check, Send } from 'lucide-react'
+import { ChevronDown, Copy, Check, Send, Trash2 } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../../lib/OrgContext'
@@ -11,8 +11,9 @@ interface OrganizationTeamProps {
 }
 
 export function OrganizationTeam({ members, setMembers, executeSecuredAction }: OrganizationTeamProps) {
-  const { guardAction } = useOrg()
+  const { org, guardAction } = useOrg()
   const [showInviteForm, setShowInviteForm] = useState(false)
+  const [memberToRemove, setMemberToRemove] = useState<any | null>(null)
   const [inviteForm, setInviteForm] = useState({ name: '', phone: '', role: 'dispatcher' })
   const [showInvitePreview, setShowInvitePreview] = useState(false)
   const [generatedOTP, setGeneratedOTP] = useState('')
@@ -62,6 +63,16 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
     })
   }
 
+  const handleConfirmRemove = () => {
+    if (!memberToRemove) return
+    const { id, name } = memberToRemove
+    setMemberToRemove(null)
+    executeSecuredAction(() => {
+      setMembers(prev => prev.filter(m => m.id !== id))
+      toast.success(`${name} has been removed from the team`)
+    })
+  }
+
   const copyLinkToClipboard = () => {
     const link = generateInviteLink(inviteForm.phone, generatedOTP)
     navigator.clipboard.writeText(link)
@@ -85,6 +96,15 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
             <span className={clsx('text-[10px] font-bold uppercase tracking-wider', m.role === 'finance' ? 'text-primary-500' : 'text-primary-400')}>
               {m.role}
             </span>
+            {org.role === 'Owner' && m.role !== 'owner' && (
+              <button
+                onClick={() => setMemberToRemove(m)}
+                className="p-1.5 rounded-lg text-neutral-200 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
+                title="Remove member"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -206,6 +226,51 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
         >
           + Invite Member
         </button>
+      )}
+
+      {/* ── Remove Member Confirmation Modal ── */}
+      {memberToRemove && (
+        <div
+          className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+          onClick={() => setMemberToRemove(null)}
+        >
+          <div
+            className="bg-white w-full max-w-sm rounded-3xl shadow-float flex flex-col p-6 space-y-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center text-center space-y-3 pt-2">
+              <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-black">Remove Team Member?</h3>
+                <p className="text-xs text-neutral-300 mt-1 leading-relaxed">
+                  You are about to remove <span className="font-bold text-black">{memberToRemove.name}</span> from your organization. This action requires security verification.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-neutral-50 rounded-2xl p-3 text-center">
+              <p className="text-[10px] text-neutral-300 uppercase font-bold tracking-wider">Role</p>
+              <p className="text-xs font-bold text-primary-400 capitalize mt-0.5">{memberToRemove.role}</p>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => setMemberToRemove(null)}
+                className="flex-1 px-4 py-2.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-black transition-colors"
+              >
+                No, Cancel
+              </button>
+              <button
+                onClick={handleConfirmRemove}
+                className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-xs font-bold rounded-xl text-white transition-colors"
+              >
+                Yes, Remove
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -1,11 +1,27 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Shield, ChevronDown, Phone, Car, MapPin, CreditCard, Sparkles, HelpCircle } from 'lucide-react'
+import { Eye, EyeOff, Shield, ChevronDown, Phone, Car, MapPin, CreditCard, Sparkles, HelpCircle, CheckCircle } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
+import { z } from 'zod'
 
-type Step = 'login' | 'otp' | 'security_question'
+const loginSchema = z.object({
+  phone: z.string().length(10, 'Phone must be exactly 10 digits'),
+  password: z.string().min(8, 'Password must be at least 8 characters')
+})
+
+const signupSchema = z.object({
+  suFirstName: z.string().min(1, 'First name is required'),
+  suLastName: z.string().min(1, 'Last name is required'),
+  suPhone: z.string().length(10, 'Phone must be exactly 10 digits'),
+  suDob: z.string().min(1, 'Date of birth is required'),
+  suNin: z.string().length(11, 'NIN must be exactly 11 digits'),
+  suCompany: z.string().min(1, 'Company name is required'),
+  suReg: z.string().min(1, 'RC Number is required')
+})
+
+type Step = 'login' | 'otp' | 'security_question' | 'signup' | 'signup_success'
 
 const COUNTRY_CODES = [
   { code: '+234', flag: 'https://flagcdn.com/w40/ng.png', name: 'Nigeria' },
@@ -19,21 +35,44 @@ const COUNTRY_CODES = [
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { org } = useOrg()
+  const { org, updateOrg } = useOrg()
   const [step, setStep]         = useState<Step>('login')
   const [country, setCountry]   = useState(COUNTRY_CODES[0])
+  
+  // Login fields
   const [phone, setPhone]       = useState('')
   const [password, setPassword] = useState('')
   const [otp, setOtp]           = useState('')
   const [secAnswer, setSecAnswer] = useState('')
+  
+  // Signup fields
+  const [suFirstName, setSuFirstName] = useState('')
+  const [suLastName, setSuLastName] = useState('')
+  const [suPhone, setSuPhone] = useState('')
+  const [suDob, setSuDob] = useState('')
+  const [suNin, setSuNin] = useState('')
+  const [suCompany, setSuCompany] = useState('')
+  const [suReg, setSuReg] = useState('')
+
   const [showPw, setShowPw]     = useState(false)
   const [showCC, setShowCC]     = useState(false)
   const [loading, setLoading]   = useState(false)
+  const [errors, setErrors]     = useState<string[]>([])
+
+  const today = new Date()
+  const maxDobDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split('T')[0]
 
   const fullPhone = `${country.code}${phone.replace(/^0/, '')}`
+  const fullSuPhone = `${country.code}${suPhone.replace(/^0/, '')}`
 
   const handleLogin = () => {
-    if (!phone || !password) return
+    const result = loginSchema.safeParse({ phone, password })
+    if (!result.success) {
+      setErrors(result.error.issues.map(i => i.path[0] as string))
+      toast.error(result.error.issues[0].message)
+      return
+    }
+    setErrors([])
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
@@ -46,10 +85,13 @@ export function LoginPage() {
     setLoading(true)
     setTimeout(() => {
       setLoading(false)
-      // Check if security question and answer are setup
-      if (org.securityQuestions && org.securityQuestions.length > 0) {
+      if (org.isNewUser) {
+        sessionStorage.setItem('isAuthenticated', 'true')
+        navigate('/onboarding')
+      } else if (org.securityQuestions && org.securityQuestions.length > 0) {
         setStep('security_question')
       } else {
+        sessionStorage.setItem('isAuthenticated', 'true')
         toast.success('Welcome back to Mobiliti!')
         navigate('/')
       }
@@ -63,6 +105,7 @@ export function LoginPage() {
       setLoading(false)
       const activeQuestion = org.securityQuestions?.[0]
       if (activeQuestion && secAnswer.toLowerCase().trim() === (activeQuestion.answer || '').toLowerCase().trim()) {
+        sessionStorage.setItem('isAuthenticated', 'true')
         toast.success('Welcome back to Mobiliti!')
         navigate('/')
       } else {
@@ -70,6 +113,40 @@ export function LoginPage() {
       }
     }, 800)
   }
+
+  const handleSignup = () => {
+    const result = signupSchema.safeParse({ suFirstName, suLastName, suPhone, suDob, suNin, suCompany, suReg })
+    if (!result.success) {
+      setErrors(result.error.issues.map(i => i.path[0] as string))
+      toast.error(result.error.issues[0].message)
+      return
+    }
+
+    setErrors([])
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+      updateOrg({
+        isNewUser: true,
+        approvalStatus: 'incomplete',
+        registrationDetails: {
+          firstName: suFirstName,
+          lastName: suLastName,
+          phone: fullSuPhone,
+          dob: suDob,
+          nin: suNin,
+          companyName: suCompany,
+          companyRegNum: suReg,
+        }
+      })
+      setStep('signup_success')
+    }, 1500)
+  }
+
+  const getBorderClass = (field: string) => 
+    errors.includes(field) 
+      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' 
+      : 'border-neutral-100 focus:border-secondary-300 focus:ring-secondary-300/10'
 
   return (
     <div className="min-h-screen bg-primary-75 flex flex-col lg:flex-row">
@@ -81,7 +158,7 @@ export function LoginPage() {
         <div className="absolute top-1/2 -right-6 w-24 h-24 rounded-full bg-accent-300/20" />
 
         <div className="relative z-10 text-center w-full max-w-sm">
-          {/* Logo Mark without white background */}
+          {/* Logo Mark */}
           <div className="w-24 h-24 flex items-center justify-center mx-auto mb-6">
             <img src="/soole-icon.png" alt="Soole logo" className="w-full h-full object-contain" />
           </div>
@@ -109,54 +186,56 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Right panel — login form */}
-      <div className="flex-1 flex flex-col">
+      {/* Right panel */}
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto">
         {/* Mobile header */}
-        <div className="bg-primary-500 px-6 pt-16 pb-12 text-white lg:hidden">
+        <div className="bg-primary-500 px-6 pt-16 pb-12 text-white lg:hidden flex-shrink-0">
           <div className="w-16 h-16 flex items-center justify-start mb-6">
             <img src="/soole-icon.png" alt="Soole logo" className="h-full object-contain" />
           </div>
           <h1 className="text-3xl font-extrabold mb-2 font-display">
-            {step === 'login' ? 'Welcome back' : 'Two-factor check'}
+            {step === 'login' ? 'Welcome back' : step === 'signup' ? 'Create Account' : step === 'signup_success' ? 'Account Created' : 'Two-factor check'}
           </h1>
           <p className="text-primary-200 text-sm">
-            {step === 'login'
-              ? 'Sign in to your organization account'
-              : 'Enter the 6-digit code sent to your authenticator app'}
+            {step === 'login' ? 'Sign in to your organization account' : step === 'signup' ? 'Register your company on Soole' : step === 'signup_success' ? 'Registration successful' : 'Enter the code sent via SMS'}
           </p>
         </div>
 
-        {/* Form card container made wider (max-w-[500px]) */}
+        {/* Form card container */}
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-          <div className="w-full max-w-[500px]">
+          <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-[500px]" : "max-w-[400px]")}>
             {/* Desktop heading */}
             <div className="hidden lg:block mb-8">
               <h1 className="text-4xl font-extrabold text-primary-500 mb-2 font-display">
-                {step === 'login' ? 'Sign in' : 'Two-factor check'}
+                {step === 'login' ? 'Sign in' : step === 'signup' ? 'Register Company' : step === 'signup_success' ? 'Account Created' : 'Two-factor check'}
               </h1>
               <p className="text-neutral-300 text-base">
                 {step === 'login'
                   ? 'Enter your phone number and password to continue'
-                  : 'Enter the 6-digit code from your authenticator app'}
+                  : step === 'signup'
+                  ? 'Fill out your basic details to get started'
+                  : step === 'signup_success'
+                  ? 'Your account has been provisioned'
+                  : 'Enter the 6-digit code sent to your phone'}
               </p>
             </div>
 
-            <div className="bg-white rounded-card shadow-card p-8 lg:p-10 space-y-7 -mt-6 lg:mt-0 relative z-10">
+            <div className="bg-white rounded-card shadow-card p-8 lg:p-10 relative z-10">
               {step === 'login' ? (
-                <>
+                <div className="space-y-7">
                   {/* Phone field */}
                   <div className="space-y-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-black flex items-center gap-1.5">
                       <Phone className="w-3.5 h-3.5 text-black" />
-                      Phone Number
+                      Phone Number <span className="text-red-500">*</span>
                     </label>
-                    <div className="flex gap-3 items-center">
+                    <div className="flex gap-2 items-center">
                       {/* Country code selector */}
                       <div className="relative flex-shrink-0">
                         <button
                           type="button"
                           onClick={() => setShowCC(!showCC)}
-                          className="flex items-center gap-2 h-[60px] px-4 bg-white border border-neutral-100 rounded-2xl text-sm font-black text-black hover:border-primary-200 transition-colors"
+                          className={clsx("flex items-center gap-2 h-[44px] px-3 bg-white border rounded-xl text-sm font-black text-black transition-colors", getBorderClass('phone'))}
                         >
                           <img src={country.flag} alt={country.name} className="w-6 h-4 object-cover rounded-sm" />
                           <span className="text-sm font-black text-black">{country.code}</span>
@@ -166,7 +245,7 @@ export function LoginPage() {
                         {showCC && (
                           <div className="absolute top-full left-0 mt-1 bg-white rounded-2xl shadow-float border border-neutral-50 overflow-hidden z-30 min-w-48">
                             {COUNTRY_CODES.map(c => (
-                              <button
+                               <button
                                 key={c.code}
                                 type="button"
                                 onClick={() => { setCountry(c); setShowCC(false) }}
@@ -186,26 +265,27 @@ export function LoginPage() {
 
                       <input
                         type="tel"
+                        maxLength={10}
                         value={phone}
-                        onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-                        className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 py-0 text-base text-black font-black placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
-                        placeholder="08031234567"
+                        onChange={e => {
+                          setPhone(e.target.value.replace(/\D/g, '').replace(/^0/, ''))
+                          setErrors(errors.filter(err => err !== 'phone'))
+                        }}
+                        className={clsx("w-full h-[44px] bg-white border rounded-xl px-4 py-0 text-sm text-black font-black placeholder:text-neutral-100 focus:outline-none transition-all", getBorderClass('phone'))}
+                        placeholder="8031234567"
                         autoComplete="tel"
                         inputMode="tel"
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
                       />
                     </div>
-                    {phone && (
-                      <p className="text-xs text-black mt-1 font-black">
-                        Full number: <span className="font-black text-black">{fullPhone}</span>
-                      </p>
-                    )}
                   </div>
 
                   {/* Password field */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-black uppercase tracking-wider text-black">Password</label>
+                      <label className="text-xs font-black uppercase tracking-wider text-black">
+                        Password <span className="text-red-500">*</span>
+                      </label>
                       <button type="button" className="text-xs text-black font-black hover:text-neutral-700 transition-colors">
                         Forgot password?
                       </button>
@@ -214,8 +294,11 @@ export function LoginPage() {
                       <input
                         type={showPw ? 'text' : 'password'}
                         value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 py-0 pr-12 text-base text-black font-black placeholder:text-neutral-100 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+                        onChange={e => {
+                          setPassword(e.target.value)
+                          setErrors(errors.filter(err => err !== 'password'))
+                        }}
+                        className={clsx("w-full h-[44px] bg-white border rounded-xl px-5 py-0 pr-12 text-sm text-black font-black placeholder:text-neutral-100 focus:outline-none transition-all", getBorderClass('password'))}
                         placeholder="••••••••••••"
                         autoComplete="current-password"
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
@@ -224,7 +307,6 @@ export function LoginPage() {
                         type="button"
                         onClick={() => setShowPw(!showPw)}
                         className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-neutral-700 transition-colors"
-                        aria-label={showPw ? 'Hide password' : 'Show password'}
                       >
                         {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -233,37 +315,178 @@ export function LoginPage() {
 
                   <button
                     onClick={handleLogin}
-                    disabled={!phone || !password || loading}
-                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-sm', loading && 'opacity-70')}
+                    disabled={loading}
+                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm', loading && 'opacity-70')}
                   >
-                    {loading
-                      ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Signing in…</>
-                      : 'Sign in'
-                    }
+                    {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Signing in…</> : 'Sign in'}
                   </button>
 
-                  {/* Not registered notice */}
                   <div className="rounded-2xl bg-primary-75 p-4 border border-primary-100">
-                    <p className="text-xs text-black text-center leading-relaxed font-black">
+                    <p className="text-xs text-primary-500 text-center leading-relaxed font-black">
                       Don't have an account?{' '}
-                      <a
-                        href="mailto:hello@soole.ng?subject=Organization Dashboard Access Request"
-                        className="text-black font-black underline hover:text-neutral-700 transition-colors"
+                      <button
+                        onClick={() => { setStep('signup'); setErrors([]) }}
+                        className="text-teal-300 font-black underline hover:text-teal-200 transition-colors inline"
                       >
-                        Contact Soole to register your organization
-                      </a>
+                        Sign up your organization
+                      </button>
                     </p>
                   </div>
-                </>
+                </div>
+              ) : step === 'signup' ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                        First Name <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        value={suFirstName} 
+                        onChange={e => { setSuFirstName(e.target.value); setErrors(errors.filter(err => err !== 'suFirstName')) }} 
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suFirstName'))} 
+                        placeholder="Folake" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                        Last Name <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        value={suLastName} 
+                        onChange={e => { setSuLastName(e.target.value); setErrors(errors.filter(err => err !== 'suLastName')) }} 
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suLastName'))} 
+                        placeholder="Okafor" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      Phone Number <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <div className={clsx("h-[40px] px-3 bg-white border rounded-xl flex items-center justify-center gap-2 text-sm font-black flex-shrink-0 text-black", getBorderClass('suPhone'))}>
+                        <img src={country.flag} alt={country.name} className="w-5 h-3.5 object-cover rounded-sm" />
+                        {country.code}
+                      </div>
+                      <input 
+                        type="tel" 
+                        maxLength={10}
+                        value={suPhone} 
+                        onChange={e => { setSuPhone(e.target.value.replace(/\D/g, '').replace(/^0/, '')); setErrors(errors.filter(err => err !== 'suPhone')) }} 
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suPhone'))} 
+                        placeholder="8031234567" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                        Date of Birth <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="date" 
+                        max={maxDobDate}
+                        value={suDob} 
+                        onChange={e => { setSuDob(e.target.value); setErrors(errors.filter(err => err !== 'suDob')) }} 
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suDob'))} 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                        NIN <span className="text-red-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        maxLength={11}
+                        value={suNin} 
+                        onChange={e => { setSuNin(e.target.value.replace(/\D/g, '')); setErrors(errors.filter(err => err !== 'suNin')) }} 
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suNin'))} 
+                        placeholder="11-digit NIN" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      Company Name <span className="text-red-500">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      value={suCompany} 
+                      onChange={e => { setSuCompany(e.target.value); setErrors(errors.filter(err => err !== 'suCompany')) }} 
+                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suCompany'))} 
+                      placeholder="E.g., Speedway Transport Ltd." 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      Company Registration Number <span className="text-red-500">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      maxLength={10}
+                      value={suReg} 
+                      onChange={e => { setSuReg(e.target.value); setErrors(errors.filter(err => err !== 'suReg')) }} 
+                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suReg'))} 
+                      placeholder="RC Number" 
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSignup}
+                    disabled={loading}
+                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4', loading && 'opacity-70')}
+                  >
+                    {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Creating Account…</> : 'Register Company'}
+                  </button>
+                  <button onClick={() => { setStep('login'); setErrors([]) }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
+                    ← Back to login
+                  </button>
+                </div>
+              ) : step === 'signup_success' ? (
+                <div className="space-y-6 text-center animate-in fade-in slide-in-from-bottom-4">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="text-xl font-extrabold text-primary-500">Account Created!</h3>
+                  <div className="bg-primary-75 p-6 rounded-2xl border border-primary-100 text-left space-y-4">
+                    <p className="text-sm text-neutral-400 font-medium">Your account has been successfully provisioned. You can log in right away.</p>
+                    <div className="bg-white p-4 rounded-xl border border-neutral-100 space-y-3">
+                      <div>
+                        <p className="text-xs text-neutral-300 uppercase tracking-wider font-black mb-1">Your User ID</p>
+                        <p className="font-black text-black">{fullSuPhone}</p>
+                      </div>
+                      <div className="h-px bg-neutral-100 w-full" />
+                      <div>
+                        <p className="text-xs text-neutral-300 uppercase tracking-wider font-black mb-1">Temporary Password</p>
+                        <p className="font-black text-black">{suPhone}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setPhone(suPhone)
+                      setPassword(suPhone)
+                      setStep('login')
+                    }}
+                    className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base hover:bg-primary-400 transition-all shadow-sm"
+                  >
+                    Go to Login
+                  </button>
+                </div>
               ) : step === 'otp' ? (
-                <>
+                <div className="space-y-7">
                   <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
                     <Shield className="w-5 h-5 text-black flex-shrink-0" />
                     <p className="text-xs text-black leading-relaxed font-black">
-                      Open your authenticator app and enter the 6-digit code for <strong>Soole</strong>.
+                      We've sent a 6-digit code via SMS to your phone. Please enter it below.
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-black">6-digit code</label>
                     <input
@@ -277,47 +500,25 @@ export function LoginPage() {
                       onKeyDown={e => e.key === 'Enter' && handleOtp()}
                       autoFocus
                     />
-                    {/* Progress dots */}
                     <div className="flex justify-center gap-2 mt-3">
                       {Array.from({ length: 6 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={clsx(
-                            'w-2 h-2 rounded-full transition-colors',
-                            i < otp.length ? 'bg-primary-500' : 'bg-neutral-100',
-                          )}
-                        />
+                        <div key={i} className={clsx('w-2 h-2 rounded-full transition-colors', i < otp.length ? 'bg-primary-500' : 'bg-neutral-100')} />
                       ))}
                     </div>
                   </div>
-
-                  <button
-                    onClick={handleOtp}
-                    disabled={otp.length !== 6 || loading}
-                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-sm', loading && 'opacity-70')}
-                  >
-                    {loading
-                      ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying…</>
-                      : 'Verify & Sign in'
-                    }
+                  <button onClick={handleOtp} disabled={otp.length !== 6 || loading} className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2', loading && 'opacity-70')}>
+                    {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying…</> : 'Verify & Sign in'}
                   </button>
-
-                  <button
-                    onClick={() => { setStep('login'); setOtp('') }}
-                    className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 active:scale-95 transition-all text-sm"
-                  >
+                  <button onClick={() => { setStep('login'); setOtp('') }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
                     ← Back to login
                   </button>
-                </>
+                </div>
               ) : (
-                <>
+                <div className="space-y-7">
                   <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
                     <HelpCircle className="w-5 h-5 text-black flex-shrink-0" />
-                    <p className="text-xs text-black leading-relaxed font-black">
-                      Please answer your backup security question to complete signing in.
-                    </p>
+                    <p className="text-xs text-black leading-relaxed font-black">Please answer your backup security question to complete signing in.</p>
                   </div>
-
                   <div className="space-y-3">
                     <label className="block text-sm font-black text-black">
                       Question: <span className="font-extrabold text-primary-500">{org.securityQuestions?.[0]?.question ?? 'Backup Security Question'}</span>
@@ -332,31 +533,18 @@ export function LoginPage() {
                       autoFocus
                     />
                   </div>
-
-                  <button
-                    onClick={handleSecurityQuestion}
-                    disabled={!secAnswer || loading}
-                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 select-none disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-sm', loading && 'opacity-70')}
-                  >
-                    {loading
-                      ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying…</>
-                      : 'Verify Answer'
-                    }
+                  <button onClick={handleSecurityQuestion} disabled={!secAnswer || loading} className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2', loading && 'opacity-70')}>
+                    {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying…</> : 'Verify Answer'}
                   </button>
-
-                  <button
-                    onClick={() => { setStep('otp'); setSecAnswer('') }}
-                    className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 active:scale-95 transition-all text-sm"
-                  >
+                  <button onClick={() => { setStep('otp'); setSecAnswer('') }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
                     ← Back to 2FA PIN
                   </button>
-                </>
+                </div>
               )}
             </div>
-
-            <p className="text-center text-xs text-neutral-200 mt-8 font-medium">
-              Protected by Soole · 2FA required for all organization accounts
-            </p>
+            {step === 'login' && (
+              <p className="text-center text-xs text-neutral-200 mt-8 font-medium">Protected by Soole · 2FA required for all organization accounts</p>
+            )}
           </div>
         </div>
       </div>

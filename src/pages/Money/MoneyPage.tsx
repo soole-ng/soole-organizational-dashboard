@@ -12,13 +12,13 @@ import { useOrg } from '../../lib/OrgContext'
 const tabs = ['Transactions', 'Payouts']
 
 export function MoneyPage() {
+  const { org, updateOrg, guardAction } = useOrg()
   const { data, loading } = useMockData()
   const [activeTab, setActiveTab] = useState('Transactions')
   const [balance, setBalance] = useState(47300)
   const [extraTransactions, setExtraTransactions] = useState<any[]>([])
   const [extraPayouts, setExtraPayouts] = useState<any[]>([])
 
-  const { org, updateOrg } = useOrg()
   const isHidden = org.isBalanceHidden || false
   const bankAccounts = org.bankAccounts || []
   const primaryAccount = bankAccounts.find(a => a.isPrimary) || bankAccounts[0]
@@ -57,16 +57,10 @@ export function MoneyPage() {
   const allPayouts = [...extraPayouts, ...data.payouts]
 
   const handleWithdrawClick = () => {
-    if (balance <= 0) {
-      toast.error('No funds available for withdrawal.')
-      return
-    }
-    const list = org.securityQuestions || []
-    if (list.length > 0) {
-      setActiveQuestionIdx(Math.floor(Math.random() * list.length))
-    }
-    setSelectedAccountId(primaryAccount?.id || '')
-    setShowModal(true)
+    guardAction(undefined, () => {
+      setSelectedAccountId(primaryAccount?.id || '')
+      setShowModal(true)
+    })
   }
 
   const handleConfirmWithdraw = (e: React.FormEvent) => {

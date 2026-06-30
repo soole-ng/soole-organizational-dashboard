@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
+import { useOrg } from '../../../lib/OrgContext'
 
 interface OrganizationTeamProps {
   members: any[]
@@ -10,6 +11,7 @@ interface OrganizationTeamProps {
 }
 
 export function OrganizationTeam({ members, setMembers, executeSecuredAction }: OrganizationTeamProps) {
+  const { guardAction } = useOrg()
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [inviteForm, setInviteForm] = useState({ name: '', phone: '', role: 'dispatcher' })
 
@@ -109,7 +111,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
         </div>
       ) : (
         <button
-          onClick={() => setShowInviteForm(true)}
+          onClick={() => guardAction(undefined, () => setShowInviteForm(true))}
           className="btn-secondary w-full text-sm py-2 bg-white hover:bg-primary-75 border-primary-100"
         >
           + Invite Member

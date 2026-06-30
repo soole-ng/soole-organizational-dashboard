@@ -107,13 +107,9 @@ export function AddVehiclePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <TopBar 
-        title="Register Vehicle" 
-        backHref="#"
-        onBack={() => {
-          if (currentStep > 1) setCurrentStep(c => c - 1)
-          else navigate('/fleet/vehicles')
-        }} 
+      <TopBar
+        title="Register Vehicle"
+        backHref="/fleet/vehicles"
       />
 
       <div className="flex-1 max-w-xl mx-auto w-full px-4 flex flex-col pb-24">

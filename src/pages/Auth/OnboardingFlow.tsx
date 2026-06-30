@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Shield, Lock, ChevronRight, HelpCircle, ChevronDown } from 'lucide-react'
+import { Shield, Lock, ChevronRight, HelpCircle, ChevronDown, Check, X } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
@@ -18,6 +18,17 @@ const securitySchema = z.object({
   question: z.string().min(1, 'Please provide a question'),
   answer: z.string().min(1, 'Please provide an answer')
 })
+
+// Password validation helpers
+const getPasswordRequirements = (password: string) => ({
+  hasMinLength: password.length >= 8,
+  hasUppercase: /[A-Z]/.test(password),
+  hasLowercase: /[a-z]/.test(password),
+  hasNumber: /[0-9]/.test(password),
+  hasSpecial: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+})
+
+const passwordsMatch = (pwd: string, confirm: string) => pwd === confirm && pwd.length > 0
 
 export function OnboardingFlow() {
   const navigate = useNavigate()
@@ -90,35 +101,80 @@ export function OnboardingFlow() {
               <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
                 <Lock className="w-5 h-5 text-black flex-shrink-0" />
                 <p className="text-xs text-black leading-relaxed font-black">
-                  For your security, please change your default password.
+                  For your security, please create a strong password.
                 </p>
               </div>
 
+              {/* Password Requirements Info */}
+              <div className="bg-primary-75 p-4 rounded-2xl border border-primary-100 space-y-3">
+                <p className="text-xs font-black uppercase tracking-wider text-black">Password Requirements:</p>
+                <div className="space-y-2 text-xs font-black">
+                  {[
+                    { label: 'At least 8 characters', check: getPasswordRequirements(newPassword).hasMinLength },
+                    { label: 'Uppercase letter (A-Z)', check: getPasswordRequirements(newPassword).hasUppercase },
+                    { label: 'Lowercase letter (a-z)', check: getPasswordRequirements(newPassword).hasLowercase },
+                    { label: 'Number (0-9)', check: getPasswordRequirements(newPassword).hasNumber },
+                    { label: 'Special character (!@#$%^&*...)', check: getPasswordRequirements(newPassword).hasSpecial },
+                  ].map((req, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      {req.check ? (
+                        <Check className="w-4 h-4 text-accent-400 flex-shrink-0" />
+                      ) : (
+                        <X className="w-4 h-4 text-neutral-300 flex-shrink-0" />
+                      )}
+                      <span className={req.check ? 'text-black' : 'text-neutral-300'}>{req.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <label className="block text-xs font-black uppercase tracking-wider text-black">New Password</label>
+                <label className="block text-xs font-black uppercase tracking-wider text-black">New Password (8+ characters)</label>
                 <input
                   type="password"
+                  maxLength={20}
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
-                  placeholder="At least 6 characters"
+                  className={clsx("w-full h-[60px] bg-white border rounded-2xl px-5 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none focus:ring-4 transition-all",
+                    newPassword.length > 0 && getPasswordRequirements(newPassword).hasMinLength
+                      ? 'border-secondary-300 focus:border-secondary-300 focus:ring-secondary-300/10'
+                      : 'border-neutral-100 focus:border-secondary-300 focus:ring-secondary-300/10'
+                  )}
+                  placeholder="Create a strong password"
                 />
+                <p className="text-xs text-neutral-300">{newPassword.length}/20 characters</p>
               </div>
 
               <div className="space-y-2">
                 <label className="block text-xs font-black uppercase tracking-wider text-black">Confirm Password</label>
                 <input
                   type="password"
+                  maxLength={20}
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+                  className={clsx("w-full h-[60px] bg-white border rounded-2xl px-5 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none focus:ring-4 transition-all",
+                    confirmPassword.length > 0 && passwordsMatch(newPassword, confirmPassword)
+                      ? 'border-secondary-300 focus:border-secondary-300 focus:ring-secondary-300/10'
+                      : confirmPassword.length > 0 && !passwordsMatch(newPassword, confirmPassword)
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10'
+                      : 'border-neutral-100 focus:border-secondary-300 focus:ring-secondary-300/10'
+                  )}
                   placeholder="Re-enter password"
                 />
+                {confirmPassword.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs font-black">
+                    {passwordsMatch(newPassword, confirmPassword) ? (
+                      <><Check className="w-4 h-4 text-accent-400" /> <span className="text-accent-400">Passwords match</span></>
+                    ) : (
+                      <><X className="w-4 h-4 text-red-500" /> <span className="text-red-500">Passwords do not match</span></>
+                    )}
+                  </div>
+                )}
               </div>
 
               <button
                 onClick={handlePasswordSubmit}
-                disabled={!newPassword || !confirmPassword}
+                disabled={!newPassword || !confirmPassword || !passwordsMatch(newPassword, confirmPassword) || newPassword.length < 8}
                 className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
               >
                 Continue <ChevronRight className="w-5 h-5" />

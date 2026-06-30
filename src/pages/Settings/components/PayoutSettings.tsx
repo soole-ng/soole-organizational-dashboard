@@ -5,7 +5,7 @@ import { useOrg, type BankAccount } from '../../../lib/OrgContext'
 import toast from 'react-hot-toast'
 
 export function PayoutSettings() {
-  const { org, updateOrg } = useOrg()
+  const { org, updateOrg, guardAction } = useOrg()
   const bankAccounts = org.bankAccounts || []
 
   const [showAddModal, setShowAddModal] = useState(false)
@@ -86,14 +86,14 @@ export function PayoutSettings() {
         </div>
         {bankAccounts.length < 3 && (
           <button
-            onClick={() => {
+            onClick={() => guardAction(undefined, () => {
               setModalStep(1)
               const list = org.securityQuestions || []
               if (list.length > 0) {
                 setActiveQuestionIdx(Math.floor(Math.random() * list.length))
               }
               setShowAddModal(true)
-            }}
+            })}
             className="px-3 py-1.5 bg-primary-500 hover:bg-primary-400 text-xs font-bold rounded-xl text-white transition-colors flex items-center gap-1"
           >
             + Add Bank
@@ -124,7 +124,7 @@ export function PayoutSettings() {
                   </span>
                 ) : (
                   <button
-                    onClick={() => handleSetPrimary(acc.id)}
+                    onClick={() => guardAction(undefined, () => handleSetPrimary(acc.id))}
                     className="text-[10px] text-neutral-200 hover:text-primary-500 font-bold border border-neutral-100 rounded-lg px-2 py-0.5 hover:bg-neutral-50"
                   >
                     Set Primary
@@ -132,7 +132,7 @@ export function PayoutSettings() {
                 )}
                 {bankAccounts.length > 1 && (
                   <button
-                    onClick={() => {
+                    onClick={() => guardAction(undefined, () => {
                       setPendingDeleteId(acc.id)
                       const list = org.securityQuestions || []
                       if (list.length > 0) {
@@ -140,7 +140,7 @@ export function PayoutSettings() {
                       }
                       setDeleteStep(1)
                       setShowDeleteConfirm(true)
-                    }}
+                    })}
                     className="text-neutral-100 hover:text-danger-300 transition-colors p-1"
                     title="Delete Account"
                   >

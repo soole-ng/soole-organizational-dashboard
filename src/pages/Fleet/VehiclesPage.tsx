@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useMockData } from '../../lib/useMockData'
+import { useOrg } from '../../lib/OrgContext'
 import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 import { VehicleIcon, docStatusIcon } from '../../components/ui/VehicleIcons'
@@ -19,6 +20,7 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
 
 export function VehiclesPage() {
   const { data, loading } = useMockData()
+  const { guardAction } = useOrg()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
   
@@ -98,6 +100,7 @@ export function VehiclesPage() {
           actions={
             <Link
               to="/fleet/vehicles/new"
+              onClick={guardAction as any}
               className="flex items-center gap-2 bg-[#042011] text-white font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-400 transition-colors"
             >
               + Add Vehicle
@@ -106,7 +109,7 @@ export function VehiclesPage() {
         />
 
         {filtered.length === 0 ? (
-          <EmptyState icon={Car} title="No vehicles yet" description="Add your first vehicle to start publishing trips." action={{ label: '+ Add Vehicle', onClick: () => {} }} />
+          <EmptyState icon={Car} title="No vehicles yet" description="Add your first vehicle to start publishing trips." action={{ label: '+ Add Vehicle', onClick: () => guardAction() }} />
         ) : (
           <div id="tour-vehicles-list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map(vehicle => {
@@ -181,6 +184,7 @@ export function VehiclesPage() {
 
       <Link
         to="/fleet/vehicles/new"
+        onClick={guardAction as any}
         className="lg:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 rounded-full flex items-center justify-center shadow-float text-white z-30"
         aria-label="Add vehicle"
       >

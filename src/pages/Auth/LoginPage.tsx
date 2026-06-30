@@ -21,7 +21,7 @@ const signupSchema = z.object({
   suReg: z.string().min(1, 'RC Number is required')
 })
 
-type Step = 'login' | 'otp' | 'security_question' | 'signup' | 'signup_success'
+type Step = 'login' | 'otp' | 'security_question' | 'signup'
 
 const COUNTRY_CODES = [
   { code: '+234', flag: 'https://flagcdn.com/w40/ng.png', name: 'Nigeria' },
@@ -139,7 +139,9 @@ export function LoginPage() {
           companyRegNum: suReg,
         }
       })
-      setStep('signup_success')
+      setPhone(suPhone)
+      setOtp('')
+      setStep('otp')
     }, 1500)
   }
 
@@ -194,10 +196,10 @@ export function LoginPage() {
             <img src="/soole-icon.png" alt="Soole logo" className="h-full object-contain" />
           </div>
           <h1 className="text-3xl font-extrabold mb-2 font-display">
-            {step === 'login' ? 'Welcome back' : step === 'signup' ? 'Create Account' : step === 'signup_success' ? 'Account Created' : 'Two-factor check'}
+            {step === 'login' ? 'Welcome back' : step === 'signup' ? 'Create Account' : 'Verify your phone'}
           </h1>
           <p className="text-primary-200 text-sm">
-            {step === 'login' ? 'Sign in to your organization account' : step === 'signup' ? 'Register your company on Soole' : step === 'signup_success' ? 'Registration successful' : 'Enter the code sent via SMS'}
+            {step === 'login' ? 'Sign in to your organization account' : step === 'signup' ? 'Register your company on Soole' : 'Enter the verification code sent via SMS'}
           </p>
         </div>
 
@@ -207,16 +209,14 @@ export function LoginPage() {
             {/* Desktop heading */}
             <div className="hidden lg:block mb-8">
               <h1 className="text-4xl font-extrabold text-primary-500 mb-2 font-display">
-                {step === 'login' ? 'Sign in' : step === 'signup' ? 'Register Company' : step === 'signup_success' ? 'Account Created' : 'Two-factor check'}
+                {step === 'login' ? 'Sign in' : step === 'signup' ? 'Register Company' : 'Verify your phone'}
               </h1>
               <p className="text-neutral-300 text-base">
                 {step === 'login'
                   ? 'Enter your phone number and password to continue'
                   : step === 'signup'
                   ? 'Fill out your basic details to get started'
-                  : step === 'signup_success'
-                  ? 'Your account has been provisioned'
-                  : 'Enter the 6-digit code sent to your phone'}
+                  : 'Enter the 6-digit verification code sent to your phone'}
               </p>
             </div>
 
@@ -446,37 +446,6 @@ export function LoginPage() {
                   </button>
                   <button onClick={() => { setStep('login'); setErrors([]) }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
                     ← Back to login
-                  </button>
-                </div>
-              ) : step === 'signup_success' ? (
-                <div className="space-y-6 text-center animate-in fade-in slide-in-from-bottom-4">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-8 h-8 text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-extrabold text-primary-500">Account Created!</h3>
-                  <div className="bg-primary-75 p-6 rounded-2xl border border-primary-100 text-left space-y-4">
-                    <p className="text-sm text-neutral-400 font-medium">Your account has been successfully provisioned. You can log in right away.</p>
-                    <div className="bg-white p-4 rounded-xl border border-neutral-100 space-y-3">
-                      <div>
-                        <p className="text-xs text-neutral-300 uppercase tracking-wider font-black mb-1">Your User ID</p>
-                        <p className="font-black text-black">{fullSuPhone}</p>
-                      </div>
-                      <div className="h-px bg-neutral-100 w-full" />
-                      <div>
-                        <p className="text-xs text-neutral-300 uppercase tracking-wider font-black mb-1">Temporary Password</p>
-                        <p className="font-black text-black">{suPhone}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setPhone(suPhone)
-                      setPassword(suPhone)
-                      setStep('login')
-                    }}
-                    className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base hover:bg-primary-400 transition-all shadow-sm"
-                  >
-                    Go to Login
                   </button>
                 </div>
               ) : step === 'otp' ? (

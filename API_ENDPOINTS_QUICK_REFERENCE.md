@@ -78,7 +78,7 @@
 
 ---
 
-## 7. SETTINGS & ORGANIZATION (8 endpoints)
+## 7. SETTINGS & ORGANIZATION (11 endpoints)
 
 | Method | Endpoint | Purpose | Priority |
 |--------|----------|---------|----------|
@@ -87,10 +87,13 @@
 | POST | `/organization/bank-accounts` | Add bank account | 🟡 HIGH |
 | PUT | `/organization/bank-accounts/:id/primary` | Set primary bank account | 🟡 HIGH |
 | GET | `/organization/members` | Team members list | 🟡 HIGH |
-| POST | `/organization/members/invite` | Invite team member | 🟡 HIGH |
-| DELETE | `/organization/members/:memberId` | Remove team member | 🟡 HIGH |
+| POST | `/organization/members/invite` | Invite team member (send SMS OTP) | 🟡 HIGH |
+| DELETE | `/organization/members/:memberId` | Remove team member | 🔴 CRITICAL |
 | GET | `/organization/alerts` | Alert settings | 🟡 HIGH |
 | PUT | `/organization/alerts` | Update alert settings | 🟡 HIGH |
+| GET | `/organization/approval-status` | Check organization approval status | 🟡 HIGH |
+| POST | `/admin/organizations/:orgId/approve` | Admin: Approve organization | 🟡 HIGH |
+| POST | `/admin/organizations/:orgId/reject` | Admin: Reject organization | 🟡 HIGH |
 
 ---
 
@@ -137,7 +140,7 @@
 
 ## ENDPOINT PRIORITY BREAKDOWN
 
-### 🔴 CRITICAL (13 endpoints) - Required for MVP
+### 🔴 CRITICAL (14 endpoints) - Required for MVP
 - Auth login
 - Dashboard summary, trips, stats
 - Drivers list & detail
@@ -146,18 +149,117 @@
 - Refund passenger
 - Money balance, transactions, payouts
 - Instant withdrawal
+- **Team member removal (DELETE /organization/members/:memberId)**
 
-### 🟡 HIGH (28 endpoints) - Core functionality
+### 🟡 HIGH (30 endpoints) - Core functionality
 - All CRUD operations on drivers/vehicles
 - Trip status & boarding management
 - Settings & organization management
 - Notifications system
 - Reports & analytics
 - Live tracking
+- **Organization approval endpoints (admin)**
+- **Invite team member with OTP**
 
 ### 🟢 MEDIUM (2 endpoints) - Nice to have
 - AI suggestions
 - AI chat
+
+---
+
+## NEW ENDPOINTS FOR TEAM MANAGEMENT
+
+### Team Member Invitation (with OTP)
+```
+POST /organization/members/invite
+Request:
+{
+  "name": "John Doe",
+  "phone": "+234 803 111 2233",
+  "role": "dispatcher"  // finance | dispatcher | driver | manager
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "otp": "483927",
+    "joinLink": "/join?phone=%2B234803111223&otp=483927",
+    "smsMessage": "Hi John, you're invited to join Speedway Transport on Soole! Your OTP: 483927. Complete your setup: https://soole.ng/join?phone=..."
+  }
+}
+```
+
+### Team Member Removal (Owner/Admin only)
+```
+DELETE /organization/members/:memberId
+Authorization: Bearer {token}
+Parameters: memberId (UUID)
+
+Response:
+{
+  "success": true,
+  "message": "Team member removed successfully"
+}
+```
+
+### Organization Approval (Django Admin)
+```
+POST /admin/organizations/:orgId/approve
+Authorization: Bearer {adminToken}
+Request:
+{
+  "approvedBy": "admin-user-id",
+  "notes": "All documents verified"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "organizationId": "org-123",
+    "approvalStatus": "approved",
+    "approvedAt": "2026-06-30T10:30:00Z"
+  }
+}
+```
+
+```
+POST /admin/organizations/:orgId/reject
+Authorization: Bearer {adminToken}
+Request:
+{
+  "rejectionReason": "Invalid business registration number"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "organizationId": "org-123",
+    "approvalStatus": "rejected",
+    "rejectionReason": "Invalid business registration number"
+  }
+}
+```
+
+### Check Organization Approval Status
+```
+GET /organization/approval-status
+Authorization: Bearer {token}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "approvalStatus": "pending",  // pending | approved | rejected
+    "appliedAt": "2026-06-25T14:20:00Z",
+    "approvedAt": null,
+    "approvedBy": null,
+    "rejectionReason": null
+  }
+}
+```
 
 ---
 
@@ -170,6 +272,7 @@ Implement all 🔴 CRITICAL endpoints first:
 3. Drivers/Vehicles GET endpoints
 4. Trips CRUD + refund
 5. Money endpoints
+6. **Team member removal**
 
 ### Phase 2 - Core (Week 2-3)
 Implement all 🟡 HIGH endpoints:
@@ -178,6 +281,8 @@ Implement all 🟡 HIGH endpoints:
 3. Organization settings
 4. Notifications
 5. Reports
+6. **Team member invitation with OTP**
+7. **Organization approval (admin endpoints)**
 
 ### Phase 3 - Enhancement (Week 3-4)
 1. Live tracking (WebSocket)
@@ -185,6 +290,7 @@ Implement all 🟡 HIGH endpoints:
 3. Advanced filters & search
 4. File uploads for documents
 5. Data export (CSV)
+6. **Django admin dashboard for company approvals**
 
 ---
 
@@ -329,6 +435,8 @@ GET /reports/revenue?range=custom&startDate=2026-06-01&endDate=2026-06-29
 4. Refund processing
 5. Payout calculation & withdrawal
 6. Real-time vehicle tracking accuracy
+7. **Team member removal (only owner/admin can remove)**
+8. **Organization approval flow (Django admin approval)**
 
 ### Important to Test
 1. Search & filter functionality
@@ -336,12 +444,14 @@ GET /reports/revenue?range=custom&startDate=2026-06-01&endDate=2026-06-29
 3. Data validation (phone, email, amounts)
 4. Role-based access control
 5. Error handling & error messages
+6. **Team member OTP invitation SMS generation**
+7. **Organization approval status transitions (pending → approved/rejected)**
 
 ---
 
-**Total: 50+ Endpoints**
-- 13 Critical (MVP)
-- 28 High (Core)
-- 2 Medium (Enhancement)
+**Total: 53+ Endpoints**
+- 14 Critical (MVP) — includes team member removal
+- 30 High (Core) — includes OTP team invites & admin approvals
+- 2 Medium (Enhancement) — AI features
 - Plus WebSocket for live tracking
 

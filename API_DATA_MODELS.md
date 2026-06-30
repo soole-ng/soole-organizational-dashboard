@@ -203,7 +203,11 @@ interface Organization {
     startDate: string;
     renewalDate: string;
   };
-  status: StatusVariant;
+  status: StatusVariant;         // pending_approval | approved | rejected | suspended | active
+  approvalStatus: 'pending' | 'approved' | 'rejected';  // Admin approval state
+  approvedBy?: string;           // Admin user ID who approved
+  approvalDate?: string;         // ISO8601 when approved
+  rejectionReason?: string;      // If rejected, reason why
   createdAt: string;
   updatedAt: string;
 }
@@ -233,14 +237,17 @@ interface OrganizationMember {
   id: string;                    // UUID (same as User.id)
   organizationId: string;        // Reference to Organization
   name: string;
-  email: string;
-  phone: string;
+  email?: string;                // Optional until signup complete
+  phone: string;                 // Phone number, used for OTP verification
   role: UserRole;                // owner | admin | dispatcher | finance | viewer
-  status: 'active' | 'pending' | 'inactive';
+  status: 'active' | 'pending' | 'inactive';  // pending = invited but not yet signed up
   inviteToken?: string;          // For pending invitations
-  inviteExpiresAt?: string;
-  joinedAt: string;              // ISO8601
-  lastActiveAt?: string;
+  inviteOTP?: string;            // OTP sent via SMS for verification
+  inviteExpiresAt?: string;      // When invitation expires (usually 7 days)
+  inviteSentAt?: string;         // When SMS invite was sent
+  joinedAt?: string;             // ISO8601 (when they actually completed signup)
+  lastActiveAt?: string;         // Last login timestamp
+  createdAt: string;
   updatedAt: string;
 }
 ```
@@ -734,4 +741,130 @@ CREATE INDEX idx_payout_status ON payouts(status);
 8. **Pagination**: Limit returned items (default 20, max 100)
 9. **Relationships**: Implement foreign keys with proper constraints
 10. **Archiving**: Archive old transactions/payouts (>1 year) for performance
+
+---
+
+## Team Member Invitation Flow
+
+### Step 1: Admin Invites Team Member
+**Endpoint:** `POST /organization/members/invite`
+
+Admin provides: `name`, `phone`, `role`
+
+System generates:
+- 6-digit OTP (e.g., "483927")
+- Join link: `/join?phone=%2B234803111223&otp=483927`
+- SMS message with OTP + link
+- Member added to `organization_members` table with status=`pending`
+
+### Step 2: Team Member Receives SMS
+SMS format:
+```
+Hi {name}, you're invited to join Speedway Transport on Soole! 
+Your OTP: {otp}. 
+Complete your setup: {link}
+```
+
+### Step 3: Team Member Completes Signup
+**Endpoint:** `POST /auth/join`
+
+Team member enters:
+- Phone number (from URL param or manual entry)
+- OTP (from SMS)
+- Password (8+ chars, validation rules)
+- Confirm password
+- Security questions
+
+System:
+- Verifies OTP matches & hasn't expired
+- Creates User record with assigned role
+- Updates OrganizationMember status from `pending` → `active`
+- Auto-logs them in
+- Redirects to dashboard
+
+### Step 4: Member is Now Active
+- Can access dashboard with their assigned role
+- Can see assigned features (Finance, Dispatcher, Driver, Manager)
+- Profile considered "incomplete" until they complete profile checklist
+
+---
+
+## Organization Approval Flow (Django Admin)
+
+### Step 1: Company Signs Up
+Company owner creates account at frontend. Organization status = `pending_approval`
+
+### Step 2: Django Admin Reviews
+Admin reviews in Django admin dashboard:
+- Company info (name, address, registration number)
+- Uploaded documents (if required)
+- Owner verification
+
+### Step 3: Admin Approves or Rejects
+
+#### Approve:
+```
+POST /admin/organizations/:orgId/approve
+{
+  "approvedBy": "admin-user-123",
+  "notes": "All documents verified. Registration valid."
+}
+```
+
+Result:
+- `organization.approvalStatus` → `approved`
+- `organization.status` → `active`
+- Owner gets notification
+- Can now create team members & start operations
+
+#### Reject:
+```
+POST /admin/organizations/:orgId/reject
+{
+  "rejectionReason": "Invalid business registration number. Please resubmit with valid documentation."
+}
+```
+
+Result:
+- `organization.approvalStatus` → `rejected`
+- `organization.status` → `suspended`
+- Owner gets notification with reason
+- Cannot operate until reapplied
+
+### Step 4: Owner Can Check Status
+```
+GET /organization/approval-status
+```
+
+Returns current approval state for dashboard display
+
+---
+
+## Security Rules for Team Member Management
+
+### Who Can Invite?
+- Organization Owner (always)
+- Admin users (with admin role)
+- NOT Dispatcher, Finance, or Driver roles
+
+### Who Can Remove?
+- Organization Owner (always)
+- Admin users (with admin role)
+- NOT Dispatcher, Finance, or Driver roles
+
+### Permission Check:
+```
+if (user.role === 'owner' || user.role === 'admin') {
+  // Allow invite/remove
+} else {
+  // Reject with 403 Forbidden
+}
+```
+
+### OTP Validation Rules:
+- 6-digit numeric code
+- Generated fresh for each invitation
+- Expires in 7 days
+- Can only be used once
+- Verified during signup step 2
 

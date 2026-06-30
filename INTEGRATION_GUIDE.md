@@ -105,6 +105,42 @@ export async function getTransactions(page = 1, filters = {}) {
   return apiCall(`/money/transactions?page=${page}&...`)
 }
 
+// src/lib/api/organization.ts
+export async function getOrganization() {
+  return apiCall('/organization')
+}
+
+export async function inviteTeamMember(data: { name, phone, role }) {
+  return apiCall('/organization/members/invite', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
+export async function removeTeamMember(memberId: string) {
+  return apiCall(`/organization/members/${memberId}`, {
+    method: 'DELETE'
+  })
+}
+
+export async function getApprovalStatus() {
+  return apiCall('/organization/approval-status')
+}
+
+// src/lib/api/auth.ts (team member signup)
+export async function joinOrganization(data: { 
+  phone: string, 
+  otp: string, 
+  password: string,
+  confirmPassword: string,
+  securityQuestion: { question: string, answer: string }
+}) {
+  return apiCall('/auth/join', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+}
+
 // Helper function
 function apiCall(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('token')
@@ -319,6 +355,14 @@ When you have a real backend, this file can be deleted and all data will come fr
 - [ ] Reports/analytics data
 - [ ] AI assistant integration
 - [ ] Settings/organization updates
+
+### Week 4: Team Management & Organization
+- [ ] Implement team member invitation with OTP
+- [ ] Implement team member removal
+- [ ] Implement organization approval status check
+- [ ] Add organization approval flow to dashboard
+- [ ] Display approval status on settings page
+- [ ] Add admin approval endpoints (for Django admin)
 
 ### Week 5: Testing & Polish
 - [ ] End-to-end testing
@@ -621,6 +665,289 @@ export async function getTrips(filters) {
 3. Deploy with feature flag disabled (using real API)
 4. If issues detected, enable flag to revert to mock data
 5. Fix issues and redeploy with flag disabled
+
+---
+
+## Team Member Management Integration
+
+### 1. Invite Team Member (Frontend)
+
+**Location:** `src/pages/Settings/components/OrganizationTeam.tsx`
+
+```typescript
+// Step 1: Admin fills form
+const handleInviteSubmit = async (name: string, phone: string, role: string) => {
+  const response = await inviteTeamMember({ name, phone, role })
+  
+  // Response includes:
+  // {
+  //   "otp": "483927",
+  //   "joinLink": "/join?phone=...&otp=...",
+  //   "smsMessage": "Hi John, you're invited..."
+  // }
+  
+  // Step 2: Show preview with OTP and SMS message
+  setGeneratedOTP(response.otp)
+  setShowInvitePreview(true)
+}
+
+// Step 3: Admin confirms and sends invite
+const handleConfirmInvite = async () => {
+  // Actually send SMS with the OTP and link
+  // This would be done by backend in a real scenario
+  // For now, just show success and add to members list
+  
+  setMembers(prev => [...prev, {
+    id: `m-${Date.now()}`,
+    name,
+    phone,
+    role,
+    status: 'pending',
+    joinedAt: new Date().toISOString().split('T')[0]
+  }])
+}
+```
+
+### 2. Team Member Signs Up (JoinOrganizationPage)
+
+**Location:** `src/pages/Auth/JoinOrganizationPage.tsx`
+
+```typescript
+// Step 1: User extracts phone & OTP from URL
+const urlParams = new URLSearchParams(window.location.search)
+const phone = urlParams.get('phone')
+const otp = urlParams.get('otp')
+
+// Step 2: User verifies OTP
+const handleVerifyOTP = async () => {
+  // Verify the 6-digit OTP matches the one from SMS
+  if (enteredOTP !== otp) {
+    toast.error('Incorrect OTP')
+    return
+  }
+  // Move to password step
+  setCurrentStep(3)
+}
+
+// Step 3: User sets password (8+ chars, validation)
+const handleSetPassword = () => {
+  const requirements = getPasswordRequirements(password)
+  
+  if (!allRequirementsMet(requirements)) {
+    toast.error('Password does not meet requirements')
+    return
+  }
+  
+  if (password !== confirmPassword) {
+    toast.error('Passwords do not match')
+    return
+  }
+  
+  setCurrentStep(4) // Security questions
+}
+
+// Step 4: User sets security questions
+const handleSetSecurityQuestion = async () => {
+  const response = await joinOrganization({
+    phone,
+    otp,
+    password,
+    confirmPassword,
+    securityQuestion: { question: selectedQuestion, answer: answer }
+  })
+  
+  // Response: { success: true, user: {...}, token: "..." }
+  // Auto-login and redirect
+  localStorage.setItem('token', response.token)
+  navigate('/') // Dashboard
+}
+```
+
+### 3. Remove Team Member (Frontend)
+
+**Location:** `src/pages/Settings/components/OrganizationTeam.tsx`
+
+```typescript
+const handleRemoveMember = async (memberId: string) => {
+  if (!confirm('Are you sure? This action cannot be undone.')) {
+    return
+  }
+  
+  try {
+    await removeTeamMember(memberId)
+    
+    // Update local state
+    setMembers(prev => prev.filter(m => m.id !== memberId))
+    toast.success('Team member removed')
+  } catch (error) {
+    toast.error(error.message)
+  }
+}
+```
+
+### Backend Implementation Requirements
+
+#### Endpoint: POST /organization/members/invite
+```
+Input:
+{
+  "name": "John Doe",
+  "phone": "+234 803 111 2233",
+  "role": "dispatcher"
+}
+
+Output:
+{
+  "success": true,
+  "data": {
+    "memberId": "m-123",
+    "otp": "483927",
+    "joinLink": "/join?phone=%2B234803111223&otp=483927",
+    "smsMessage": "Hi John, you're invited...",
+    "expiresAt": "2026-07-07T10:30:00Z"
+  }
+}
+```
+
+#### Endpoint: DELETE /organization/members/:memberId
+```
+Input: memberId (UUID)
+
+Authorization: User must be owner or admin
+
+Output:
+{
+  "success": true,
+  "message": "Team member removed successfully"
+}
+
+Errors:
+- 404: Member not found
+- 403: Insufficient permissions
+```
+
+#### Endpoint: POST /auth/join
+```
+Input:
+{
+  "phone": "+234 803 111 2233",
+  "otp": "483927",
+  "password": "SecurePass123!",
+  "confirmPassword": "SecurePass123!",
+  "securityQuestion": {
+    "question": "What is your favorite food?",
+    "answer": "Jollof"
+  }
+}
+
+Output:
+{
+  "success": true,
+  "data": {
+    "userId": "u-123",
+    "email": "john@example.com",
+    "phone": "+234 803 111 2233",
+    "role": "dispatcher",
+    "token": "eyJhbGc..."
+  }
+}
+
+Errors:
+- 400: Invalid OTP
+- 400: OTP expired
+- 400: Password requirements not met
+```
+
+---
+
+## Organization Approval Integration
+
+### 1. Check Approval Status (Frontend)
+
+**Location:** `src/pages/Settings/SettingsPage.tsx` or dashboard header
+
+```typescript
+const handleCheckApprovalStatus = async () => {
+  const response = await getApprovalStatus()
+  
+  // Response:
+  // {
+  //   "approvalStatus": "pending",  // pending | approved | rejected
+  //   "appliedAt": "2026-06-25T...",
+  //   "approvedAt": null,
+  //   "rejectionReason": null
+  // }
+  
+  if (response.approvalStatus === 'approved') {
+    // Show success - can operate
+    showBanner('Organization approved! You can now create team members.')
+  } else if (response.approvalStatus === 'rejected') {
+    // Show error with reason
+    showError(`Organization rejected: ${response.rejectionReason}`)
+  } else {
+    // Pending - show waiting message
+    showInfo('Your organization is pending approval. We will notify you soon.')
+  }
+}
+```
+
+### 2. Django Admin Approval Flow
+
+**For Backend Team:** Admin approvals happen in Django admin dashboard
+
+```
+Path: /admin/organizations/
+Actions:
+1. Admin views pending organizations
+2. Reviews company info, registration, documents
+3. Clicks "Approve" or "Reject"
+4. System calls:
+   - POST /admin/organizations/:orgId/approve (with admin token)
+   - POST /admin/organizations/:orgId/reject (with admin token)
+```
+
+#### Endpoint: POST /admin/organizations/:orgId/approve
+```
+Authorization: Admin-only token required
+
+Input:
+{
+  "approvedBy": "admin-user-id",
+  "notes": "All documents verified"
+}
+
+Output:
+{
+  "success": true,
+  "data": {
+    "organizationId": "org-123",
+    "approvalStatus": "approved",
+    "status": "active",
+    "approvedAt": "2026-06-30T10:30:00Z"
+  }
+}
+```
+
+#### Endpoint: POST /admin/organizations/:orgId/reject
+```
+Authorization: Admin-only token required
+
+Input:
+{
+  "rejectionReason": "Invalid business registration"
+}
+
+Output:
+{
+  "success": true,
+  "data": {
+    "organizationId": "org-123",
+    "approvalStatus": "rejected",
+    "status": "suspended",
+    "rejectionReason": "Invalid business registration"
+  }
+}
+```
 
 ---
 

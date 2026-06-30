@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from 'react'
-import { MapPin, Navigation, Activity, Layers, ChevronLeft, ChevronRight } from 'lucide-react'
+import { MapPin, Navigation, Activity, Layers, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
+import { useOrg } from '../../lib/OrgContext'
 import { MapContainer } from './components/MapContainer'
 import { DriverSidebar } from './components/DriverSidebar'
 import { clsx } from 'clsx'
@@ -43,6 +44,40 @@ const basemapStyles: Record<BasemapStyle, { name: string; style: string }> = {
 }
 
 export function LiveMapPage() {
+  const { org } = useOrg()
+  const isProfileIncomplete = org.approvalStatus === 'incomplete'
+
+  if (isProfileIncomplete) {
+    return (
+      <div className="flex flex-col h-full bg-white">
+        <TopBar title="Live Map" backHref="/" />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-sm text-center space-y-6">
+            <div className="w-20 h-20 bg-secondary-500 rounded-3xl flex items-center justify-center shadow-float mx-auto">
+              <AlertCircle className="w-10 h-10 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-extrabold text-primary-500 mb-2">Profile Incomplete</h2>
+              <p className="text-sm text-neutral-300 leading-relaxed">Please complete your profile to unlock Real-Time Tracking.</p>
+            </div>
+            <div className="bg-secondary-500/10 border border-secondary-300 rounded-2xl p-4 space-y-3">
+              <p className="text-xs font-bold text-black uppercase tracking-wider">What's needed:</p>
+              <ul className="text-xs text-neutral-300 space-y-2 text-left">
+                <li>✓ Organization details</li>
+                <li>✓ Director information</li>
+                <li>✓ Bank account setup</li>
+                <li>✓ Security questions</li>
+              </ul>
+            </div>
+            <button onClick={() => window.dispatchEvent(new Event('require-profile-completion'))} className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150">
+              Complete Profile Now
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const [vehicleLocations, setVehicleLocations] = useState<VehicleLoc[]>([])
   const [selectedDriver, setSelectedDriver] = useState<VehicleLoc | null>(null)
   const [filter, setFilter] = useState<'all' | 'on_trip' | 'idle'>('all')

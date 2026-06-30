@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { BarChart2, Bus, Users, Car, TrendingUp, Navigation, Download } from 'lucide-react'
+import { BarChart2, Bus, Users, Car, TrendingUp, Navigation, Download, AlertCircle } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
+import { useOrg } from '../../lib/OrgContext'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useMockData } from '../../lib/useMockData'
 import { formatMoneyCompact } from '../../lib/formatters'
@@ -15,7 +16,40 @@ const reportTypes = [
 ]
 
 export function ReportsPage() {
+  const { org } = useOrg()
   const { data, loading } = useMockData()
+  const isProfileIncomplete = org.approvalStatus === 'incomplete'
+
+  if (isProfileIncomplete) {
+    return (
+      <div className="flex flex-col h-full bg-white">
+        <TopBar title="Reports" backHref="/" />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-sm text-center space-y-6">
+            <div className="w-20 h-20 bg-secondary-500 rounded-3xl flex items-center justify-center shadow-float mx-auto">
+              <AlertCircle className="w-10 h-10 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-extrabold text-primary-500 mb-2">Profile Incomplete</h2>
+              <p className="text-sm text-neutral-300 leading-relaxed">Please complete your profile to unlock Advanced Reports.</p>
+            </div>
+            <div className="bg-secondary-500/10 border border-secondary-300 rounded-2xl p-4 space-y-3">
+              <p className="text-xs font-bold text-black uppercase tracking-wider">What's needed:</p>
+              <ul className="text-xs text-neutral-300 space-y-2 text-left">
+                <li>✓ Organization details</li>
+                <li>✓ Director information</li>
+                <li>✓ Bank account setup</li>
+                <li>✓ Security questions</li>
+              </ul>
+            </div>
+            <button onClick={() => window.dispatchEvent(new Event('require-profile-completion'))} className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150">
+              Complete Profile Now
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (

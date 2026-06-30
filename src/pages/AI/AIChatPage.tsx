@@ -78,11 +78,11 @@ export function AIChatPage() {
   const [query, setQuery] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const historyRef = useRef<HTMLDivElement>(null)
 
-  // Check if profile is incomplete - freeze everything
   const isProfileIncomplete = org.approvalStatus === 'incomplete'
 
   useEffect(() => {
@@ -102,6 +102,10 @@ export function AIChatPage() {
 
   const sendMessage = (text: string) => {
     if (!text.trim() || isLoading) return
+    if (isProfileIncomplete) {
+      setShowProfileModal(true)
+      return
+    }
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     setMessages(prev => [...prev, { type: 'user', text, timestamp: now }])
     setQuery('')
@@ -124,43 +128,6 @@ export function AIChatPage() {
   }
 
   const historyGroups = groupHistory(chatHistory)
-
-  // If profile is incomplete, show frozen state
-  if (isProfileIncomplete) {
-    return (
-      <div className="flex flex-col h-full bg-white">
-        <TopBar title="AI Assistant" backHref="/" />
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-sm text-center space-y-6">
-            <div className="w-20 h-20 bg-secondary-500 rounded-3xl flex items-center justify-center shadow-float mx-auto">
-              <AlertCircle className="w-10 h-10 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-extrabold text-primary-500 mb-2">Profile Incomplete</h2>
-              <p className="text-sm text-neutral-300 leading-relaxed">
-                Please complete your profile to unlock AI Assistant. This helps us personalize your experience and ensure account security.
-              </p>
-            </div>
-            <div className="bg-secondary-500/10 border border-secondary-300 rounded-2xl p-4 space-y-3">
-              <p className="text-xs font-bold text-black uppercase tracking-wider">What's needed:</p>
-              <ul className="text-xs text-neutral-300 space-y-2 text-left">
-                <li>✓ Organization details</li>
-                <li>✓ Director information</li>
-                <li>✓ Bank account setup</li>
-                <li>✓ Security questions</li>
-              </ul>
-            </div>
-            <button
-              onClick={() => window.dispatchEvent(new Event('require-profile-completion'))}
-              className="w-full bg-secondary-500 text-white font-black rounded-2xl px-6 py-4 text-base hover:bg-secondary-400 transition-all shadow-sm"
-            >
-              Complete Profile Now
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -369,6 +336,54 @@ export function AIChatPage() {
           </div>
         </div>
       </div>
+
+      {/* Profile Incomplete Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm p-8 shadow-float space-y-6 animate-in fade-in zoom-in duration-200">
+            <div className="w-24 h-24 bg-secondary-500 rounded-3xl flex items-center justify-center mx-auto shadow-float">
+              <AlertCircle className="w-12 h-12 text-white" />
+            </div>
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-extrabold text-primary-500">Profile Incomplete</h2>
+              <p className="text-sm text-neutral-300 leading-relaxed">Please complete your profile to start chatting with AI Assistant.</p>
+            </div>
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-black">Complete these steps:</p>
+              <div className="grid grid-cols-1 gap-2.5">
+                {[
+                  { icon: '🏢', label: 'Organization details' },
+                  { icon: '👤', label: 'Director information' },
+                  { icon: '🏦', label: 'Bank account setup' },
+                  { icon: '🔐', label: 'Security questions' }
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-primary-75 hover:bg-primary-100 rounded-2xl p-3 transition-colors border border-primary-100">
+                    <div className="text-lg flex-shrink-0">{item.icon}</div>
+                    <span className="text-sm font-semibold text-primary-500">{item.label}</span>
+                    <div className="ml-auto w-5 h-5 rounded-full bg-secondary-300 flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">→</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="flex-1 bg-neutral-50 hover:bg-neutral-100 text-black font-black rounded-2xl px-6 py-3.5 transition-all active:scale-95 text-sm"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => window.dispatchEvent(new Event('require-profile-completion'))}
+                className="flex-1 bg-secondary-500 hover:bg-secondary-600 text-white font-black rounded-2xl px-6 py-3.5 transition-all active:scale-95 text-sm"
+              >
+                Complete Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

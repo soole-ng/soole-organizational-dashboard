@@ -46,38 +46,7 @@ const basemapStyles: Record<BasemapStyle, { name: string; style: string }> = {
 export function LiveMapPage() {
   const { org } = useOrg()
   const isProfileIncomplete = org.approvalStatus === 'incomplete'
-
-  if (isProfileIncomplete) {
-    return (
-      <div className="flex flex-col h-full bg-white">
-        <TopBar title="Live Map" backHref="/" />
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-sm text-center space-y-6">
-            <div className="w-20 h-20 bg-secondary-500 rounded-3xl flex items-center justify-center shadow-float mx-auto">
-              <AlertCircle className="w-10 h-10 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-extrabold text-primary-500 mb-2">Profile Incomplete</h2>
-              <p className="text-sm text-neutral-300 leading-relaxed">Please complete your profile to unlock Real-Time Tracking.</p>
-            </div>
-            <div className="bg-secondary-500/10 border border-secondary-300 rounded-2xl p-4 space-y-3">
-              <p className="text-xs font-bold text-black uppercase tracking-wider">What's needed:</p>
-              <ul className="text-xs text-neutral-300 space-y-2 text-left">
-                <li>✓ Organization details</li>
-                <li>✓ Director information</li>
-                <li>✓ Bank account setup</li>
-                <li>✓ Security questions</li>
-              </ul>
-            </div>
-            <button onClick={() => window.dispatchEvent(new Event('require-profile-completion'))} className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150">
-              Complete Profile Now
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
+  const [showProfileModal, setShowProfileModal] = useState(false)
   const [vehicleLocations, setVehicleLocations] = useState<VehicleLoc[]>([])
   const [selectedDriver, setSelectedDriver] = useState<VehicleLoc | null>(null)
   const [filter, setFilter] = useState<'all' | 'on_trip' | 'idle'>('all')
@@ -151,9 +120,13 @@ export function LiveMapPage() {
     ), [vehicleLocations, filter])
 
   const handleSelectDriver = useCallback((vehicle: VehicleLoc) => {
+    if (isProfileIncomplete) {
+      setShowProfileModal(true)
+      return
+    }
     setSelectedDriver(vehicle)
     mapRef.current?.flyTo({ center: [vehicle.lng, vehicle.lat], zoom: 14, duration: 600 })
-  }, [])
+  }, [isProfileIncomplete])
 
   const markerColor = (status: string) => {
     if (status === 'on_trip') return '#1D754C'
@@ -263,6 +236,44 @@ export function LiveMapPage() {
           </div>
         )}
       </div>
+
+      {/* Profile Incomplete Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm p-6 shadow-float space-y-6 animate-in fade-in zoom-in duration-200">
+            <div className="w-20 h-20 bg-secondary-500 rounded-3xl flex items-center justify-center mx-auto">
+              <AlertCircle className="w-10 h-10 text-white" />
+            </div>
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-extrabold text-primary-500">Profile Incomplete</h2>
+              <p className="text-sm text-neutral-300">Please complete your profile to access real-time tracking.</p>
+            </div>
+            <div className="bg-secondary-500/10 border border-secondary-300 rounded-2xl p-4 space-y-3">
+              <p className="text-xs font-bold text-black uppercase tracking-wider">What's needed:</p>
+              <ul className="text-xs text-neutral-300 space-y-2 text-left">
+                <li>✓ Organization details</li>
+                <li>✓ Director information</li>
+                <li>✓ Bank account setup</li>
+                <li>✓ Security questions</li>
+              </ul>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="flex-1 bg-neutral-50 hover:bg-neutral-100 text-black font-bold rounded-2xl px-6 py-3 transition-all"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => window.dispatchEvent(new Event('require-profile-completion'))}
+                className="flex-1 bg-primary-500 hover:bg-primary-400 text-white font-bold rounded-2xl px-6 py-3 transition-all"
+              >
+                Complete Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

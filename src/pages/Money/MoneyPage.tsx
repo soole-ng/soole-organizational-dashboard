@@ -212,14 +212,12 @@ export function MoneyPage() {
         <DesktopPageHeader title="Money" subtitle="Wallet, transactions & payouts" />
 
         <div className="flex items-center justify-between mb-4">
-          {activeTab === 'Transactions' ? (
-            <button 
-              onClick={() => setShowFilterModal(true)}
-              className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold hover:text-black transition-colors bg-white border border-neutral-100 rounded-lg px-3 py-1.5 shadow-sm"
-            >
-              <Filter className="w-3.5 h-3.5" /> {startDate && endDate ? `${startDate} - ${endDate}` : 'Filter Date'}
-            </button>
-          ) : <div />}
+          <button
+            onClick={() => setShowFilterModal(true)}
+            className="flex items-center gap-1.5 text-xs text-neutral-500 font-semibold hover:text-black transition-colors bg-white border border-neutral-100 rounded-lg px-3 py-1.5 shadow-sm"
+          >
+            <Filter className="w-3.5 h-3.5" /> {startDate && endDate ? `${startDate} - ${endDate}` : 'Filter Date'}
+          </button>
           <button className="flex items-center gap-1.5 text-xs text-secondary-300 font-semibold hover:underline">
             <Download className="w-3.5 h-3.5" /> Export CSV
           </button>
@@ -263,19 +261,32 @@ export function MoneyPage() {
 
         {activeTab === 'Payouts' && (
           <div className="space-y-3">
-            {allPayouts.map(payout => (
-              <div key={payout.id} className="card">
-                <div className="flex items-center justify-between mb-2">
-                  <MoneyDisplay amount={payout.amount} size="lg" hidden={isHidden} className="font-bold text-lg" />
-                  <StatusPill status={payout.status} />
-                </div>
-                <div className="space-y-1 text-xs text-neutral-200">
-                  <p>Settled: {formatDate(payout.date)}</p>
-                  <p>Bank: {payout.bankRef}</p>
-                  <p>Covers {payout.bookingCount} bookings</p>
-                </div>
-              </div>
-            ))}
+            {(() => {
+              const filteredPayouts = allPayouts.filter(p => {
+                if (!startDate || !endDate) return true
+                const payoutTime = new Date(p.date).getTime()
+                const start = new Date(startDate).getTime()
+                const end = new Date(endDate).getTime() + 86400000
+                return payoutTime >= start && payoutTime <= end
+              })
+              return filteredPayouts.length === 0 ? (
+                <div className="card text-center py-8 text-neutral-200 text-sm">No payouts found.</div>
+              ) : (
+                filteredPayouts.map(payout => (
+                  <div key={payout.id} className="card">
+                    <div className="flex items-center justify-between mb-2">
+                      <MoneyDisplay amount={payout.amount} size="lg" hidden={isHidden} className="font-bold text-lg" />
+                      <StatusPill status={payout.status} />
+                    </div>
+                    <div className="space-y-1 text-xs text-neutral-200">
+                      <p>Settled: {formatDate(payout.date)}</p>
+                      <p>Bank: {payout.bankRef}</p>
+                      <p>Covers {payout.bookingCount} bookings</p>
+                    </div>
+                  </div>
+                ))
+              )
+            })()}
 
             <button
               onClick={handleWithdrawClick}

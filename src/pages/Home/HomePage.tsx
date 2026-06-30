@@ -7,7 +7,7 @@ import { QuickStats } from './components/QuickStats'
 import { useOrg } from '../../lib/OrgContext'
 
 export function HomePage() {
-  const { org, updateOrg } = useOrg()
+  const { org, updateOrg, guardAction } = useOrg()
   const { notifications, setNotifications } = useOutletContext<any>()
   const isHidden = org.isBalanceHidden || false
 
@@ -25,7 +25,7 @@ export function HomePage() {
             <p className="text-primary-200 text-sm">Good morning,</p>
             <h1 className="text-3xl font-bold text-white">{org.name}</h1>
           </div>
-          <Link to="/trips/new" id="tour-new-trip" className="flex items-center gap-2 bg-white text-primary-500 font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-75 transition-colors">
+          <Link to="/trips/new" onClick={guardAction as any} id="tour-new-trip" className="flex items-center gap-2 bg-white text-primary-500 font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-75 transition-colors">
             <Plus className="w-4 h-4" />
             New Trip
           </Link>
@@ -66,6 +66,7 @@ export function HomePage() {
 
       <Link
         to="/trips/new"
+        onClick={guardAction as any}
         id="tour-new-trip-mobile"
         className="lg:hidden fixed bottom-28 right-4 w-14 h-14 bg-primary-500 rounded-full flex items-center justify-center shadow-float text-white z-30"
         aria-label="New trip"

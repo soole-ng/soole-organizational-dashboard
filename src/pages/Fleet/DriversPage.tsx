@@ -3,6 +3,7 @@ import { Plus, Phone, Award, Users } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useMockData } from '../../lib/useMockData'
+import { useOrg } from '../../lib/OrgContext'
 import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 import toast from 'react-hot-toast'
@@ -22,6 +23,7 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
 
 export function DriversPage() {
   const { data, loading } = useMockData()
+  const { guardAction } = useOrg()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [showAddSheet, setShowAddSheet] = useState(false)
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null)
@@ -91,7 +93,7 @@ export function DriversPage() {
           subtitle={`${filtered.length} drivers · ${verified} verified · Avg ${avgRating > 0 ? avgRating.toFixed(1) : '—'}★`}
           actions={
             <button
-              onClick={() => setShowAddSheet(true)}
+              onClick={(e) => guardAction(e, () => setShowAddSheet(true))}
               className="flex items-center gap-2 bg-[#042011] text-white font-semibold rounded-btn px-5 py-2.5 text-sm hover:bg-primary-400 transition-colors"
             >
               + Invite Driver
@@ -104,7 +106,7 @@ export function DriversPage() {
             icon={Users}
             title="No drivers yet"
             description="Invite your first driver by phone number."
-            action={{ label: '+ Invite Driver', onClick: () => setShowAddSheet(true) }}
+            action={{ label: '+ Invite Driver', onClick: () => guardAction(undefined, () => setShowAddSheet(true)) }}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -169,7 +171,7 @@ export function DriversPage() {
                     <div className="flex items-center gap-2">
                       {driver.status === 'pending' && (
                         <button
-                          onClick={e => { e.stopPropagation(); toast.success(`Invite resent to ${driver.name}`) }}
+                          onClick={e => { e.stopPropagation(); guardAction(e, () => toast.success(`Invite resent to ${driver.name}`)) }}
                           className="text-[13px] text-secondary-300 font-bold border border-secondary-300 rounded-lg px-2 py-1"
                         >
                           Resend invite
@@ -193,7 +195,7 @@ export function DriversPage() {
 
       {/* FAB */}
       <button
-        onClick={() => setShowAddSheet(true)}
+        onClick={(e) => guardAction(e, () => setShowAddSheet(true))}
         className="lg:hidden fixed bottom-20 right-4 w-14 h-14 bg-primary-500 rounded-full flex items-center justify-center shadow-float text-white z-30"
         aria-label="Add driver"
       >

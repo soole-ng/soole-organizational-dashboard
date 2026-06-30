@@ -1,16 +1,13 @@
-import { useState, useEffect } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { formatMoneyCompact } from '../../../lib/formatters'
+import { useQuery } from '@tanstack/react-query'
+import { tripsApi } from '../../../api/trips'
 
 export function QuickStats() {
-  const [weeklyRevenue, setWeeklyRevenue] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetch('/mock-data.json')
-      .then(res => res.json())
-      .then(data => setWeeklyRevenue(data.weeklyRevenue || []))
-      .catch(console.error);
-  }, []);
+  const { data: weeklyRevenue = [] } = useQuery({
+    queryKey: ['weeklyRevenue'],
+    queryFn: tripsApi.getRevenue
+  })
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {

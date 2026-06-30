@@ -6,7 +6,9 @@
 import { ChevronRight, Clock, Users, MapPin, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { StatusPill } from '../../../components/ui/StatusPill'
-import { useMockData } from '../../../lib/useMockData'
+import { useOrg } from '../../../lib/OrgContext'
+import { useQuery } from '@tanstack/react-query'
+import { tripsApi } from '../../../api/trips'
 import { formatTime, formatOccupancy } from '../../../lib/formatters'
 import { clsx } from 'clsx'
 
@@ -24,7 +26,11 @@ function TripSkeleton() {
 }
 
 export function UpcomingTrips() {
-  const { data, loading } = useMockData()
+  const { data: trips = [], isLoading: loading } = useQuery({
+    queryKey: ['trips'],
+    queryFn: tripsApi.getTrips
+  })
+  const { guardAction } = useOrg()
 
   if (loading) {
     return (
@@ -38,8 +44,8 @@ export function UpcomingTrips() {
     )
   }
 
-  const upcoming = data.trips
-    .filter(t => t.status !== 'completed' && t.status !== 'cancelled')
+  const upcoming = trips
+    .filter((t: any) => t.status !== 'completed' && t.status !== 'cancelled')
     .slice(0, 3)
 
   return (
@@ -61,7 +67,7 @@ export function UpcomingTrips() {
           </div>
           <p className="text-sm font-semibold text-primary-500 mb-1">No trips today</p>
           <p className="text-xs text-neutral-200 mb-4">Create a trip to get started.</p>
-          <Link to="/trips/new" className="btn-accent text-sm">
+          <Link to="/trips/new" onClick={guardAction as any} className="btn-accent text-sm">
             + New Trip
           </Link>
         </div>

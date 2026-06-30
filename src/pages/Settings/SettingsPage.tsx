@@ -79,25 +79,6 @@ export function SettingsPage() {
       <div className="flex-1 p-4 space-y-4 lg:pt-8 lg:px-8 w-full">
         <DesktopPageHeader title="Settings" subtitle="Organization profile, team and account settings" />
 
-        <div className="card p-4 mb-4 flex items-center justify-between border-accent-300 bg-accent-50">
-          <div>
-            <h3 className="text-sm font-bold text-primary-500">RBAC Testing Role</h3>
-            <p className="text-xs text-neutral-300">Switch roles to test access control restrictions.</p>
-          </div>
-          <select 
-            value={org.activeRole || 'admin'} 
-            onChange={(e) => {
-              updateOrg({ activeRole: e.target.value as any })
-              toast.success(`Role switched to ${e.target.value}`)
-            }}
-            className="input-field w-auto py-1.5 px-3 text-xs font-bold bg-white"
-          >
-            <option value="admin">Admin</option>
-            <option value="dispatcher">Dispatcher</option>
-            <option value="finance">Finance</option>
-          </select>
-        </div>
-
         <div className="card p-0 overflow-hidden divide-y divide-neutral-50">
           {sections.map(({ icon: Icon, label, desc, badge, to, href }) => {
             const isOpen = activeSection === label;

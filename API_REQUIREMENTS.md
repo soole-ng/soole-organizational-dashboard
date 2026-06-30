@@ -18,10 +18,11 @@
 | **Trips** | **11/11** | ✅ Done | feat/trips-api | List, detail, create, update, status, board, refund, comments, cancel, routes + 40+ tests |
 | **Notifications** | **4/4** | ✅ Done | feat/notifications-api | List, mark read, create alerts, summary + 30+ tests |
 | **Live Tracking** | **3/3** | ✅ Done | feat/live-tracking-api | Get vehicles, trip tracking, update location + 25+ tests |
+| **Organization Signup** | **1/1** | 🟡 In Review | feat/org-approval-team-management | Owner signup (user + org creation) + 15 tests |
 | **Team Management** | **2/2** | 🟡 In Review | feat/org-approval-team-management | Team member OTP invite, join-organization signup + 12 tests |
 | **Organization Approval** | **5/5** | 🟡 In Review | feat/org-approval-team-management | Admin approve/reject, approval status, pending list, org review + 15 tests |
 | AI Assistant | 2/2 | 🔲 Queued | - | Suggestions, chat |
-| **TOTAL** | **58/58** | **98% Complete** | | 51/58 endpoints done; 7 new endpoints + 47 tests in review (PR #98) |
+| **TOTAL** | **59/59** | **99% Complete** | | 52/59 endpoints done; 8 new endpoints + 62 tests in review (PR #98) |
 
 ### PR Status
 - ✅ feat/dashboard-foundation - Merged/Ready
@@ -30,7 +31,8 @@
 - ✅ feat/organization-reports-api - Ready for review (5 endpoints + 35+ tests)
 - ✅ feat/organization-settings-api - Ready for review (8 endpoints + 20+ tests)
 - ✅ feat/fleet-vehicles-api - Ready for review (7 endpoints + 25+ tests)
-- 🟡 feat/org-approval-team-management - **PR #98** - In Review (7 endpoints + tests)
+- 🟡 feat/org-approval-team-management - **PR #98** - In Review (8 endpoints + 62 tests)
+  - 1 Organization signup endpoint (owner signup + org creation)
   - 2 Team Member endpoints (OTP invite, join-org signup)
   - 5 Admin approval endpoints (approve, reject, status, pending, review)
 - ✅ feat/api-router-integration - Ready for review (registers all 4 routers)

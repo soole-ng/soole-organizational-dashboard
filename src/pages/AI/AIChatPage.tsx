@@ -360,13 +360,13 @@ export function AIChatPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowProfileModal(false)}
-                className="flex-1 bg-neutral-50 hover:bg-neutral-100 text-black font-bold rounded-2xl px-6 py-3 transition-all"
+                className="flex-1 bg-neutral-50 hover:bg-neutral-100 text-black font-semibold rounded-xl px-4 py-2 text-sm transition-all"
               >
                 Close
               </button>
               <button
                 onClick={() => window.dispatchEvent(new Event('require-profile-completion'))}
-                className="flex-1 bg-primary-500 hover:bg-primary-400 text-white font-bold rounded-2xl px-6 py-3 transition-all"
+                className="flex-1 bg-secondary-500 hover:bg-secondary-600 text-white font-semibold rounded-xl px-4 py-2 text-sm transition-all whitespace-nowrap"
               >
                 Complete Now
               </button>

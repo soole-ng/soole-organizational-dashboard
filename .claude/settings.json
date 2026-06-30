@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(python -m py_compile \"c:\\\\Users\\\\Admin\\\\Desktop\\\\Soole.ng\\\\soole-backend\\\\organization\\\\organization_money_api.py\")",
+      "PowerShell(Get-Command gh -ErrorAction SilentlyContinue)",
+      "PowerShell(python -m py_compile \"c:\\\\Users\\\\Admin\\\\Desktop\\\\Soole.ng\\\\soole-backend\\\\organization\\\\organization_reports_api.py\")",
+      "PowerShell($env:Path = $env:Path + \";$env:ProgramFiles\\\\GitHub CLI\"; gh auth status)",
+      "PowerShell($env:Path = $env:Path + \";$env:ProgramFiles\\\\GitHub CLI\"; gh pr list --repo soole-ng/soole-backend --head feat/organization-money-api 2>&1 | head -5)",
+      "PowerShell($env:Path = $env:Path + \";$env:ProgramFiles\\\\GitHub CLI\"; gh pr list --repo soole-ng/soole-backend 2>&1 | Select-Object -First 10)"
+    ]
+  }
+}

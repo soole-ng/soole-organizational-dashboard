@@ -98,7 +98,7 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
   const [confirmLogout, setConfirmLogout] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
 
-  const userRole = org.role ? org.role.toLowerCase() : 'owner'
+  const userRole = org.activeRole ? org.activeRole.toLowerCase() : 'admin'
 
   const filteredGroups = navGroups.map(group => {
     const items = group.items.filter(item => {

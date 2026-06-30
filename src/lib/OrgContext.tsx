@@ -22,23 +22,40 @@ interface OrgProfile {
   name: string
   logoUrl: string | null   // org's own uploaded logo
   role: string
+  activeRole: 'admin' | 'dispatcher' | 'finance'
   commissionPct: number
   email?: string
   phone?: string
   securityQuestions?: SecurityQuestion[]
   bankAccounts?: BankAccount[]
   isBalanceHidden?: boolean
+  isNewUser?: boolean
+  approvalStatus?: 'incomplete' | 'pending' | 'approved'
+  registrationDetails?: {
+    firstName?: string
+    lastName?: string
+    phone?: string
+    dob?: string
+    nin?: string
+    companyName?: string
+    companyRegNum?: string
+    numCars?: string
+    numDrivers?: string
+    cacDocumentUrl?: string
+  }
 }
 
 interface OrgContextValue {
   org: OrgProfile
   updateOrg: (patch: Partial<OrgProfile>) => void
+  guardAction: (e?: React.SyntheticEvent, callback?: () => void) => boolean
 }
 
 const DEFAULT_ORG: OrgProfile = {
   name: 'Speedway Transport',
   logoUrl: null,
   role: 'Owner',
+  activeRole: 'admin',
   commissionPct: 8,
   email: 'contact@speedway.ng',
   phone: '+234 803 123 4567',
@@ -56,12 +73,15 @@ const DEFAULT_ORG: OrgProfile = {
       isPrimary: true
     }
   ],
-  isBalanceHidden: false
+  isBalanceHidden: false,
+  isNewUser: false,
+  approvalStatus: 'approved'
 }
 
 const OrgContext = createContext<OrgContextValue>({
   org: DEFAULT_ORG,
   updateOrg: () => {},
+  guardAction: () => true
 })
 
 export function OrgProvider({ children }: { children: ReactNode }) {
@@ -82,8 +102,26 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  const guardAction = useCallback((e?: React.SyntheticEvent, callback?: () => void) => {
+    let allowed = true
+    setOrg(currentOrg => {
+      if (currentOrg.approvalStatus === 'incomplete') {
+        if (e) e.preventDefault()
+        window.dispatchEvent(new Event('require-profile-completion'))
+        allowed = false
+      } else if (currentOrg.approvalStatus === 'pending') {
+        if (e) e.preventDefault()
+        window.dispatchEvent(new CustomEvent('require-approval-toast', { detail: 'Your account is pending approval. You are currently in read-only mode.' }))
+        allowed = false
+      }
+      return currentOrg
+    })
+    if (allowed && callback) callback()
+    return allowed
+  }, [])
+
   return (
-    <OrgContext.Provider value={{ org, updateOrg }}>
+    <OrgContext.Provider value={{ org, updateOrg, guardAction }}>
       {children}
     </OrgContext.Provider>
   )

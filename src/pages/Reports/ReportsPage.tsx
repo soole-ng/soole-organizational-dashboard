@@ -19,36 +19,13 @@ export function ReportsPage() {
   const { org } = useOrg()
   const { data, loading } = useMockData()
   const isProfileIncomplete = org.approvalStatus === 'incomplete'
+  const [showProfileModal, setShowProfileModal] = useState(false)
 
-  if (isProfileIncomplete) {
-    return (
-      <div className="flex flex-col h-full bg-white">
-        <TopBar title="Reports" backHref="/" />
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-sm text-center space-y-6">
-            <div className="w-20 h-20 bg-secondary-500 rounded-3xl flex items-center justify-center shadow-float mx-auto">
-              <AlertCircle className="w-10 h-10 text-white" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-extrabold text-primary-500 mb-2">Profile Incomplete</h2>
-              <p className="text-sm text-neutral-300 leading-relaxed">Please complete your profile to unlock Advanced Reports.</p>
-            </div>
-            <div className="bg-secondary-500/10 border border-secondary-300 rounded-2xl p-4 space-y-3">
-              <p className="text-xs font-bold text-black uppercase tracking-wider">What's needed:</p>
-              <ul className="text-xs text-neutral-300 space-y-2 text-left">
-                <li>✓ Organization details</li>
-                <li>✓ Director information</li>
-                <li>✓ Bank account setup</li>
-                <li>✓ Security questions</li>
-              </ul>
-            </div>
-            <button onClick={() => window.dispatchEvent(new Event('require-profile-completion'))} className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150">
-              Complete Profile Now
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+  const handleAction = () => {
+    if (isProfileIncomplete) {
+      setShowProfileModal(true)
+      return
+    }
   }
 
   if (loading) {
@@ -209,8 +186,11 @@ export function ReportsPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
-                  toast.loading('Generating PDF report...', { duration: 1500 })
-                  setTimeout(() => toast.success('PDF report downloaded successfully!'), 1500)
+                  handleAction()
+                  if (!isProfileIncomplete) {
+                    toast.loading('Generating PDF report...', { duration: 1500 })
+                    setTimeout(() => toast.success('PDF report downloaded successfully!'), 1500)
+                  }
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-primary-500 border border-neutral-100 transition-colors"
               >
@@ -218,8 +198,11 @@ export function ReportsPage() {
               </button>
               <button
                 onClick={() => {
-                  toast.loading('Generating Excel sheet...', { duration: 1500 })
-                  setTimeout(() => toast.success('Excel sheet downloaded successfully!'), 1500)
+                  handleAction()
+                  if (!isProfileIncomplete) {
+                    toast.loading('Generating Excel sheet...', { duration: 1500 })
+                    setTimeout(() => toast.success('Excel sheet downloaded successfully!'), 1500)
+                  }
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-[#1D754C] border border-neutral-100 transition-colors"
               >
@@ -267,8 +250,11 @@ export function ReportsPage() {
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
                     onClick={() => {
-                      toast.loading(`Preparing ${label} (PDF)...`, { duration: 1500 })
-                      setTimeout(() => toast.success(`${label} downloaded as PDF`), 1500)
+                      handleAction()
+                      if (!isProfileIncomplete) {
+                        toast.loading(`Preparing ${label} (PDF)...`, { duration: 1500 })
+                        setTimeout(() => toast.success(`${label} downloaded as PDF`), 1500)
+                      }
                     }}
                     className="w-8 h-8 rounded-xl bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center border border-neutral-100 text-primary-400 hover:text-primary-500 transition-colors"
                     title="Export PDF"
@@ -277,8 +263,11 @@ export function ReportsPage() {
                   </button>
                   <button
                     onClick={() => {
-                      toast.loading(`Preparing ${label} (Excel)...`, { duration: 1500 })
-                      setTimeout(() => toast.success(`${label} downloaded as Excel`), 1500)
+                      handleAction()
+                      if (!isProfileIncomplete) {
+                        toast.loading(`Preparing ${label} (Excel)...`, { duration: 1500 })
+                        setTimeout(() => toast.success(`${label} downloaded as Excel`), 1500)
+                      }
                     }}
                     className="w-8 h-8 rounded-xl bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center border border-neutral-100 text-[#1D754C] hover:text-[#16593a] transition-colors"
                     title="Export Excel"
@@ -291,6 +280,54 @@ export function ReportsPage() {
           </div>
         </div>
       </div>
+
+      {/* Profile Incomplete Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm p-8 shadow-float space-y-6 animate-in fade-in zoom-in duration-200">
+            <div className="w-24 h-24 bg-secondary-500 rounded-3xl flex items-center justify-center mx-auto shadow-float">
+              <AlertCircle className="w-12 h-12 text-white" />
+            </div>
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-extrabold text-primary-500">Profile Incomplete</h2>
+              <p className="text-sm text-neutral-300 leading-relaxed">Please complete your profile to generate reports.</p>
+            </div>
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-black">Complete these steps:</p>
+              <div className="grid grid-cols-1 gap-2.5">
+                {[
+                  { icon: '🏢', label: 'Organization details' },
+                  { icon: '👤', label: 'Director information' },
+                  { icon: '🏦', label: 'Bank account setup' },
+                  { icon: '🔐', label: 'Security questions' }
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-primary-75 hover:bg-primary-100 rounded-2xl p-3 transition-colors border border-primary-100">
+                    <div className="text-lg flex-shrink-0">{item.icon}</div>
+                    <span className="text-sm font-semibold text-primary-500">{item.label}</span>
+                    <div className="ml-auto w-5 h-5 rounded-full bg-secondary-300 flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">→</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="flex-1 bg-neutral-50 hover:bg-neutral-100 text-black font-black rounded-2xl px-6 py-3.5 transition-all active:scale-95 text-sm"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => window.dispatchEvent(new Event('require-profile-completion'))}
+                className="flex-1 bg-secondary-500 hover:bg-secondary-600 text-white font-black rounded-2xl px-6 py-3.5 transition-all active:scale-95 text-sm"
+              >
+                Complete Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

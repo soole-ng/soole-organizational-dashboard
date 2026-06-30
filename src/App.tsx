@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppShell } from './components/layout/AppShell'
 import { LoginPage } from './pages/Auth/LoginPage'
 import { OnboardingFlow } from './pages/Auth/OnboardingFlow'
+import { JoinOrganizationPage } from './pages/Auth/JoinOrganizationPage'
 import { HomePage } from './pages/Home/HomePage'
 import { TripsListPage } from './pages/Trips/TripsListPage'
 import { TripCreatePage } from './pages/Trips/TripCreatePage'
@@ -36,6 +37,7 @@ export default function App() {
       <OrgProvider>
         <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/join" element={<JoinOrganizationPage />} />
       <Route path="/onboarding" element={<ProtectedRoute><OnboardingFlow /></ProtectedRoute>} />
 
       <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>

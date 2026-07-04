@@ -165,11 +165,6 @@ export function LoginPage() {
       return
     }
 
-    // NOTE: suFirstName/suLastName/suDob/suNin are collected but not sent -
-    // POST /signup/signup-organization has no fields for them (it only
-    // creates the org + owner account, no personal KYC). If owner-level
-    // KYC is actually required, that needs new backend fields/endpoints
-    // first; until then these four inputs are effectively unused.
     setErrors([])
     setLoading(true)
     try {
@@ -180,6 +175,10 @@ export function LoginPage() {
         organizationName: suCompany,
         organizationType: suOrgType,
         rcNumber: suReg,
+        firstName: suFirstName,
+        lastName: suLastName,
+        dob: suDob,
+        nin: suNin,
       })
       localStorage.setItem('auth_token', res.data.token)
       localStorage.setItem('refresh_token', res.data.refreshToken)
@@ -187,6 +186,8 @@ export function LoginPage() {
       toast.success('Organization created! Awaiting admin approval.')
       navigate('/')
     } catch (err: any) {
+      // The backend rejects a NIN that doesn't match the submitted name/DOB
+      // with a 403 explaining to enter details exactly as NIN has them.
       toast.error(err?.message ?? 'Signup failed. Please try again.')
     } finally {
       setLoading(false)
@@ -380,6 +381,12 @@ export function LoginPage() {
                 </div>
               ) : step === 'signup' ? (
                 <div className="space-y-6">
+                  <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
+                    <Shield className="w-5 h-5 text-black flex-shrink-0" />
+                    <p className="text-xs text-black leading-relaxed font-black">
+                      Enter your name and date of birth exactly as they appear on your NIN record - we verify your NIN against these before your account is created.
+                    </p>
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="block text-xs font-black uppercase tracking-wider text-black">

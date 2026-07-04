@@ -344,6 +344,10 @@ export const authApi = {
   signupOrganization: async (payload: {
     phone: string; pin: string; confirmPin: string; organizationName: string
     organizationType: string; contactEmail?: string; contactPhone?: string; rcNumber?: string
+    // Required - the backend verifies this NIN against firstName+lastName+dob
+    // (via Prembly) before creating anything. Enter exactly as it appears on
+    // the NIN record, not a nickname or reordered name.
+    firstName: string; lastName: string; dob: string; nin: string
   }) => apiRequest<LoginEnvelope<SignupOrgData>>('/signup/signup-organization', { method: 'POST', body: payload }),
   refreshToken: async (refreshToken: string) =>
     apiRequest('/accounts/login/refresh-tokens', { method: 'POST', body: { refresh_token: refreshToken } }),

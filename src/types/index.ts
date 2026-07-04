@@ -124,6 +124,7 @@ export interface OrganizationMember {
   id: string
   name: string
   email: string
+  phone?: string
   role: 'owner' | 'admin' | 'dispatcher' | 'finance' | 'viewer'
   joinedAt: string
 }

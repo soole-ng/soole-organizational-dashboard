@@ -5,9 +5,10 @@ interface NotificationSettingsProps {
   alertChannels: { push: boolean; sms: boolean; email: boolean }
   setAlertChannels: React.Dispatch<React.SetStateAction<{ push: boolean; sms: boolean; email: boolean }>>
   executeSecuredAction: (action: () => void) => void
+  onSave: () => Promise<void>
 }
 
-export function NotificationSettings({ alertChannels, setAlertChannels, executeSecuredAction }: NotificationSettingsProps) {
+export function NotificationSettings({ alertChannels, setAlertChannels, executeSecuredAction, onSave }: NotificationSettingsProps) {
   return (
     <div className="space-y-4 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
       <div className="space-y-2 rounded-xl border border-neutral-100 p-2">
@@ -48,7 +49,7 @@ export function NotificationSettings({ alertChannels, setAlertChannels, executeS
         <button
           onClick={() => {
             executeSecuredAction(() => {
-              toast.success('Notification settings saved!')
+              onSave().then(() => toast.success('Notification settings saved!')).catch(() => {})
             })
           }}
           className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"

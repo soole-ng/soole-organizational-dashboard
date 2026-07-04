@@ -1,76 +1,53 @@
 import { useState, useEffect, useRef } from 'react'
 import { Navigation, Clock, Gauge, AlertTriangle } from 'lucide-react'
 import { clsx } from 'clsx'
-
-const SPEED_LIMIT_KMH = 100
-
-function calcAvgSpeed(distanceKm: number, durationMinutes: number): number {
-  if (!durationMinutes) return 0
-  return Math.round((distanceKm / durationMinutes) * 60)
-}
+import { trackingApi } from '../../../api/client'
 
 interface LiveTrackerProps {
-  trip: any
-  distanceKm: number
-  durationMinutes: number
+  orgUuid: string
+  tripId: string
   vehiclePlate: string
   driverName: string
   onSpeedViolation: (speed: number, plate: string, driver: string) => void
 }
 
 export function LiveTracker({
-  trip, distanceKm, durationMinutes, vehiclePlate, driverName, onSpeedViolation,
+  orgUuid, tripId, vehiclePlate, driverName, onSpeedViolation,
 }: LiveTrackerProps) {
-  const baseProgress = trip.status === 'boarding' ? 0.05 : trip.status === 'in_progress' ? 0.42 : 0
-  const [progress, setProgress] = useState(baseProgress)
-
-  const prevProgressRef = useRef(baseProgress)
-  const prevTimestampRef = useRef(Date.now())
+  const [tracking, setTracking] = useState<any | null>(null)
   const violationFiredRef = useRef(false)
 
   useEffect(() => {
-    if (trip.status !== 'boarding' && trip.status !== 'in_progress') return
+    let cancelled = false
 
-    const TICK_MS = 3000
-    const PROGRESS_INCREMENT = 0.001
+    const poll = () => {
+      trackingApi.getTripTracking(orgUuid, tripId)
+        .then((raw: any) => {
+          if (cancelled) return
+          setTracking(raw)
+          if (raw.speed_violation_alert && !violationFiredRef.current) {
+            violationFiredRef.current = true
+            onSpeedViolation(raw.speed ?? 0, vehiclePlate, driverName)
+          }
+        })
+        .catch(() => {})
+    }
 
-    const timer = setInterval(() => {
-      const now = Date.now()
-      const elapsedHours = (now - prevTimestampRef.current) / 3_600_000
+    poll()
+    const interval = setInterval(poll, 8000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [orgUuid, tripId, vehiclePlate, driverName, onSpeedViolation])
 
-      setProgress(p => {
-        const next = Math.min(p + PROGRESS_INCREMENT, 0.99)
-        const kmSinceLast = (next - prevProgressRef.current) * distanceKm
-        const estimatedSpeedKmh = elapsedHours > 0 ? kmSinceLast / elapsedHours : 0
-
-        if (estimatedSpeedKmh > SPEED_LIMIT_KMH && !violationFiredRef.current) {
-          violationFiredRef.current = true
-          onSpeedViolation(Math.round(estimatedSpeedKmh), vehiclePlate, driverName)
-        }
-
-        prevProgressRef.current = next
-        prevTimestampRef.current = now
-        return next
-      })
-    }, TICK_MS)
-
-    return () => clearInterval(timer)
-  }, [trip.status, distanceKm, driverName, vehiclePlate, onSpeedViolation])
-
-  const coveredKm = Math.round(distanceKm * progress)
-  const remainingKm = distanceKm - coveredKm
-
-  const dep = new Date(trip.departureAt)
-  const etaMs = dep.getTime() + durationMinutes * 60 * 1000
-  const etaStr = new Date(etaMs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  const remainingMin = Math.max(0, Math.round((etaMs - Date.now()) / 60000))
-
-  const avgSpeed = calcAvgSpeed(distanceKm, durationMinutes)
+  const speed = tracking?.speed ?? 0
+  const speedLimit = tracking?.speed_limit ?? 100
+  const distanceRemaining = tracking?.distance_remaining
+  const durationRemaining = tracking?.duration_remaining
+  const eta = tracking?.eta ? new Date(tracking.eta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'
 
   const stats = [
-    { icon: Navigation, label: 'Covered', value: `${coveredKm} km`, color: 'text-secondary-300' },
-    { icon: Navigation, label: 'Remaining', value: `${remainingKm} km`, color: 'text-teal-400' },
-    { icon: Gauge, label: 'Avg Speed', value: `${avgSpeed} km/h`, color: 'text-primary-400' },
+    { icon: Navigation, label: 'Distance Left', value: distanceRemaining != null ? `${distanceRemaining} km` : '—', color: 'text-teal-400' },
+    { icon: Clock, label: 'Time Left', value: durationRemaining != null ? `${durationRemaining} min` : '—', color: 'text-orange-400' },
+    { icon: Gauge, label: 'Current Speed', value: `${speed} km/h`, color: 'text-primary-400' },
   ]
 
   return (
@@ -83,26 +60,11 @@ export function LiveTracker({
         </span>
       </div>
 
-      <div>
-        <div className="flex justify-between text-[10px] text-black mb-1 font-medium">
-          <span>{trip.origin?.split('(')[0].trim() ?? 'Origin'}</span>
-          <span className="text-neutral-200 text-[10px]">{Math.round(progress * 100)}% complete</span>
-          <span>{trip.destination?.split('(')[0].trim() ?? 'Destination'}</span>
-        </div>
-        <div className="h-2 bg-neutral-50 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-secondary-300 rounded-full transition-all duration-[3000ms]"
-            style={{ width: `${Math.round(progress * 100)}%` }}
-          />
-        </div>
-      </div>
-
       <div className="flex items-center justify-between bg-neutral-50 rounded-xl px-3 py-2">
         <div className="flex items-center gap-1.5">
           <Clock className="w-3.5 h-3.5 text-warning" />
-          <span className="text-xs font-bold text-primary-500">ETA {etaStr}</span>
+          <span className="text-xs font-bold text-primary-500">ETA {eta}</span>
         </div>
-        <span className="text-[11px] text-neutral-200">{remainingMin} min remaining</span>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
@@ -117,7 +79,7 @@ export function LiveTracker({
 
       <div className="flex items-center gap-1.5 px-1">
         <AlertTriangle className="w-3 h-3 text-neutral-200 flex-shrink-0" />
-        <p className="text-[10px] text-neutral-200">Fleet speed limit: {SPEED_LIMIT_KMH} km/h — violations trigger an alert</p>
+        <p className="text-[10px] text-neutral-200">Fleet speed limit: {speedLimit} km/h — violations trigger an alert</p>
       </div>
     </div>
   )

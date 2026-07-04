@@ -1,12 +1,6 @@
-/**
- * AlertsBanner — fixed to use useMockData hook instead of empty static array.
- * ≤ 400 lines
- */
 import { AlertTriangle, XCircle, Info, X, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
 import { clsx } from 'clsx'
-import { useMockData } from '../../../lib/useMockData'
 import type { Alert } from '../../../types'
 
 function AlertItem({ alert, onDismiss }: { alert: Alert; onDismiss: () => void }) {

@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useParams, useOutletContext, useNavigate } from 'react-router-dom'
 import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle, Droplets, MessageSquare, Star } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { ManifestList } from './components/ManifestList'
-import { useMockData } from '../../lib/useMockData'
-import { mockPassengers } from '../../lib/mockData'
+import { useApiData, useTripDetail } from '../../lib/useApiData'
+import { adaptTrip } from '../../lib/adapters'
+import { organizationApi } from '../../api/client'
 import { formatDate, formatTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
@@ -21,60 +22,41 @@ function calcAvgSpeed(distanceKm: number, durationMinutes: number): number {
   if (!durationMinutes) return 0
   return Math.round((distanceKm / durationMinutes) * 60)
 }
-/** Trip comment shape */
-interface TripComment {
-  id: string
-  author: string
-  initials: string
-  text: string
-  timestamp: string
-}
-
-/** Seed comments shown on completed trips */
-const seedComments: TripComment[] = [
-  { id: 'c1', author: 'Akin Bello', initials: 'AB', text: 'Driver reported minor traffic near Sagamu interchange. Trip completed smoothly overall.', timestamp: '2026-06-25T09:18:00' },
-  { id: 'c2', author: 'Ops Team',   initials: 'OT', text: 'Revenue reconciled. Two passengers requested receipts via email.', timestamp: '2026-06-25T10:05:00' },
-]
-
-
 
 export function TripDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { data, loading } = useMockData()
+  const { orgUuid } = useOrg()
+  const { data } = useApiData()
+  const { trip: rawTrip, passengers, comments, loading } = useTripDetail(id)
   const { guardAction } = useOrg()
   const ctx = useOutletContext<any>()
   const notifications = ctx?.notifications ?? []
   const setNotifications = ctx?.setNotifications
 
-  const [comments, setComments] = useState<TripComment[]>(seedComments)
-  const [newComment, setNewComment] = useState('')
   const [showAllComments, setShowAllComments] = useState(false)
-  const [modalComment, setModalComment] = useState('')
+
+  const trip = rawTrip ? adaptTrip(rawTrip) : null
 
   const handleSpeedViolation = useCallback((speed: number, plate: string, driver: string) => {
-    // Show immediate toast alert
     toast.error(`⚠ Speed limit exceeded! ${plate} is travelling at ~${speed} km/h`, {
       duration: 8000,
       style: { maxWidth: 380 },
     })
 
-    const currentTrip = data.trips.find((t: any) => t.id === id) ?? data.trips[0]
-
-    // Push into the global notification bell (if context available)
-    if (setNotifications) {
+    if (setNotifications && trip) {
       const newNotif = {
         id: `speed-${plate}-${Date.now()}`,
         type: 'warning' as const,
         title: `Speed limit exceeded — ${plate}`,
-        message: `${driver} is estimated to be travelling at ~${speed} km/h, exceeding the ${SPEED_LIMIT_KMH} km/h fleet limit on the ${currentTrip?.routeName ?? 'Lagos → Ibadan'} route.`,
+        message: `${driver} is estimated to be travelling at ~${speed} km/h, exceeding the ${SPEED_LIMIT_KMH} km/h fleet limit on the ${trip.routeName} route.`,
         read: false,
         createdAt: new Date().toISOString(),
         action: { label: 'View on map', href: '/live-map' },
       }
       setNotifications((prev: any[]) => [newNotif, ...prev])
     }
-  }, [setNotifications, data.trips, id])
+  }, [setNotifications, trip])
 
   if (loading) {
     return (
@@ -87,8 +69,6 @@ export function TripDetailPage() {
     )
   }
 
-  const trip = data.trips.find((t: any) => t.id === id) ?? data.trips[0]
-
   if (!trip) {
     return (
       <div className="flex flex-col min-h-screen bg-white">
@@ -100,37 +80,26 @@ export function TripDetailPage() {
     )
   }
 
-  const route = data.routes?.find((r: any) => r.id === trip.routeId)
-  const distanceKm: number = route?.distanceKm ?? 148
-  const durationMinutes: number = route?.durationMinutes ?? 165
+  const distanceKm = 0
+  const durationMinutes = 0
 
   const isLive = trip.status === 'boarding' || trip.status === 'in_progress'
   const isScheduled = trip.status === 'scheduled'
   const isCompleted = trip.status === 'completed'
 
-  const submitComment = (text: string, fromModal = false) => {
-    const trimmed = text.trim()
-    if (!trimmed) return
-    setComments(prev => [
-      ...prev,
-      {
-        id: `c${Date.now()}`,
-        author: 'You',
-        initials: 'ME',
-        text: trimmed,
-        timestamp: new Date().toISOString(),
-      },
-    ])
-    if (fromModal) setModalComment('')
-    else setNewComment('')
-    toast.success('Comment added')
-  }
-
-  const passengers = mockPassengers(trip.id).slice(0, trip.capacity)
   const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
 
   const handleEdit = () => guardAction(undefined, () => toast('Edit trip details'))
-  const handleCancel = () => guardAction(undefined, () => toast.error('Cancel this trip?'))
+  const handleCancel = () => guardAction(undefined, async () => {
+    if (!orgUuid || !id) return
+    try {
+      await organizationApi.cancelTrip(orgUuid, id)
+      toast.success('Trip cancelled')
+      navigate('/trips')
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to cancel trip')
+    }
+  })
 
   const actions = [
     isLive && { icon: Navigation, label: 'View on Map', action: () => navigate('/live-map'), danger: false },
@@ -155,9 +124,6 @@ export function TripDetailPage() {
                   <h2 className="text-base font-bold text-primary-500">{trip.routeName}</h2>
                   <p className="text-xs text-neutral-200 mt-0.5">
                     {formatDate(trip.departureAt)} · {formatTime(trip.departureAt)}
-                  </p>
-                  <p className="text-[10px] text-neutral-200 mt-0.5">
-                    {distanceKm} km · ~{Math.floor(durationMinutes / 60)}h {durationMinutes % 60}m route
                   </p>
                 </div>
                 <StatusPill status={trip.status} />
@@ -192,17 +158,13 @@ export function TripDetailPage() {
             {/* Completed trip summary stats — only for completed trips */}
             {isCompleted && (() => {
               const avgSpeed = calcAvgSpeed(distanceKm, durationMinutes)
-              const estFuelL = Math.round((distanceKm / 100) * 10) // ~10L per 100km for a bus
+              const estFuelL = Math.round((distanceKm / 100) * 10)
               const hrs = Math.floor(durationMinutes / 60)
               const mins = durationMinutes % 60
               const timeTaken = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`
 
-              // Find driver details & reviews to show the specific trip rating
               const driverObj = data.drivers?.find((d: any) => d.id === trip.driverId)
-              const tripReviews = driverObj?.reviews?.filter((r: any) => r.tripId === trip.id) ?? []
-              const avgTripRating = tripReviews.length > 0
-                ? (tripReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / tripReviews.length).toFixed(1)
-                : '4.8' // Fallback to driver's default or common rating if none found
+              const avgTripRating = driverObj?.avgRating ? driverObj.avgRating.toFixed(1) : '—'
 
               const completedStats = [
                 { icon: Navigation, label: 'Distance Covered', value: `${distanceKm} km`,  color: 'text-secondary-300' },
@@ -233,11 +195,10 @@ export function TripDetailPage() {
             })()}
 
             {/* Live tracker — only when in_progress / boarding */}
-            {isLive && (
+            {isLive && orgUuid && (
               <LiveTracker
-                trip={trip}
-                distanceKm={distanceKm}
-                durationMinutes={durationMinutes}
+                orgUuid={orgUuid}
+                tripId={trip.id}
                 vehiclePlate={trip.vehiclePlate}
                 driverName={trip.driverName}
                 onSpeedViolation={handleSpeedViolation}
@@ -272,7 +233,7 @@ export function TripDetailPage() {
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-neutral-100 bg-white hover:bg-neutral-50 text-primary-500 font-semibold transition-all duration-150"
               >
                 <MessageSquare className="w-4 h-4 text-primary-400" />
-                <span>Comments & Ratings ({comments.length + (data.drivers?.find((d: any) => d.id === trip.driverId)?.reviews?.filter((r: any) => r.tripId === trip.id)?.length ?? 0)})</span>
+                <span>Comments & Ratings ({comments.length})</span>
               </button>
             )}
           </div>

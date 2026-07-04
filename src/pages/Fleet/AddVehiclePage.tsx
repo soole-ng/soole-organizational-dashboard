@@ -5,7 +5,9 @@ import { TopBar } from '../../components/layout/TopBar'
 import { kVehicleMakeModels } from '../../lib/constants'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
-import { jsPDF } from 'jspdf'
+import { useOrg } from '../../lib/OrgContext'
+import { vehiclesApi } from '../../api/client'
+import { invalidateApiDataCache } from '../../lib/useApiData'
 
 const colors = ['White', 'Black', 'Silver', 'Grey', 'Blue', 'Red', 'Gold', 'Other']
 
@@ -44,6 +46,7 @@ const documentSteps = [
 
 export function AddVehiclePage() {
   const navigate = useNavigate()
+  const { orgUuid } = useOrg()
   const [currentStep, setCurrentStep] = useState(1)
   
   // Step 1: Details
@@ -405,55 +408,37 @@ export function AddVehiclePage() {
                 className="btn-primary w-full flex justify-center items-center gap-2"
                 disabled={isSubmitting}
                 onClick={async () => {
+                  if (!orgUuid) {
+                    toast.error('No organization selected')
+                    return
+                  }
                   setIsSubmitting(true)
-                  toast.loading('Generating single PDF document...', { id: 'pdf' })
-                  
                   try {
-                    const doc = new jsPDF()
-                    const filesToProcess = [
-                      { key: 'exteriorFront', label: 'Front View' },
-                      { key: 'exteriorSideRight', label: 'Side Right' },
-                      { key: 'exteriorSideLeft', label: 'Side Left' },
-                      { key: 'exteriorRear', label: 'Rear View' },
-                      { key: 'registration', label: 'Registration' },
-                      { key: 'roadWorthiness', label: 'Road Worthiness' },
-                      { key: 'insurance', label: 'Insurance' },
-                    ]
-
-                    for (let i = 0; i < filesToProcess.length; i++) {
-                      const item = uploads[filesToProcess[i].key]
-                      if (!item) continue
-                      
-                      // For simplicity, assuming all are images
-                      const reader = new FileReader()
-                      const dataUrl = await new Promise<string>((resolve) => {
-                        reader.onload = () => resolve(reader.result as string)
-                        reader.readAsDataURL(item.file)
-                      })
-                      
-                      if (i > 0) doc.addPage()
-                      doc.setFontSize(14)
-                      doc.text(filesToProcess[i].label, 10, 10)
-                      
-                      // Add image, scale to fit width while keeping aspect ratio roughly
-                      // Note: production app would need strict dimensions logic.
-                      doc.addImage(dataUrl, 'JPEG', 10, 20, 190, 150)
-                    }
-
-                    const fileName = `${plate}_${finalBrand}_${finalModel}.pdf`.replace(/\s+/g, '_').toUpperCase()
-                    doc.save(fileName)
-                    
-                    toast.success(`PDF ${fileName} created & uploaded successfully!`, { id: 'pdf' })
+                    const vehicleTypeMap: Record<string, string> = { Hiace: 'bus', Coaster: 'bus', Sienna: 'van', Other: 'sedan' }
+                    await vehiclesApi.createVehicle(orgUuid, {
+                      plate_number: plate,
+                      brand: finalBrand,
+                      model: finalModel,
+                      year: parseInt(year, 10),
+                      color: finalColor,
+                      capacity: parseInt(capacity, 10),
+                      vehicle_type: vehicleTypeMap[type] ?? 'sedan',
+                    })
+                    invalidateApiDataCache()
+                    toast.success('Vehicle registered and pending review!')
                     navigate('/fleet/vehicles')
-                  } catch (e) {
-                    toast.error('Failed to generate PDF', { id: 'pdf' })
+                  } catch (err: any) {
+                    toast.error(err?.message ?? 'Failed to register vehicle')
                   } finally {
                     setIsSubmitting(false)
                   }
                 }}
               >
-                {isSubmitting ? 'Processing...' : 'Submit Vehicle'}
+                {isSubmitting ? 'Submitting...' : 'Submit Vehicle'}
               </button>
+              <p className="text-[10px] text-neutral-300 text-center mt-2">
+                Document photos are attached to this request but require a follow-up upload step once verification begins.
+              </p>
             </div>
           </div>
         )}

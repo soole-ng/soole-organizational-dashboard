@@ -1,8 +1,3 @@
-/**
- * UpcomingTrips — fixed to use useMockData hook.
- * Shows today's departing trips as rich cards.
- * ≤ 400 lines
- */
 import { ChevronRight, Clock, Users, MapPin, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { StatusPill } from '../../../components/ui/StatusPill'

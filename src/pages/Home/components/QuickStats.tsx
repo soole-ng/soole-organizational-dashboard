@@ -8,6 +8,14 @@ export function QuickStats() {
     queryKey: ['weeklyRevenue'],
     queryFn: tripsApi.getRevenue
   })
+  const { data: summary } = useQuery({
+    queryKey: ['weeklyRevenueSummary'],
+    queryFn: tripsApi.getWeeklyRevenueSummary
+  })
+
+  const totalRevenue = Number(summary?.total_revenue ?? 0)
+  const changePercent = summary?.comparison_previous_week?.revenue_change_percent
+  const previousWeekRevenue = Number(summary?.comparison_previous_week?.previous_week_revenue ?? 0)
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -31,12 +39,16 @@ export function QuickStats() {
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-xs text-neutral-200 font-medium">This week</p>
-            <p className="text-3xl sm:text-4xl font-black text-primary-500 stat-number">NGN 451K</p>
-            <p className="text-xs text-accent-400 font-semibold mt-1">+18% vs last week</p>
+            <p className="text-3xl sm:text-4xl font-black text-primary-500 stat-number">{formatMoneyCompact(totalRevenue)}</p>
+            {changePercent != null && (
+              <p className={`text-xs font-semibold mt-1 ${changePercent >= 0 ? 'text-accent-400' : 'text-danger'}`}>
+                {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(0)}% vs last week
+              </p>
+            )}
           </div>
           <div className="text-right">
             <p className="text-xs text-neutral-200 font-medium">Last week</p>
-            <p className="text-xl font-bold text-neutral-200 stat-number">NGN 382K</p>
+            <p className="text-xl font-bold text-neutral-200 stat-number">{formatMoneyCompact(previousWeekRevenue)}</p>
           </div>
         </div>
 

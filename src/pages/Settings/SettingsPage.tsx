@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Building2, Users, Wallet, Bell, RefreshCw, HelpCircle, ChevronRight, AlertTriangle, FileText } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
-import { useMockData } from '../../lib/useMockData'
+import { useApiData } from '../../lib/useApiData'
+import { settingsApi } from '../../api/client'
 import { clsx } from 'clsx'
 import { useOrg } from '../../lib/OrgContext'
 import toast from 'react-hot-toast'
@@ -15,13 +16,48 @@ import { NotificationSettings } from './components/NotificationSettings'
 import { PayoutSettings } from './components/PayoutSettings'
 
 export function SettingsPage() {
-  const { org, updateOrg, guardAction } = useOrg()
-  const { data } = useMockData()
-  
+  const { org, updateOrg, guardAction, orgUuid } = useOrg()
+  const { data } = useApiData()
+
   const [members, setMembers] = useState<any[]>([])
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const [speedLimit, setSpeedLimit] = useState(100)
   const [alertChannels, setAlertChannels] = useState({ push: true, sms: true, email: false })
+
+  useEffect(() => {
+    if (!orgUuid) return
+    settingsApi.getAlertSettings(orgUuid)
+      .then(res => {
+        setSpeedLimit(res.speed_limit)
+        setAlertChannels(prev => ({ ...prev, ...res.alert_channels }))
+      })
+      .catch(() => {})
+  }, [orgUuid])
+
+  const saveAlertSettings = async () => {
+    if (!orgUuid) return
+    try {
+      await settingsApi.updateAlertSettings(orgUuid, { speed_limit: speedLimit, alert_channels: alertChannels })
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to save alert settings')
+      throw err
+    }
+  }
+
+  const saveBusinessProfile = async () => {
+    if (!orgUuid) return
+    try {
+      await settingsApi.updateSettings(orgUuid, {
+        name: org.name,
+        contact_email: org.email,
+        contact_phone: org.phone,
+        logo_url: org.logoUrl,
+      })
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to save business profile')
+      throw err
+    }
+  }
   
   // Secure Settings Verification States
   const [showSecurityConfirm, setShowSecurityConfirm] = useState(false)
@@ -47,16 +83,8 @@ export function SettingsPage() {
     })
   }
 
-  // Initialize members list with phone numbers
   useEffect(() => {
-    if (data.organizationMembers) {
-      const formatted = data.organizationMembers.map((m: any, idx: number) => ({
-        ...m,
-        // Make sure we always show their phone number instead of email
-        phone: m.phone || `+234 803 111 ${2200 + idx * 11}`
-      }))
-      setMembers(formatted)
-    }
+    setMembers(data.organizationMembers || [])
   }, [data.organizationMembers])
 
   const sections = [
@@ -119,7 +147,7 @@ export function SettingsPage() {
                 {isOpen && !to && (
                   <div className="px-5 pb-5 pt-4 bg-white border-t border-neutral-100/50">
                     {label === 'Business Profile' && (
-                      <BusinessProfile executeSecuredAction={executeSecuredAction} />
+                      <BusinessProfile executeSecuredAction={executeSecuredAction} onSave={saveBusinessProfile} />
                     )}
 
                     {label === 'Organization Team' && (
@@ -139,6 +167,7 @@ export function SettingsPage() {
                         alertChannels={alertChannels}
                         setAlertChannels={setAlertChannels}
                         executeSecuredAction={executeSecuredAction}
+                        onSave={saveAlertSettings}
                       />
                     )}
 
@@ -147,6 +176,7 @@ export function SettingsPage() {
                         speedLimit={speedLimit}
                         setSpeedLimit={setSpeedLimit}
                         executeSecuredAction={executeSecuredAction}
+                        onSave={saveAlertSettings}
                       />
                     )}
 

@@ -4,6 +4,8 @@ import { TopBar } from '../../components/layout/TopBar'
 import { useOrg } from '../../lib/OrgContext'
 import { MapContainer } from './components/MapContainer'
 import { DriverSidebar } from './components/DriverSidebar'
+import { trackingApi } from '../../api/client'
+import { adaptVehicleLocation } from '../../lib/adapters'
 import { clsx } from 'clsx'
 
 type VehicleLoc = {
@@ -44,7 +46,7 @@ const basemapStyles: Record<BasemapStyle, { name: string; style: string }> = {
 }
 
 export function LiveMapPage() {
-  const { org } = useOrg()
+  const { org, orgUuid } = useOrg()
   const isProfileIncomplete = org.approvalStatus === 'incomplete'
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [vehicleLocations, setVehicleLocations] = useState<VehicleLoc[]>([])
@@ -55,64 +57,23 @@ export function LiveMapPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const mapRef = useRef<any>(null)
 
-  // Load vehicle locations from mock data
-  useMemo(() => {
-    fetch('/mock-data.json')
-      .then(res => res.json())
-      .then(data => setVehicleLocations(data.vehicleLocations || []))
-      .catch(console.error)
-  }, [])
-
-  // Simulate real-time movement of active vehicles
+  // Load real vehicle locations, then poll for live updates.
   useEffect(() => {
-    if (vehicleLocations.length === 0) return
-    const interval = setInterval(() => {
-      setVehicleLocations(prev =>
-        prev.map(v => {
-          if (v.status !== 'on_trip') return v
+    if (!orgUuid) return
+    let cancelled = false
 
-          // Define target destinations (approximate coordinates)
-          let destLat = v.lat
-          let destLng = v.lng
-          if (v.driver === 'Akin Bello') { // Lagos -> Ibadan
-            destLat = 7.3775
-            destLng = 3.9470
-          } else if (v.driver === 'Chidi Okafor') { // Lagos -> Abuja
-            destLat = 9.0765
-            destLng = 7.3986
-          } else if (v.driver === 'Funke Adeleke') { // Lagos -> Benin
-            destLat = 6.3350
-            destLng = 5.6263
-          } else {
-            return v
-          }
-
-          // Move 0.5% closer to destination on each tick
-          const step = 0.005
-          const newLat = v.lat + (destLat - v.lat) * step
-          const newLng = v.lng + (destLng - v.lng) * step
-
-          // If close to destination, loop it back to starting point
-          const dist = Math.sqrt(Math.pow(destLat - newLat, 2) + Math.pow(destLng - newLng, 2))
-          if (dist < 0.01) {
-            return {
-              ...v,
-              lat: 6.5244 + (Math.random() - 0.5) * 0.05,
-              lng: 3.3792 + (Math.random() - 0.5) * 0.05,
-            }
-          }
-
-          return {
-            ...v,
-            lat: newLat,
-            lng: newLng,
-          }
+    const load = () => {
+      trackingApi.getVehiclesLocations(orgUuid)
+        .then((raw: any[]) => {
+          if (!cancelled) setVehicleLocations((raw || []).map(adaptVehicleLocation))
         })
-      )
-    }, 2000)
+        .catch(console.error)
+    }
 
-    return () => clearInterval(interval)
-  }, [vehicleLocations.length])
+    load()
+    const interval = setInterval(load, 10000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [orgUuid])
 
   const filtered = useMemo(() =>
     vehicleLocations.filter(v =>

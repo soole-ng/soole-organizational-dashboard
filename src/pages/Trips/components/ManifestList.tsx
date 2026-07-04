@@ -4,6 +4,7 @@ import { clsx } from 'clsx'
 import type { Passenger } from '../../../types'
 import { formatTime } from '../../../lib/formatters'
 import { requestRefund } from '../../../lib/refundApi'
+import { organizationApi } from '../../../api/client'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../../lib/OrgContext'
 
@@ -56,16 +57,33 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
   const isCompleted = tripStatus === 'completed'
   const isScheduled = tripStatus === 'scheduled'
 
+  const [boardingIds, setBoardingIds] = useState<Set<string>>(new Set())
+
   const markBoarded = (id: string) => {
-    guardAction(undefined, () => {
-      setPassengers(p =>
-        p.map(pass => pass.id === id
-          ? { ...pass, boardingStatus: 'boarded' as const, boardedAt: new Date().toISOString() }
-          : pass,
-        ),
-      )
+    guardAction(undefined, async () => {
+      const orgUuid = localStorage.getItem('org_uuid')
       const pass = passengers.find(p => p.id === id)
-      if (pass) toast.success(`${pass.name} marked as boarded`)
+      if (!pass || !orgUuid) return
+
+      setBoardingIds(prev => new Set(prev).add(id))
+      try {
+        await organizationApi.boardPassenger(orgUuid, tripId, id)
+        setPassengers(p =>
+          p.map(pa => pa.id === id
+            ? { ...pa, boardingStatus: 'boarded' as const, boardedAt: new Date().toISOString() }
+            : pa,
+          ),
+        )
+        toast.success(`${pass.name} marked as boarded`)
+      } catch (err: any) {
+        toast.error(err?.message ?? 'Failed to mark passenger as boarded')
+      } finally {
+        setBoardingIds(prev => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
+      }
     })
   }
 
@@ -202,10 +220,14 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
                 ) : isBoarding ? (
                   <button
                     onClick={() => markBoarded(pass.id)}
-                    className="w-9 h-9 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:border-secondary-300 hover:bg-secondary-50 transition-colors active:scale-95"
+                    disabled={boardingIds.has(pass.id)}
+                    className="w-9 h-9 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:border-secondary-300 hover:bg-secondary-50 transition-colors active:scale-95 disabled:opacity-60"
                     aria-label={`Mark ${pass.name} as boarded`}
                   >
-                    <CheckCircle2 className="w-5 h-5 text-neutral-300" strokeWidth={1.2} />
+                    {boardingIds.has(pass.id)
+                      ? <Loader2 className="w-4 h-4 text-neutral-300 animate-spin" />
+                      : <CheckCircle2 className="w-5 h-5 text-neutral-300" strokeWidth={1.2} />
+                    }
                   </button>
                 ) : (
                   // Scheduled or in_progress — no action available

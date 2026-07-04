@@ -3,7 +3,7 @@ import { BarChart2, Bus, Users, Car, TrendingUp, Navigation, Download, AlertCirc
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { useOrg } from '../../lib/OrgContext'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import { useMockData } from '../../lib/useMockData'
+import { useApiData } from '../../lib/useApiData'
 import { formatMoneyCompact } from '../../lib/formatters'
 import toast from 'react-hot-toast'
 
@@ -17,7 +17,7 @@ const reportTypes = [
 
 export function ReportsPage() {
   const { org } = useOrg()
-  const { data, loading } = useMockData()
+  const { data, loading } = useApiData()
   const isProfileIncomplete = org.approvalStatus === 'incomplete'
   const [showProfileModal, setShowProfileModal] = useState(false)
 
@@ -40,15 +40,7 @@ export function ReportsPage() {
     )
   }
 
-  const weeklyRevData = data.weeklyRevenue.length > 0 ? data.weeklyRevenue : [
-    { day: 'Mon', gross: 45000, net: 41400 },
-    { day: 'Tue', gross: 62000, net: 57040 },
-    { day: 'Wed', gross: 38000, net: 34960 },
-    { day: 'Thu', gross: 71000, net: 65320 },
-    { day: 'Fri', gross: 88000, net: 80960 },
-    { day: 'Sat', gross: 95000, net: 87400 },
-    { day: 'Sun', gross: 52000, net: 47840 },
-  ]
+  const weeklyRevData = data.weeklyRevenue
 
   const totalNet = weeklyRevData.reduce((a, d) => a + d.net, 0)
   const totalGross = weeklyRevData.reduce((a, d) => a + d.gross, 0)

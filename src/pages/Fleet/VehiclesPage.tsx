@@ -3,7 +3,7 @@ import { Plus, History, Car } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { useMockData } from '../../lib/useMockData'
+import { useApiData } from '../../lib/useApiData'
 import { useOrg } from '../../lib/OrgContext'
 import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
@@ -19,7 +19,7 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
 
 
 export function VehiclesPage() {
-  const { data, loading } = useMockData()
+  const { data, loading } = useApiData()
   const { guardAction } = useOrg()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)

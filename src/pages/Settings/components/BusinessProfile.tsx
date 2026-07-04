@@ -2,7 +2,12 @@ import { Upload, ChevronDown, Phone, Mail } from 'lucide-react'
 import { useOrg } from '../../../lib/OrgContext'
 import toast from 'react-hot-toast'
 
-export function BusinessProfile({ executeSecuredAction }: { executeSecuredAction: (action: () => void) => void }) {
+interface BusinessProfileProps {
+  executeSecuredAction: (action: () => void) => void
+  onSave: () => Promise<void>
+}
+
+export function BusinessProfile({ executeSecuredAction, onSave }: BusinessProfileProps) {
   const { org, updateOrg } = useOrg()
 
   return (
@@ -111,7 +116,7 @@ export function BusinessProfile({ executeSecuredAction }: { executeSecuredAction
         <button
           onClick={() => {
             executeSecuredAction(() => {
-              toast.success('Business Profile updated successfully!')
+              onSave().then(() => toast.success('Business Profile updated successfully!')).catch(() => {})
             })
           }}
           className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"

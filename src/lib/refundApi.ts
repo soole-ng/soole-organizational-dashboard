@@ -1,10 +1,8 @@
 /**
- * Refund API service
- * Sends a refund request to the backend for a passenger on a trip.
- * Replace BASE_URL with your actual API endpoint before going live.
+ * Refund API service — routes passenger refunds through the real soole-backend
+ * organization trips endpoint (organization_trips_api.py).
  */
-
-const BASE_URL = (import.meta as any).env?.VITE_API_URL ?? 'https://api.soole.ng/v1'
+import { organizationApi } from '../api/client'
 
 export interface RefundPayload {
   tripId: string
@@ -21,29 +19,20 @@ export interface RefundResponse {
 }
 
 /**
- * POST /trips/:tripId/passengers/:passengerId/refund
- * Notifies the backend that this passenger should be refunded.
+ * POST /organizations/:orgUuid/trips/:tripId/passengers/:passengerId/refund
  */
 export async function requestRefund(payload: RefundPayload): Promise<RefundResponse> {
-  const { tripId, passengerId, ...body } = payload
+  const orgUuid = localStorage.getItem('org_uuid')
+  if (!orgUuid) throw new Error('No organization selected')
 
-  const res = await fetch(
-    `${BASE_URL}/trips/${tripId}/passengers/${passengerId}/refund`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Auth token will be injected here once auth is wired up
-        // 'Authorization': `Bearer ${getToken()}`,
-      },
-      body: JSON.stringify(body),
-    },
-  )
+  const res: any = await organizationApi.refundPassenger(orgUuid, payload.tripId, payload.passengerId, {
+    reason: payload.reason,
+    amount: payload.amount,
+  })
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error(err?.message ?? `Refund request failed (${res.status})`)
+  return {
+    success: true,
+    refundId: res.refund_id,
+    message: res.detail,
   }
-
-  return res.json()
 }

@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react'
-import { Settings, Download, Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X, ChevronDown, Eye, EyeOff, Filter, AlertCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Download, Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X, ChevronDown, Eye, EyeOff, Filter, AlertCircle } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay'
 import { StatusPill } from '../../components/ui/StatusPill'
-import { useMockData } from '../../lib/useMockData'
+import { useApiData } from '../../lib/useApiData'
+import { moneyApi, settingsApi } from '../../api/client'
 import { formatDate, formatDateTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
@@ -12,9 +13,9 @@ import { useOrg } from '../../lib/OrgContext'
 const tabs = ['Transactions', 'Payouts']
 
 export function MoneyPage() {
-  const { org, updateOrg, guardAction } = useOrg()
+  const { org, updateOrg, guardAction, orgUuid } = useOrg()
   const isProfileIncomplete = org.approvalStatus === 'incomplete'
-  const { data, loading } = useMockData()
+  const { data, loading, refetch } = useApiData()
   const [showProfileModal, setShowProfileModal] = useState(false)
 
   const handleAction = () => {
@@ -24,36 +25,44 @@ export function MoneyPage() {
     }
   }
   const [activeTab, setActiveTab] = useState('Transactions')
-  const [balance, setBalance] = useState(47300)
-  const [extraTransactions, setExtraTransactions] = useState<any[]>([])
-  const [extraPayouts, setExtraPayouts] = useState<any[]>([])
+  const [balance, setBalance] = useState({ available: 0, withdrawable: 0 })
+  const [bankAccounts, setBankAccounts] = useState<Array<{ uuid: string; bank_name: string; account_number: string; account_name: string; is_primary: boolean }>>([])
+
+  useEffect(() => {
+    if (!orgUuid) return
+    let cancelled = false
+    Promise.all([
+      moneyApi.getBalance(orgUuid).catch(() => null),
+      settingsApi.getBankAccounts(orgUuid).catch(() => []),
+    ]).then(([balanceRes, accountsRes]: [any, any]) => {
+      if (cancelled) return
+      if (balanceRes) {
+        setBalance({
+          available: Number(balanceRes.available_balance ?? 0),
+          withdrawable: Number(balanceRes.withdrawable_balance ?? 0),
+        })
+      }
+      setBankAccounts(accountsRes || [])
+    })
+    return () => { cancelled = true }
+  }, [orgUuid])
 
   const isHidden = org.isBalanceHidden || false
-  const bankAccounts = org.bankAccounts || []
-  const primaryAccount = bankAccounts.find(a => a.isPrimary) || bankAccounts[0]
+  const primaryAccount = bankAccounts.find(a => a.is_primary) || bankAccounts[0]
 
-  // Security verification states for withdrawal
+  // Withdrawal confirmation state
   const [showModal, setShowModal] = useState(false)
-  const [password, setPassword] = useState('')
-  const [securityAnswer, setSecurityAnswer] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedAccountId, setSelectedAccountId] = useState('')
-  const [activeQuestionIdx, setActiveQuestionIdx] = useState(0)
 
   // Filter states
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
-  const activeQuestions = org.securityQuestions || [
-    { question: 'What is your favourite food?', answer: 'Ojota' }
-  ]
-  const activeSecQuestion = activeQuestions[activeQuestionIdx]?.question || 'What is your favourite food?'
-  const activeSecAnswer = activeQuestions[activeQuestionIdx]?.answer || 'Ojota'
+  const selectedAccount = bankAccounts.find(a => a.uuid === selectedAccountId) || primaryAccount
 
-  const selectedAccount = bankAccounts.find(a => a.id === selectedAccountId) || primaryAccount
-
-  let allTransactions = [...extraTransactions, ...data.transactions]
+  let allTransactions = data.transactions
   if (startDate && endDate) {
     const start = new Date(startDate).getTime()
     const end = new Date(endDate).getTime() + 86400000 // include the end day
@@ -63,67 +72,47 @@ export function MoneyPage() {
     })
   }
 
-  const allPayouts = [...extraPayouts, ...data.payouts]
+  const allPayouts = data.payouts
+
+  const weekStart = Date.now() - 7 * 86400000
+  const bookingsThisWeek = data.transactions.filter(t => t.type === 'booking' && new Date(t.date).getTime() >= weekStart)
+  const totalEarningsThisWeek = bookingsThisWeek.reduce((sum, t) => sum + t.gross, 0)
 
   const handleWithdrawClick = () => {
     handleAction()
     if (!isProfileIncomplete) {
       guardAction(undefined, () => {
-        setSelectedAccountId(primaryAccount?.id || '')
+        setSelectedAccountId(primaryAccount?.uuid || '')
         setShowModal(true)
       })
     }
   }
 
-  const handleConfirmWithdraw = (e: React.FormEvent) => {
+  const handleConfirmWithdraw = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!password.trim() || !securityAnswer.trim()) {
-      toast.error('Please enter both your password and security answer.')
-      return
-    }
-
-    if (securityAnswer.trim().toLowerCase() !== activeSecAnswer.toLowerCase()) {
-      toast.error('Incorrect secret security answer. Please try again.')
+    if (!orgUuid || !selectedAccountId) {
+      toast.error('Select a withdrawal account')
       return
     }
 
     setIsProcessing(true)
-    setTimeout(() => {
-      const withdrawnAmount = balance
-      setBalance(0)
-      
-      const destName = selectedAccount?.bankName || 'GTBank'
-      const destAcc = selectedAccount?.accountNumber ? `****${selectedAccount.accountNumber.slice(-4)}` : '****4521'
-      
-      const newTx = {
-        id: `tx-instant-${Date.now()}`,
-        date: new Date().toISOString(),
-        description: `Instant Payout to ${destName} ${destAcc}`,
-        type: 'payout' as const,
-        gross: -withdrawnAmount,
-        commission: 0,
-        net: -withdrawnAmount,
-        balance: 0
-      }
-      
-      const newPayout = {
-        id: `po-instant-${Date.now()}`,
-        date: new Date().toISOString(),
-        amount: withdrawnAmount,
-        status: 'received' as const,
-        bankRef: `${destName} ${destAcc}`,
-        bookingCount: 11,
-        expectedArrival: new Date().toISOString()
-      }
-
-      setExtraTransactions(prev => [newTx, ...prev])
-      setExtraPayouts(prev => [newPayout, ...prev])
-      setIsProcessing(false)
+    try {
+      const res: any = await moneyApi.initiateWithdrawal(orgUuid, {
+        amount: balance.withdrawable,
+        bank_account_id: selectedAccountId,
+      })
+      toast.success(res.message ?? `Withdrawal of NGN ${balance.withdrawable.toLocaleString()} initiated`)
       setShowModal(false)
-      setPassword('')
-      setSecurityAnswer('')
-      toast.success(`Instant Payout of NGN ${withdrawnAmount.toLocaleString()} successful!`)
-    }, 1500)
+      refetch()
+      moneyApi.getBalance(orgUuid).then((b: any) => setBalance({
+        available: Number(b.available_balance ?? 0),
+        withdrawable: Number(b.withdrawable_balance ?? 0),
+      })).catch(() => {})
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Withdrawal failed. Please try again.')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   if (loading) {
@@ -149,8 +138,8 @@ export function MoneyPage() {
             <div>
               <p className="text-primary-200 text-xs mb-1">Available balance</p>
               <div className="flex items-center gap-3">
-                <MoneyDisplay amount={balance} size="2xl" hidden={isHidden} className="text-white text-3xl sm:text-5xl font-black" />
-                <button 
+                <MoneyDisplay amount={balance.available} size="2xl" hidden={isHidden} className="text-white text-3xl sm:text-5xl font-black" />
+                <button
                   onClick={() => updateOrg({ isBalanceHidden: !isHidden })}
                   className="p-2 bg-primary-400 hover:bg-primary-300 rounded-full text-white transition-colors"
                 >
@@ -164,13 +153,13 @@ export function MoneyPage() {
         <div className="bg-primary-400 rounded-2xl p-4 mb-4">
           <div className="flex items-center gap-1 text-xs text-white mb-2">
             <Calendar className="w-3.5 h-3.5 text-accent-300" />
-            <span className="font-medium text-primary-100">Instant Transfer Available</span>
+            <span className="font-medium text-primary-100">Withdrawable Now</span>
           </div>
           <p className="text-2xl sm:text-3xl font-black text-white stat-number">
-            {isHidden ? '****' : `NGN ${balance.toLocaleString()}`}
+            {isHidden ? '****' : `NGN ${balance.withdrawable.toLocaleString()}`}
           </p>
           <p className="text-[11px] text-primary-200 mt-1">
-            Ready for withdrawal · {primaryAccount?.bankName || 'GTBank'} ****{primaryAccount?.accountNumber?.slice(-4) || '4521'}
+            {primaryAccount ? `Ready for withdrawal · ${primaryAccount.bank_name} ****${primaryAccount.account_number?.slice(-4)}` : 'Add a bank account in Settings to withdraw'}
           </p>
         </div>
 
@@ -178,9 +167,9 @@ export function MoneyPage() {
           <p className="text-xs text-primary-200 mb-3 font-semibold">This week so far</p>
           <div className="grid grid-cols-3 gap-4 text-center">
             {[
-              { label: 'Bookings', value: `${allTransactions.filter(t => t.type === 'booking').length}` },
-              { label: 'Total Earnings', value: 'NGN 269K' },
-              { label: 'Available Balance', value: `NGN ${(balance / 1000).toFixed(1)}K` },
+              { label: 'Bookings', value: `${bookingsThisWeek.length}` },
+              { label: 'Total Earnings', value: `NGN ${(totalEarningsThisWeek / 1000).toFixed(1)}K` },
+              { label: 'Available Balance', value: `NGN ${(balance.available / 1000).toFixed(1)}K` },
             ].map(s => (
               <div key={s.label}>
                 <p className="text-xl sm:text-3xl font-black text-white stat-number">
@@ -389,9 +378,10 @@ export function MoneyPage() {
                     onChange={e => setSelectedAccountId(e.target.value)}
                     className="input-field bg-white border border-neutral-200 appearance-none pr-10"
                   >
+                    {bankAccounts.length === 0 && <option value="">No bank accounts on file</option>}
                     {bankAccounts.map(acc => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.bankName} - {acc.accountNumber} {acc.isPrimary ? '(Primary)' : ''}
+                      <option key={acc.uuid} value={acc.uuid}>
+                        {acc.bank_name} - {acc.account_number} {acc.is_primary ? '(Primary)' : ''}
                       </option>
                     ))}
                   </select>
@@ -399,42 +389,16 @@ export function MoneyPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Account Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="input-field border border-neutral-200"
-                  placeholder="Enter password"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-primary-400 mb-1.5">
-                  Security Question: {activeSecQuestion}
-                </label>
-                <input
-                  type="text"
-                  value={securityAnswer}
-                  onChange={e => setSecurityAnswer(e.target.value)}
-                  className="input-field border border-neutral-200"
-                  placeholder="Enter security answer"
-                  required
-                />
-              </div>
-
               <div className="bg-primary-75 border border-primary-100 rounded-xl p-3 text-xs text-primary-400">
                 <p className="font-semibold text-primary-500">Payout details:</p>
-                <p className="mt-1">Amount: NGN {balance.toLocaleString()}</p>
-                <p>Destination: {selectedAccount?.bankName || 'GTBank'} ****{selectedAccount?.accountNumber?.slice(-4) || '4521'}</p>
+                <p className="mt-1">Amount: NGN {balance.withdrawable.toLocaleString()}</p>
+                <p>Destination: {selectedAccount ? `${selectedAccount.bank_name} ****${selectedAccount.account_number?.slice(-4)}` : 'No account selected'}</p>
               </div>
 
               <button
                 type="submit"
-                disabled={isProcessing}
-                className="btn-primary w-full py-4 text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-400 active:scale-95 transition-all"
+                disabled={isProcessing || !selectedAccountId}
+                className="btn-primary w-full py-4 text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-400 active:scale-95 transition-all disabled:opacity-60"
               >
                 {isProcessing ? (
                   <>

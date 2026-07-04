@@ -3,7 +3,8 @@
  * Organizations can set their own logo & name in Settings.
  * The Soole platform logo is shown separately (powered by).
  */
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { orgApi, settingsApi } from '../api/client'
 
 export interface SecurityQuestion {
   question: string
@@ -47,6 +48,7 @@ interface OrgProfile {
 
 interface OrgContextValue {
   org: OrgProfile
+  orgUuid: string | null
   updateOrg: (patch: Partial<OrgProfile>) => void
   guardAction: (e?: React.SyntheticEvent, callback?: () => void) => boolean
 }
@@ -64,15 +66,7 @@ const DEFAULT_ORG: OrgProfile = {
     { question: 'What was the name of your first school?', answer: 'Lagos Primary' },
     { question: 'What is your mother\'s maiden name?', answer: 'Alabi' },
   ],
-  bankAccounts: [
-    {
-      id: 'bank-1',
-      bankName: 'Guaranty Trust Bank (GTB)',
-      accountName: 'Speedway Transport Limited',
-      accountNumber: '0123456789',
-      isPrimary: true
-    }
-  ],
+  bankAccounts: [],
   isBalanceHidden: false,
   isNewUser: false,
   approvalStatus: 'approved'
@@ -80,6 +74,7 @@ const DEFAULT_ORG: OrgProfile = {
 
 const OrgContext = createContext<OrgContextValue>({
   org: DEFAULT_ORG,
+  orgUuid: null,
   updateOrg: () => {},
   guardAction: () => true
 })
@@ -93,6 +88,41 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       return DEFAULT_ORG
     }
   })
+
+  const [orgUuid, setOrgUuid] = useState<string | null>(() => localStorage.getItem('org_uuid'))
+
+  // Bootstrap the real org_uuid + profile from the backend on first load.
+  useEffect(() => {
+    if (orgUuid || !localStorage.getItem('auth_token')) return
+    let cancelled = false
+
+    orgApi.getMine()
+      .then(async (orgs) => {
+        if (cancelled || !orgs || orgs.length === 0) return
+        const primary = orgs[0]
+        localStorage.setItem('org_uuid', primary.uuid)
+        setOrgUuid(primary.uuid)
+
+        try {
+          const settings = await settingsApi.getSettings(primary.uuid) as any
+          if (cancelled) return
+          setOrg(prev => ({
+            ...prev,
+            name: settings.name ?? primary.name,
+            logoUrl: settings.logo_url ?? primary.logo_url ?? null,
+            email: settings.contact_email ?? undefined,
+            phone: settings.contact_phone ?? undefined,
+          }))
+        } catch {
+          // Settings fetch failing shouldn't block org_uuid bootstrap
+        }
+      })
+      .catch(() => {
+        // No orgs yet / not authenticated — leave org_uuid unset, guarded pages will handle it
+      })
+
+    return () => { cancelled = true }
+  }, [orgUuid])
 
   const updateOrg = useCallback((patch: Partial<OrgProfile>) => {
     setOrg(prev => {
@@ -121,7 +151,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <OrgContext.Provider value={{ org, updateOrg, guardAction }}>
+    <OrgContext.Provider value={{ org, orgUuid, updateOrg, guardAction }}>
       {children}
     </OrgContext.Provider>
   )

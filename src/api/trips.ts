@@ -1,19 +1,20 @@
 import { apiClient } from './client'
+import { adaptTrip, adaptWeeklyRevenueDay } from '../lib/adapters'
 
 /**
  * Trips API Integration with Real Backend Endpoints
  */
 export const tripsApi = {
   /**
-   * Get all trips for the authenticated organization
+   * Get all trips for the authenticated organization, adapted to the frontend Trip shape.
    */
   getTrips: async (orgUuid?: string) => {
     try {
-      // If orgUuid not provided, get from localStorage
       const uuid = orgUuid || localStorage.getItem('org_uuid')
       if (!uuid) throw new Error('Organization UUID not found')
 
-      return await apiClient.organization.getTrips(uuid)
+      const res: any = await apiClient.organization.getTrips(uuid)
+      return (res.trips || []).map(adaptTrip)
     } catch (error) {
       console.error('Failed to fetch trips:', error)
       throw error
@@ -48,19 +49,32 @@ export const tripsApi = {
   },
 
   /**
-   * Get revenue/financial data
+   * Get this week's revenue broken down by day, plus week-over-week comparison.
    */
   getRevenue: async (orgUuid?: string) => {
     try {
       const uuid = orgUuid || localStorage.getItem('org_uuid')
       if (!uuid) throw new Error('Organization UUID not found')
 
-      const report = await apiClient.reports.getRevenueReport(uuid)
-      return report.revenue_data || []
+      const week: any = await apiClient.money.getWeeklyRevenue(uuid)
+      return (week.daily_breakdown || []).map(adaptWeeklyRevenueDay)
     } catch (error) {
       console.error('Failed to fetch revenue:', error)
       throw error
     }
+  },
+
+  /**
+   * Get this week's total revenue plus week-over-week comparison summary.
+   */
+  getWeeklyRevenueSummary: async (orgUuid?: string) => {
+    const uuid = orgUuid || localStorage.getItem('org_uuid')
+    if (!uuid) throw new Error('Organization UUID not found')
+    return apiClient.money.getWeeklyRevenue(uuid) as Promise<{
+      total_revenue: number
+      total_trips: number
+      comparison_previous_week?: { revenue_change_percent: number; previous_week_revenue: string } | null
+    }>
   },
 
   /**

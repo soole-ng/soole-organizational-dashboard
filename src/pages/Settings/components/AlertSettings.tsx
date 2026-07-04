@@ -4,9 +4,10 @@ interface AlertSettingsProps {
   speedLimit: number
   setSpeedLimit: (limit: number) => void
   executeSecuredAction: (action: () => void) => void
+  onSave: () => Promise<void>
 }
 
-export function AlertSettings({ speedLimit, setSpeedLimit, executeSecuredAction }: AlertSettingsProps) {
+export function AlertSettings({ speedLimit, setSpeedLimit, executeSecuredAction, onSave }: AlertSettingsProps) {
   return (
     <div className="space-y-4 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
       <div>
@@ -28,7 +29,7 @@ export function AlertSettings({ speedLimit, setSpeedLimit, executeSecuredAction 
         <button
           onClick={() => {
             executeSecuredAction(() => {
-              toast.success('Fleet speed limit updated!')
+              onSave().then(() => toast.success('Fleet speed limit updated!')).catch(() => {})
             })
           }}
           className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"

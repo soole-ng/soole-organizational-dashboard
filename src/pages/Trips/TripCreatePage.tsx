@@ -3,61 +3,95 @@ import { useNavigate } from 'react-router-dom'
 import { Calculator, ChevronDown, MapPin } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { formatMoney } from '../../lib/formatters'
+import { useOrg } from '../../lib/OrgContext'
+import { vehiclesApi, driversApi, organizationApi } from '../../api/client'
+import { adaptVehicle, adaptDriverIdentity } from '../../lib/adapters'
+import { invalidateApiDataCache } from '../../lib/useApiData'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
 
 export function TripCreatePage() {
   const navigate = useNavigate()
+  const { orgUuid } = useOrg()
   const [form, setForm] = useState({
-    pickupLocation: 'Lagos',
-    dropoffLocation: 'Ibadan',
-    vehicleId: 'v1',
-    driverId: 'd1',
-    departureAt: '2026-06-27T06:00',
+    pickupLocation: '',
+    dropoffLocation: '',
+    vehicleId: '',
+    driverId: '',
+    departureAt: '',
     fare: 5000,
   })
   const [showCalc, setShowCalc] = useState(true)
   const [publishing, setPublishing] = useState(false)
-  const [mockVehiclesList, setMockVehiclesList] = useState<any[]>([])
-  const [locations, setLocations] = useState<any[]>([])
-  const [mockDriversList, setMockDriversList] = useState<any[]>([])
-
-  const [pickupSearch, setPickupSearch] = useState('Lagos')
-  const [dropoffSearch, setDropoffSearch] = useState('Ibadan')
-  const [showPickupList, setShowPickupList] = useState(false)
-  const [showDropoffList, setShowDropoffList] = useState(false)
+  const [vehiclesList, setVehiclesList] = useState<ReturnType<typeof adaptVehicle>[]>([])
+  const [driversList, setDriversList] = useState<ReturnType<typeof adaptDriverIdentity>[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/mock-data.json')
-      .then(res => res.json())
-      .then(data => {
-        setMockVehiclesList(data.vehicles || [])
-        setLocations(data.locations || [])
-        setMockDriversList(data.drivers || [])
-      })
-      .catch(console.error)
-  }, [])
+    if (!orgUuid) return
+    let cancelled = false
 
-  const selectedVehicle = mockVehiclesList.find(v => v.id === form.vehicleId)
+    Promise.all([
+      vehiclesApi.getVehicles(orgUuid).catch(() => ({ vehicles: [] })),
+      driversApi.getDrivers(orgUuid).catch(() => []),
+    ]).then(([vehiclesRes, driversRaw]: [any, any[]]) => {
+      if (cancelled) return
+      const vehicles = (vehiclesRes.vehicles || []).map(adaptVehicle)
+      const drivers = (driversRaw || []).map(adaptDriverIdentity)
+      setVehiclesList(vehicles)
+      setDriversList(drivers)
+      setForm(f => ({
+        ...f,
+        vehicleId: f.vehicleId || vehicles.find((v: any) => v.status === 'verified')?.id || '',
+        driverId: f.driverId || drivers[0]?.id || '',
+      }))
+      setLoading(false)
+    })
 
-  const filteredPickupLocations = locations.filter(loc =>
-    loc.name.toLowerCase().includes(pickupSearch.toLowerCase())
-  )
+    return () => { cancelled = true }
+  }, [orgUuid])
 
-  const filteredDropoffLocations = locations
-    .filter(loc => loc.name !== form.pickupLocation)
-    .filter(loc => loc.name.toLowerCase().includes(dropoffSearch.toLowerCase()))
+  const selectedVehicle = vehiclesList.find(v => v.id === form.vehicleId)
 
   const set = (key: string, val: string | number) =>
     setForm(p => ({ ...p, [key]: val }))
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
+    if (!orgUuid) {
+      toast.error('No organization selected')
+      return
+    }
+    if (!form.pickupLocation.trim() || !form.dropoffLocation.trim()) {
+      toast.error('Enter pickup and dropoff locations')
+      return
+    }
+    if (!form.driverId) {
+      toast.error('Select a driver')
+      return
+    }
+    if (!form.departureAt) {
+      toast.error('Select a departure date and time')
+      return
+    }
+
     setPublishing(true)
-    setTimeout(() => {
-      setPublishing(false)
+    try {
+      await organizationApi.createTrip(orgUuid, {
+        driver_uuid: form.driverId,
+        origin_address: form.pickupLocation.trim(),
+        destination_address: form.dropoffLocation.trim(),
+        departure_date: new Date(form.departureAt).toISOString(),
+        total_seats: selectedVehicle?.capacity || 14,
+        price_per_seat: form.fare,
+      })
+      invalidateApiDataCache()
       toast.success('Trip published!')
       navigate('/trips')
-    }, 1200)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to publish trip')
+    } finally {
+      setPublishing(false)
+    }
   }
 
   return (
@@ -70,99 +104,30 @@ export function TripCreatePage() {
 
           {/* Pickup & Dropoff side-by-side on desktop */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Pickup Location */}
-            <div className="relative">
+            <div>
               <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5" /> Pickup Location
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={pickupSearch}
-                  onChange={e => {
-                    setPickupSearch(e.target.value)
-                    setShowPickupList(true)
-                  }}
-                  onFocus={() => setShowPickupList(true)}
-                  onBlur={() => {
-                    // slight timeout to allow onClick to fire
-                    setTimeout(() => setShowPickupList(false), 200)
-                  }}
-                  placeholder="Search pickup location..."
-                  className="input-field py-2.5 pr-10"
-                />
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
-                
-                {showPickupList && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-100 rounded-xl shadow-float max-h-48 overflow-y-auto z-50">
-                    {filteredPickupLocations.length > 0 ? (
-                      filteredPickupLocations.map(loc => (
-                        <button
-                          key={loc.id}
-                          type="button"
-                          onClick={() => {
-                            set('pickupLocation', loc.name)
-                            setPickupSearch(loc.name)
-                            setShowPickupList(false)
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-primary-50 transition-colors"
-                        >
-                          {loc.name}
-                        </button>
-                      ))
-                    ) : (
-                      <p className="px-4 py-2.5 text-xs text-neutral-200">No locations found</p>
-                    )}
-                  </div>
-                )}
-              </div>
+              <input
+                type="text"
+                value={form.pickupLocation}
+                onChange={e => set('pickupLocation', e.target.value)}
+                placeholder="e.g. Lagos"
+                className="input-field py-2.5"
+              />
             </div>
 
-            {/* Dropoff Location */}
-            <div className="relative">
+            <div>
               <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5" /> Dropoff Location
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={dropoffSearch}
-                  onChange={e => {
-                    setDropoffSearch(e.target.value)
-                    setShowDropoffList(true)
-                  }}
-                  onFocus={() => setShowDropoffList(true)}
-                  onBlur={() => {
-                    setTimeout(() => setShowDropoffList(false), 200)
-                  }}
-                  placeholder="Search dropoff location..."
-                  className="input-field py-2.5 pr-10"
-                />
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
-                
-                {showDropoffList && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-100 rounded-xl shadow-float max-h-48 overflow-y-auto z-50">
-                    {filteredDropoffLocations.length > 0 ? (
-                      filteredDropoffLocations.map(loc => (
-                        <button
-                          key={loc.id}
-                          type="button"
-                          onClick={() => {
-                            set('dropoffLocation', loc.name)
-                            setDropoffSearch(loc.name)
-                            setShowDropoffList(false)
-                          }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-primary-50 transition-colors"
-                        >
-                          {loc.name}
-                        </button>
-                      ))
-                    ) : (
-                      <p className="px-4 py-2.5 text-xs text-neutral-200">No locations found</p>
-                    )}
-                  </div>
-                )}
-              </div>
+              <input
+                type="text"
+                value={form.dropoffLocation}
+                onChange={e => set('dropoffLocation', e.target.value)}
+                placeholder="e.g. Ibadan"
+                className="input-field py-2.5"
+              />
             </div>
           </div>
 
@@ -174,9 +139,11 @@ export function TripCreatePage() {
                 <select
                   value={form.vehicleId}
                   onChange={e => set('vehicleId', e.target.value)}
+                  disabled={loading}
                   className="input-field py-2.5 appearance-none pr-10"
                 >
-                  {mockVehiclesList.filter(v => v.status === 'verified').map(v => (
+                  {vehiclesList.length === 0 && <option value="">No verified vehicles</option>}
+                  {vehiclesList.filter(v => v.status === 'verified').map(v => (
                     <option key={v.id} value={v.id}>
                       {v.plate} — {v.model} ({v.capacity} seats)
                     </option>
@@ -193,9 +160,11 @@ export function TripCreatePage() {
                 <select
                   value={form.driverId}
                   onChange={e => set('driverId', e.target.value)}
+                  disabled={loading}
                   className="input-field py-2.5 appearance-none pr-10"
                 >
-                  {mockDriversList.filter(d => d.status === 'verified' || d.status === 'active').map(d => (
+                  {driversList.length === 0 && <option value="">No drivers available</option>}
+                  {driversList.map(d => (
                     <option key={d.id} value={d.id}>
                       {d.name} ({d.phone})
                     </option>
@@ -255,9 +224,8 @@ export function TripCreatePage() {
               const netPerSeat = form.fare
               const commPerSeat = Math.round(netPerSeat * 0.08)
               const passengerFare = netPerSeat + commPerSeat
-              
+
               const totalNet = netPerSeat * capacity
-              const totalPassengerGross = passengerFare * capacity
 
               return (
                 <div className="mt-3 p-4 bg-white border border-neutral-100 rounded-xl shadow-sm">

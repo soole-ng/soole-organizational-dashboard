@@ -1,17 +1,19 @@
 import { TrendingUp, Bus, Users, Wallet, Eye, EyeOff } from 'lucide-react'
 import { MoneyDisplay } from '../../../components/ui/MoneyDisplay'
-import { formatMoney } from '../../../lib/formatters'
+import { formatMoneyCompact } from '../../../lib/formatters'
 import { useOrg } from '../../../lib/OrgContext'
+import { useHomeStats } from '../../../lib/useApiData'
 
 export function HeroBand() {
   const { org, updateOrg } = useOrg()
   const isHidden = org.isBalanceHidden || false
+  const { stats: homeStats } = useHomeStats()
 
   const stats = [
-    { label: 'Trips Today',    value: '3',            icon: Bus,        color: 'text-secondary-300' },
-    { label: 'Bookings Today', value: '34',            icon: Users,      color: 'text-teal-300' },
-    { label: "Today's Revenue", value: isHidden ? '****' : 'NGN 269,000', icon: TrendingUp, color: 'text-accent-300' },
-    { label: 'Wallet Balance', value: isHidden ? '****' : 'NGN 47,300',   icon: Wallet,     color: 'text-accent-200' },
+    { label: 'Trips Today',    value: `${homeStats.tripsToday}`, icon: Bus,        color: 'text-secondary-300' },
+    { label: 'Bookings Today', value: `${homeStats.bookingsToday}`, icon: Users,      color: 'text-teal-300' },
+    { label: "Today's Revenue", value: isHidden ? '****' : `NGN ${homeStats.revenueToday.toLocaleString()}`, icon: TrendingUp, color: 'text-accent-300' },
+    { label: 'Wallet Balance', value: isHidden ? '****' : `NGN ${homeStats.walletBalance.toLocaleString()}`,   icon: Wallet,     color: 'text-accent-200' },
   ]
 
   return (
@@ -23,7 +25,7 @@ export function HeroBand() {
         </div>
         <div className="flex items-center gap-1.5 bg-secondary-500 rounded-full px-2.5 py-1">
           <span className="w-1.5 h-1.5 bg-accent-300 rounded-full animate-pulse" />
-          <span className="text-xs text-accent-200 font-medium">3 active</span>
+          <span className="text-xs text-accent-200 font-medium">{homeStats.activeTripsCount} active</span>
         </div>
       </div>
 
@@ -48,13 +50,17 @@ export function HeroBand() {
         ))}
       </div>
 
-      <div className="mt-3 flex items-center gap-2 bg-primary-400 rounded-xl px-3.5 py-2.5">
-        <TrendingUp className="w-3.5 h-3.5 text-accent-300 flex-shrink-0" />
-        <p className="text-xs text-primary-100">
-          <span className="text-accent-300 font-semibold">+18% </span>
-          vs last week · NGN 228,300 same period
-        </p>
-      </div>
+      {homeStats.weekOverWeekPercent != null && (
+        <div className="mt-3 flex items-center gap-2 bg-primary-400 rounded-xl px-3.5 py-2.5">
+          <TrendingUp className="w-3.5 h-3.5 text-accent-300 flex-shrink-0" />
+          <p className="text-xs text-primary-100">
+            <span className="text-accent-300 font-semibold">
+              {homeStats.weekOverWeekPercent >= 0 ? '+' : ''}{homeStats.weekOverWeekPercent.toFixed(0)}%{' '}
+            </span>
+            vs last week · {formatMoneyCompact(homeStats.previousWeekRevenue)} same period
+          </p>
+        </div>
+      )}
     </div>
   )
 }

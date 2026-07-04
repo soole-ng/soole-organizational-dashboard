@@ -25,7 +25,7 @@ const queryClient = new QueryClient()
 
 export default function App() {
   const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-    const isAuth = sessionStorage.getItem('isAuthenticated') === 'true'
+    const isAuth = !!localStorage.getItem('auth_token')
     if (!isAuth) {
       return <Navigate to="/login" replace />
     }

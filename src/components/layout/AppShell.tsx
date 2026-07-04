@@ -14,45 +14,44 @@ import { TourGuide } from './TourGuide'
 import { ProfileCompletionModal } from '../auth/ProfileCompletionModal'
 import { AlertCircle, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { notificationsApi } from '../../api/client'
 
-// Mock notification data — will be replaced by API calls
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: 'n1-speed',
-    type: 'warning',
-    title: 'Speed limit exceeded — LSD 234 KJ',
-    message: 'Akin Bello is estimated to be travelling at ~115 km/h, exceeding the 100 km/h fleet limit on the Lagos → Ibadan route.',
-    read: false,
-    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    action: { label: 'View on map', href: '/live-map' },
-  },
-  {
-    id: 'n2',
-    type: 'danger',
-    title: 'Document pending — Road Worthiness',
-    message: 'KJA 008 MN road worthiness certificate is under review. Vehicle cannot be used for new trips until approved.',
-    read: false,
-    createdAt: '2026-06-25T12:00:00Z',
-    action: { label: 'View documents', href: '/fleet/vehicles' },
-  },
-  {
-    id: 'n3',
-    type: 'warning',
-    title: 'Driver Ibrahim Musa — invite pending',
-    message: 'Ibrahim has not yet completed his sign-up. Resend the invite if needed.',
-    read: true,
-    createdAt: '2026-06-20T08:00:00Z',
-    action: { label: 'View driver', href: '/fleet/drivers' },
-  },
-]
+function adaptNotification(raw: any): Notification {
+  return {
+    id: raw.uuid,
+    type: (['warning', 'danger', 'info', 'success'].includes(raw.type) ? raw.type : 'info') as Notification['type'],
+    title: raw.title,
+    message: raw.message,
+    read: !!raw.read,
+    createdAt: raw.created_at,
+    action: raw.action_label && raw.action_href ? { label: raw.action_label, href: raw.action_href } : undefined,
+  }
+}
 
 export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS)
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [showProfileModal, setShowProfileModal] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
-  const { org } = useOrg()
+  const { org, orgUuid } = useOrg()
+
+  useEffect(() => {
+    if (!orgUuid) return
+    let cancelled = false
+
+    const load = () => {
+      notificationsApi.getNotifications(orgUuid)
+        .then((res: any) => {
+          if (!cancelled) setNotifications((res.notifications || []).map(adaptNotification))
+        })
+        .catch(() => {})
+    }
+
+    load()
+    const interval = setInterval(load, 30000)
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [orgUuid])
 
   // Reset scroll position on page/route changes (essential for iOS PWA smoothness)
   useEffect(() => {
@@ -65,16 +64,25 @@ export function AppShell() {
   const unreadCount = notifications.filter(n => !n.read).length
 
   const handleDismiss = useCallback((id: string) => {
+    // No backend delete/dismiss endpoint exists yet — remove from view locally only.
     setNotifications(prev => prev.filter(n => n.id !== id))
   }, [])
 
   const handleMarkAllRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-  }, [])
+    if (!orgUuid) return
+    setNotifications(prev => {
+      prev.filter(n => !n.read).forEach(n => {
+        notificationsApi.markRead(orgUuid, n.id).catch(() => {})
+      })
+      return prev.map(n => ({ ...n, read: true }))
+    })
+  }, [orgUuid])
 
   const handleMarkRead = useCallback((id: string) => {
+    if (!orgUuid) return
+    notificationsApi.markRead(orgUuid, id).catch(() => {})
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
-  }, [])
+  }, [orgUuid])
 
   const handleClearAll = useCallback(() => {
     setNotifications([])

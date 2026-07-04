@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom'
 import { Users, Car, ChevronRight, AlertTriangle, TrendingUp, Activity } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
-import { useMockData } from '../../lib/useMockData'
+import { useApiData } from '../../lib/useApiData'
 import { clsx } from 'clsx'
 import { DriverAvatar } from '../../components/ui/DriverAvatar'
 
 export function FleetPage() {
-  const { data, loading } = useMockData()
+  const { data, loading } = useApiData()
 
   const pendingDrivers = data.drivers.filter(d => d.status === 'pending').length
   const pendingDocs = data.vehicles.reduce((acc, v) =>

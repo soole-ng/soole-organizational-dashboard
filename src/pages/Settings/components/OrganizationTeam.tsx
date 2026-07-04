@@ -3,6 +3,7 @@ import { ChevronDown, Copy, Check, Send, Trash2 } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../../lib/OrgContext'
+import { settingsApi } from '../../../api/client'
 
 interface OrganizationTeamProps {
   members: any[]
@@ -11,42 +12,41 @@ interface OrganizationTeamProps {
 }
 
 export function OrganizationTeam({ members, setMembers, executeSecuredAction }: OrganizationTeamProps) {
-  const { org, guardAction } = useOrg()
+  const { org, guardAction, orgUuid } = useOrg()
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [memberToRemove, setMemberToRemove] = useState<any | null>(null)
   const [inviteForm, setInviteForm] = useState({ name: '', phone: '', role: 'dispatcher' })
   const [showInvitePreview, setShowInvitePreview] = useState(false)
-  const [generatedOTP, setGeneratedOTP] = useState('')
-  const [inviteSent, setInviteSent] = useState(false)
+  const [invitePreview, setInvitePreview] = useState<{ otp: string; joinLink: string; smsMessage: string } | null>(null)
+  const [sendingInvite, setSendingInvite] = useState(false)
   const [copiedToClipboard, setCopiedToClipboard] = useState(false)
 
-  const generateOTP = () => {
-    return Math.random().toString().substring(2, 8).padEnd(6, '0')
-  }
-
-  const generateInviteLink = (phone: string, otp: string) => {
-    return `${window.location.origin}/join?phone=${phone}&otp=${otp}`
-  }
-
-  const generateSMSMessage = (name: string, otp: string, link: string) => {
-    return `Hi ${name}, you're invited to join Speedway Transport on Soole! Your OTP: ${otp}. Complete your setup: ${link}`
-  }
-
-  const handleSendInvite = () => {
-    if (!inviteForm.name || !inviteForm.phone) {
+  const handleSendInvite = async () => {
+    if (!inviteForm.name || !inviteForm.phone || !orgUuid) {
       toast.error('Please enter name and phone number')
       return
     }
 
-    const otp = generateOTP()
-    setGeneratedOTP(otp)
-    setShowInvitePreview(true)
+    setSendingInvite(true)
+    try {
+      const res = await settingsApi.inviteTeamMemberWithOtp(orgUuid, {
+        name: inviteForm.name,
+        phone: inviteForm.phone,
+        role: inviteForm.role,
+      })
+      setInvitePreview({ otp: res.otp, joinLink: res.joinLink, smsMessage: res.smsMessage })
+      setShowInvitePreview(true)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to create invite')
+    } finally {
+      setSendingInvite(false)
+    }
   }
 
   const handleConfirmInvite = () => {
     executeSecuredAction(() => {
       const newMember = {
-        id: `m-${Date.now()}`,
+        id: `pending-${inviteForm.phone}`,
         name: inviteForm.name,
         phone: inviteForm.phone,
         role: inviteForm.role,
@@ -57,25 +57,29 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
       setShowInviteForm(false)
       setShowInvitePreview(false)
       setInviteForm({ name: '', phone: '', role: 'dispatcher' })
-      setInviteSent(true)
+      setInvitePreview(null)
       toast.success(`SMS invite sent to ${inviteForm.name}!`)
-      setTimeout(() => setInviteSent(false), 3000)
     })
   }
 
   const handleConfirmRemove = () => {
-    if (!memberToRemove) return
+    if (!memberToRemove || !orgUuid) return
     const { id, name } = memberToRemove
     setMemberToRemove(null)
-    executeSecuredAction(() => {
-      setMembers(prev => prev.filter(m => m.id !== id))
-      toast.success(`${name} has been removed from the team`)
+    executeSecuredAction(async () => {
+      try {
+        await settingsApi.removeMember(orgUuid, id)
+        setMembers(prev => prev.filter(m => m.id !== id))
+        toast.success(`${name} has been removed from the team`)
+      } catch (err: any) {
+        toast.error(err?.message ?? 'Failed to remove member')
+      }
     })
   }
 
   const copyLinkToClipboard = () => {
-    const link = generateInviteLink(inviteForm.phone, generatedOTP)
-    navigator.clipboard.writeText(link)
+    if (!invitePreview) return
+    navigator.clipboard.writeText(invitePreview.joinLink)
     setCopiedToClipboard(true)
     setTimeout(() => setCopiedToClipboard(false), 2000)
     toast.success('Link copied to clipboard!')
@@ -162,13 +166,14 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
             </button>
             <button
               onClick={handleSendInvite}
-              className="px-3 py-1.5 bg-secondary-500 hover:bg-secondary-600 text-xs font-semibold rounded-xl text-white transition-colors flex items-center gap-1.5"
+              disabled={sendingInvite}
+              className="px-3 py-1.5 bg-secondary-500 hover:bg-secondary-600 text-xs font-semibold rounded-xl text-white transition-colors flex items-center gap-1.5 disabled:opacity-60"
             >
-              <Send className="w-3.5 h-3.5" /> Generate Invite
+              <Send className="w-3.5 h-3.5" /> {sendingInvite ? 'Generating…' : 'Generate Invite'}
             </button>
           </div>
         </div>
-      ) : showInvitePreview ? (
+      ) : showInvitePreview && invitePreview ? (
         <div className="bg-white p-4 rounded-2xl border border-secondary-300 space-y-3">
           <h4 className="text-xs font-bold text-black uppercase tracking-wider">Confirm Invite for {inviteForm.name}</h4>
 
@@ -176,7 +181,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
             <p className="text-[10px] font-bold text-primary-400 uppercase">SMS Message Preview:</p>
             <div className="bg-white rounded-xl p-3 text-xs text-black space-y-2 border border-primary-100">
               <p className="font-semibold">To: {inviteForm.phone}</p>
-              <p className="text-neutral-400 italic">{generateSMSMessage(inviteForm.name, generatedOTP, generateInviteLink(inviteForm.phone, generatedOTP))}</p>
+              <p className="text-neutral-400 italic">{invitePreview.smsMessage}</p>
             </div>
           </div>
 
@@ -189,7 +194,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
               </div>
               <div className="bg-neutral-50 rounded-lg p-2 space-y-1">
                 <p className="text-neutral-400">OTP</p>
-                <p className="font-bold text-secondary-500 font-mono">{generatedOTP}</p>
+                <p className="font-bold text-secondary-500 font-mono">{invitePreview.otp}</p>
               </div>
             </div>
           </div>

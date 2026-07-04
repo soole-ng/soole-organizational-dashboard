@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useState, useRef } from 'react'
 import { clsx } from 'clsx'
 import { useNavigate } from 'react-router-dom'
-import { useMockData } from '../../../lib/useMockData'
+import { useApiData } from '../../../lib/useApiData'
 import { Activity, WifiOff, MapPin } from 'lucide-react'
 
 type VehicleLoc = {
@@ -32,7 +32,7 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
     const markersRef = useRef<Record<string, any>>({})
     const popupRef = useRef<any>(null)
     const navigate = useNavigate()
-    const { data } = useMockData()
+    const { data } = useApiData()
     const trailsRef = useRef<Record<string, [number, number][]>>({})
 
     useEffect(() => {

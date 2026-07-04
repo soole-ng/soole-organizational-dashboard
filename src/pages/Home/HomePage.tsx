@@ -5,11 +5,14 @@ import { HeroBand } from './components/HeroBand'
 import { UpcomingTrips } from './components/UpcomingTrips'
 import { QuickStats } from './components/QuickStats'
 import { useOrg } from '../../lib/OrgContext'
+import { useHomeStats } from '../../lib/useApiData'
+import { formatMoneyCompact } from '../../lib/formatters'
 
 export function HomePage() {
   const { org, updateOrg, guardAction } = useOrg()
   const { notifications, setNotifications } = useOutletContext<any>()
   const isHidden = org.isBalanceHidden || false
+  const { stats: homeStats } = useHomeStats()
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -32,10 +35,10 @@ export function HomePage() {
         </div>
         <div id="tour-metrics" className="grid grid-cols-4 gap-4">
           {[
-            { label: 'Trips Today', value: '3', sub: '+1 vs yesterday' },
-            { label: 'Bookings Today', value: '34', sub: '10 seats remaining' },
-            { label: "Today's Revenue", value: isHidden ? '****' : 'NGN 269K', sub: '+18% vs last week' },
-            { label: 'Wallet Balance', value: isHidden ? '****' : 'NGN 47.3K', sub: 'Total Amount' },
+            { label: 'Trips Today', value: `${homeStats.tripsToday}`, sub: `${homeStats.activeTripsCount} active now` },
+            { label: 'Bookings Today', value: `${homeStats.bookingsToday}`, sub: 'seats booked' },
+            { label: "Today's Revenue", value: isHidden ? '****' : formatMoneyCompact(homeStats.revenueToday), sub: homeStats.weekOverWeekPercent != null ? `${homeStats.weekOverWeekPercent >= 0 ? '+' : ''}${homeStats.weekOverWeekPercent.toFixed(0)}% vs last week` : '' },
+            { label: 'Wallet Balance', value: isHidden ? '****' : formatMoneyCompact(homeStats.walletBalance), sub: 'Total Amount' },
           ].map(s => (
             <div key={s.label} className="bg-primary-400 rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">

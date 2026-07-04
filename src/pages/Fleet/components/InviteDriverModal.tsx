@@ -1,41 +1,34 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useOrg } from '../../../lib/OrgContext'
+import { fleetApi } from '../../../api/client'
 
 interface InviteDriverModalProps {
   onClose: () => void
 }
 
 export function InviteDriverModal({ onClose }: InviteDriverModalProps) {
+  const { orgUuid } = useOrg()
   const [countryPrefix, setCountryPrefix] = useState('+234')
-  const [isResolving, setIsResolving] = useState(false)
+  const [sending, setSending] = useState(false)
   const [form, setForm] = useState({ name: '', phone: '' })
 
-  const handlePhoneChange = (val: string) => {
-    const digits = val.replace(/\D/g, '')
-    setForm(p => ({ ...p, phone: digits }))
-    
-    if (digits.length >= 10) {
-      setIsResolving(true)
-      setTimeout(() => {
-        setIsResolving(false)
-        const endDigit = digits.slice(-1)
-        let resolvedName = 'Babajide Sanwo'
-        if (endDigit === '7') resolvedName = 'Akin Bello'
-        else if (endDigit === '1') resolvedName = 'Chidi Okafor'
-        else if (endDigit === '2') resolvedName = 'Funke Adeleke'
-        else if (endDigit === '0') resolvedName = 'Emeka Nwosu'
-        
-        setForm(p => ({ ...p, name: resolvedName }))
-        toast.success(`Driver found: ${resolvedName}`)
-      }, 800)
+  const handleInvite = async () => {
+    if (!form.name || !form.phone || !orgUuid) return
+    setSending(true)
+    try {
+      await fleetApi.inviteDriver(orgUuid, {
+        name: form.name,
+        phone: `${countryPrefix}${form.phone}`,
+      })
+      toast.success(`Invite sent to ${form.name}`)
+      onClose()
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to send invite')
+    } finally {
+      setSending(false)
     }
-  }
-
-  const handleInvite = () => {
-    if (!form.name || !form.phone) return
-    toast.success(`Invite sent to ${form.name}`)
-    onClose()
   }
 
   return (
@@ -54,8 +47,18 @@ export function InviteDriverModal({ onClose }: InviteDriverModalProps) {
             <X className="w-4 h-4 text-neutral-200" />
           </button>
         </div>
-        
+
         <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-black mb-1.5">Driver's Name</label>
+            <input
+              className="input-field"
+              placeholder="e.g. John Doe"
+              value={form.name}
+              onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+            />
+          </div>
+
           <div>
             <label className="block text-xs font-semibold text-black mb-1.5">Phone Number</label>
             <div className="flex gap-2">
@@ -74,37 +77,20 @@ export function InviteDriverModal({ onClose }: InviteDriverModalProps) {
                 type="tel"
                 placeholder="803 123 4567"
                 value={form.phone}
-                onChange={e => handlePhoneChange(e.target.value)}
+                onChange={e => setForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '') }))}
               />
             </div>
           </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-black mb-1.5">Driver's Name</label>
-            <input
-              className="input-field bg-neutral-50/80 cursor-not-allowed text-neutral-300 font-semibold"
-              placeholder="Resolves automatically..."
-              value={form.name}
-              disabled
-            />
-          </div>
-
-          {isResolving && (
-            <div className="flex items-center gap-2 justify-center py-2 text-xs text-primary-400">
-              <span className="w-4 h-4 border-2 border-primary-400/40 border-t-primary-400 rounded-full animate-spin" />
-              Checking Soole records...
-            </div>
-          )}
 
           <p className="text-xs text-black bg-white rounded-xl p-3 leading-relaxed border border-neutral-100">
             {form.name ? `${form.name} (${countryPrefix}${form.phone})` : 'The driver'} will receive an SMS to download the Soole driver app and complete verification.
           </p>
           <button
             onClick={handleInvite}
-            disabled={!form.name || !form.phone || isResolving}
-            className="btn-primary w-full"
+            disabled={!form.name || !form.phone || sending}
+            className="btn-primary w-full disabled:opacity-60"
           >
-            Send Invite
+            {sending ? 'Sending…' : 'Send Invite'}
           </button>
         </div>
       </div>

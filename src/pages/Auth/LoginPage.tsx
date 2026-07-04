@@ -4,12 +4,28 @@ import { Eye, EyeOff, Shield, ChevronDown, Phone, Car, MapPin, CreditCard, Spark
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
+import { authApi } from '../../api/client'
 import { z } from 'zod'
 
 const loginSchema = z.object({
   phone: z.string().length(10, 'Phone must be exactly 10 digits'),
-  password: z.string().min(8, 'Password must be at least 8 characters')
+  pin: z.string().length(6, 'PIN must be exactly 6 digits').regex(/^\d+$/, 'PIN must be numeric')
 })
+
+/** Backend requires latitude/longitude on every login step; falls back to 0,0 if denied. */
+function getBrowserLocation(): Promise<{ latitude: number; longitude: number }> {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      resolve({ latitude: 0, longitude: 0 })
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      () => resolve({ latitude: 0, longitude: 0 }),
+      { timeout: 5000 }
+    )
+  })
+}
 
 const signupSchema = z.object({
   suFirstName: z.string().min(1, 'First name is required'),
@@ -18,8 +34,19 @@ const signupSchema = z.object({
   suDob: z.string().min(1, 'Date of birth is required'),
   suNin: z.string().length(11, 'NIN must be exactly 11 digits'),
   suCompany: z.string().min(1, 'Company name is required'),
-  suReg: z.string().min(1, 'RC Number is required')
+  suReg: z.string().min(1, 'RC Number is required'),
+  suPin: z.string().length(6, 'PIN must be exactly 6 digits').regex(/^\d+$/, 'PIN must be numeric'),
+  suConfirmPin: z.string(),
+}).refine(data => data.suPin === data.suConfirmPin, {
+  message: 'PINs do not match',
+  path: ['suConfirmPin'],
 })
+
+const ORG_TYPES = [
+  { value: 'transport_co', label: 'Transport Company' },
+  { value: 'shuttle', label: 'Shuttle Service' },
+  { value: 'corporate', label: 'Corporate Transport' },
+]
 
 type Step = 'login' | 'otp' | 'security_question' | 'signup'
 
@@ -35,16 +62,17 @@ const COUNTRY_CODES = [
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { org, updateOrg } = useOrg()
+  const { updateOrg } = useOrg()
   const [step, setStep]         = useState<Step>('login')
   const [country, setCountry]   = useState(COUNTRY_CODES[0])
-  
+
   // Login fields
   const [phone, setPhone]       = useState('')
-  const [password, setPassword] = useState('')
+  const [pin, setPin]           = useState('')
   const [otp, setOtp]           = useState('')
   const [secAnswer, setSecAnswer] = useState('')
-  
+  const [securityQuestion, setSecurityQuestion] = useState('')
+
   // Signup fields
   const [suFirstName, setSuFirstName] = useState('')
   const [suLastName, setSuLastName] = useState('')
@@ -53,6 +81,9 @@ export function LoginPage() {
   const [suNin, setSuNin] = useState('')
   const [suCompany, setSuCompany] = useState('')
   const [suReg, setSuReg] = useState('')
+  const [suOrgType, setSuOrgType] = useState('transport_co')
+  const [suPin, setSuPin] = useState('')
+  const [suConfirmPin, setSuConfirmPin] = useState('')
 
   const [showPw, setShowPw]     = useState(false)
   const [showCC, setShowCC]     = useState(false)
@@ -65,8 +96,16 @@ export function LoginPage() {
   const fullPhone = `${country.code}${phone.replace(/^0/, '')}`
   const fullSuPhone = `${country.code}${suPhone.replace(/^0/, '')}`
 
-  const handleLogin = () => {
-    const result = loginSchema.safeParse({ phone, password })
+  /** Persists tokens and finishes login - shared by the no-security-question and security-question paths. */
+  const finishLogin = (tokenData: { access_token: string; refresh_token: { token: string } }) => {
+    localStorage.setItem('auth_token', tokenData.access_token)
+    localStorage.setItem('refresh_token', tokenData.refresh_token.token)
+    toast.success('Welcome back to Mobiliti!')
+    navigate('/')
+  }
+
+  const handleLogin = async () => {
+    const result = loginSchema.safeParse({ phone, pin })
     if (!result.success) {
       setErrors(result.error.issues.map(i => i.path[0] as string))
       toast.error(result.error.issues[0].message)
@@ -74,75 +113,84 @@ export function LoginPage() {
     }
     setErrors([])
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      await authApi.initiateLogin(fullPhone, pin)
+      toast.success('Verification code sent to your phone')
       setStep('otp')
-    }, 1000)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Login failed. Check your phone number and PIN.')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleOtp = () => {
+  const handleOtp = async () => {
     if (otp.length !== 6) return
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      if (org.isNewUser) {
-        sessionStorage.setItem('isAuthenticated', 'true')
-        navigate('/onboarding')
-      } else if (org.securityQuestions && org.securityQuestions.length > 0) {
+    try {
+      const { latitude, longitude } = await getBrowserLocation()
+      const res = await authApi.verifyLoginOtp(fullPhone, otp, latitude, longitude)
+      if ('requires_security_question' in res.data) {
+        setSecurityQuestion(res.data.question)
         setStep('security_question')
       } else {
-        sessionStorage.setItem('isAuthenticated', 'true')
-        toast.success('Welcome back to Mobiliti!')
-        navigate('/')
+        finishLogin(res.data)
       }
-    }, 800)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Invalid or expired code')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleSecurityQuestion = () => {
+  const handleSecurityQuestion = async () => {
     if (!secAnswer) return
     setLoading(true)
-    setTimeout(() => {
+    try {
+      const { latitude, longitude } = await getBrowserLocation()
+      const res = await authApi.verifySecurityAnswer(fullPhone, secAnswer, latitude, longitude)
+      finishLogin(res.data)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Incorrect answer to security question!')
+    } finally {
       setLoading(false)
-      const activeQuestion = org.securityQuestions?.[0]
-      if (activeQuestion && secAnswer.toLowerCase().trim() === (activeQuestion.answer || '').toLowerCase().trim()) {
-        sessionStorage.setItem('isAuthenticated', 'true')
-        toast.success('Welcome back to Mobiliti!')
-        navigate('/')
-      } else {
-        toast.error('Incorrect answer to security question!')
-      }
-    }, 800)
+    }
   }
 
-  const handleSignup = () => {
-    const result = signupSchema.safeParse({ suFirstName, suLastName, suPhone, suDob, suNin, suCompany, suReg })
+  const handleSignup = async () => {
+    const result = signupSchema.safeParse({ suFirstName, suLastName, suPhone, suDob, suNin, suCompany, suReg, suPin, suConfirmPin })
     if (!result.success) {
       setErrors(result.error.issues.map(i => i.path[0] as string))
       toast.error(result.error.issues[0].message)
       return
     }
 
+    // NOTE: suFirstName/suLastName/suDob/suNin are collected but not sent -
+    // POST /signup/signup-organization has no fields for them (it only
+    // creates the org + owner account, no personal KYC). If owner-level
+    // KYC is actually required, that needs new backend fields/endpoints
+    // first; until then these four inputs are effectively unused.
     setErrors([])
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      updateOrg({
-        isNewUser: true,
-        approvalStatus: 'incomplete',
-        registrationDetails: {
-          firstName: suFirstName,
-          lastName: suLastName,
-          phone: fullSuPhone,
-          dob: suDob,
-          nin: suNin,
-          companyName: suCompany,
-          companyRegNum: suReg,
-        }
+    try {
+      const res = await authApi.signupOrganization({
+        phone: fullSuPhone,
+        pin: suPin,
+        confirmPin: suConfirmPin,
+        organizationName: suCompany,
+        organizationType: suOrgType,
+        rcNumber: suReg,
       })
-      setPhone(suPhone)
-      setOtp('')
-      setStep('otp')
-    }, 1500)
+      localStorage.setItem('auth_token', res.data.token)
+      localStorage.setItem('refresh_token', res.data.refreshToken)
+      updateOrg({ approvalStatus: 'pending' })
+      toast.success('Organization created! Awaiting admin approval.')
+      navigate('/')
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Signup failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getBorderClass = (field: string) => 
@@ -280,26 +328,23 @@ export function LoginPage() {
                     </div>
                   </div>
 
-                  {/* Password field */}
+                  {/* PIN field */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-black uppercase tracking-wider text-black">
-                        Password <span className="text-red-500">*</span>
-                      </label>
-                      <button type="button" className="text-xs text-black font-black hover:text-neutral-700 transition-colors">
-                        Forgot password?
-                      </button>
-                    </div>
+                    <label className="text-xs font-black uppercase tracking-wider text-black">
+                      6-Digit PIN <span className="text-red-500">*</span>
+                    </label>
                     <div className="relative">
                       <input
                         type={showPw ? 'text' : 'password'}
-                        value={password}
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={pin}
                         onChange={e => {
-                          setPassword(e.target.value)
-                          setErrors(errors.filter(err => err !== 'password'))
+                          setPin(e.target.value.replace(/\D/g, '').slice(0, 6))
+                          setErrors(errors.filter(err => err !== 'pin'))
                         }}
-                        className={clsx("w-full h-[44px] bg-white border rounded-xl px-5 py-0 pr-12 text-sm text-black font-black placeholder:text-neutral-100 focus:outline-none transition-all", getBorderClass('password'))}
-                        placeholder="••••••••••••"
+                        className={clsx("w-full h-[44px] bg-white border rounded-xl px-5 py-0 pr-12 text-sm text-black font-black placeholder:text-neutral-100 focus:outline-none transition-all tracking-[0.3em]", getBorderClass('pin'))}
+                        placeholder="••••••"
                         autoComplete="current-password"
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
                       />
@@ -427,14 +472,60 @@ export function LoginPage() {
                     <label className="block text-xs font-black uppercase tracking-wider text-black">
                       Company Registration Number <span className="text-red-500">*</span>
                     </label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       maxLength={10}
-                      value={suReg} 
-                      onChange={e => { setSuReg(e.target.value); setErrors(errors.filter(err => err !== 'suReg')) }} 
-                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suReg'))} 
-                      placeholder="RC Number" 
+                      value={suReg}
+                      onChange={e => { setSuReg(e.target.value); setErrors(errors.filter(err => err !== 'suReg')) }}
+                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suReg'))}
+                      placeholder="RC Number"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      Business Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={suOrgType}
+                      onChange={e => setSuOrgType(e.target.value)}
+                      className="w-full h-[40px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none transition-all"
+                    >
+                      {ORG_TYPES.map(t => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                        6-Digit PIN <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={suPin}
+                        onChange={e => { setSuPin(e.target.value.replace(/\D/g, '').slice(0, 6)); setErrors(errors.filter(err => err !== 'suPin')) }}
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all tracking-[0.3em]", getBorderClass('suPin'))}
+                        placeholder="••••••"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                        Confirm PIN <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={suConfirmPin}
+                        onChange={e => { setSuConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 6)); setErrors(errors.filter(err => err !== 'suConfirmPin')) }}
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all tracking-[0.3em]", getBorderClass('suConfirmPin'))}
+                        placeholder="••••••"
+                      />
+                    </div>
                   </div>
 
                   <button
@@ -490,7 +581,7 @@ export function LoginPage() {
                   </div>
                   <div className="space-y-3">
                     <label className="block text-sm font-black text-black">
-                      Question: <span className="font-extrabold text-primary-500">{org.securityQuestions?.[0]?.question ?? 'Backup Security Question'}</span>
+                      Question: <span className="font-extrabold text-primary-500">{securityQuestion || 'Backup Security Question'}</span>
                     </label>
                     <input
                       type="password"

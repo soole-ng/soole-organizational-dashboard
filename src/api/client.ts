@@ -349,6 +349,15 @@ export const authApi = {
     // the NIN record, not a nickname or reordered name.
     firstName: string; lastName: string; dob: string; nin: string
   }) => apiRequest<LoginEnvelope<SignupOrgData>>('/signup/signup-organization', { method: 'POST', body: payload }),
+  /**
+   * Team member completing signup from an invite SMS/link. One atomic call -
+   * the OTP was already sent when the org invited them (no self-serve resend
+   * for this flow), so phone+otp+pin+confirmPin all go together.
+   */
+  joinOrganization: async (payload: { phone: string; otp: string; pin: string; confirmPin: string }) =>
+    apiRequest<LoginEnvelope<{ userId: string; phone: string; role: string; token: string; refreshToken: string; organizationId: string }>>(
+      '/signup/join-organization', { method: 'POST', body: payload }
+    ),
   refreshToken: async (refreshToken: string) =>
     apiRequest('/accounts/login/refresh-tokens', { method: 'POST', body: { refresh_token: refreshToken } }),
   getCurrentUser: async () => apiRequest('/accounts/login/get-user-profile'),

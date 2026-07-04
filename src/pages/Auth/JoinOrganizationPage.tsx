@@ -4,8 +4,13 @@ import { Shield, ChevronRight, Lock, Phone } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
+import { authApi } from '../../api/client'
 
-type Step = 'phone' | 'otp' | 'password' | 'security' | 'success'
+// The invite SMS's join link is https://dashboard.soole.ng/join?phone=X&otp=Y -
+// the OTP was already sent then, there's no self-serve resend for this flow.
+// If both arrive via the link we skip straight to setting a PIN; otherwise
+// we ask for whatever's missing.
+type Step = 'phone' | 'otp' | 'pin' | 'success'
 
 const phoneSchema = z.object({
   phone: z.string().min(10, 'Phone number must be valid')
@@ -15,41 +20,26 @@ const otpSchema = z.object({
   otp: z.string().length(6, 'OTP must be 6 digits')
 })
 
-const passwordSchema = z.object({
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string()
-}).refine(data => data.newPassword === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword']
+const pinSchema = z.object({
+  pin: z.string().length(6, 'PIN must be exactly 6 digits').regex(/^\d+$/, 'PIN must be numeric'),
+  confirmPin: z.string()
+}).refine(data => data.pin === data.confirmPin, {
+  message: 'PINs do not match',
+  path: ['confirmPin'],
 })
-
-const securitySchema = z.object({
-  question: z.string().min(1, 'Please provide a question'),
-  answer: z.string().min(1, 'Please provide an answer')
-})
-
-const getPasswordRequirements = (password: string) => ({
-  hasMinLength: password.length >= 8,
-  hasUppercase: /[A-Z]/.test(password),
-  hasLowercase: /[a-z]/.test(password),
-  hasNumber: /[0-9]/.test(password),
-  hasSpecial: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
-})
-
-const passwordsMatch = (pwd: string, confirm: string) => pwd === confirm && pwd.length > 0
 
 export function JoinOrganizationPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  const [step, setStep] = useState<Step>('phone')
-  const [phone, setPhone] = useState(searchParams.get('phone') || '')
-  const [otp, setOtp] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [question, setQuestion] = useState('')
-  const [customQuestion, setCustomQuestion] = useState('')
-  const [answer, setAnswer] = useState('')
+  const prefillPhone = searchParams.get('phone') || ''
+  const prefillOtp = searchParams.get('otp') || ''
+
+  const [step, setStep] = useState<Step>(prefillPhone && prefillOtp ? 'pin' : prefillPhone ? 'otp' : 'phone')
+  const [phone, setPhone] = useState(prefillPhone)
+  const [otp, setOtp] = useState(prefillOtp)
+  const [pin, setPin] = useState('')
+  const [confirmPin, setConfirmPin] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handlePhoneSubmit = () => {
@@ -58,12 +48,7 @@ export function JoinOrganizationPage() {
       toast.error(result.error.issues[0].message)
       return
     }
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      toast.success('OTP sent to your phone!')
-      setStep('otp')
-    }, 1000)
+    setStep('otp')
   }
 
   const handleOtpSubmit = () => {
@@ -72,43 +57,28 @@ export function JoinOrganizationPage() {
       toast.error(result.error.issues[0].message)
       return
     }
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      if (otp === '000000') {
-        toast.success('OTP verified!')
-        setStep('password')
-      } else {
-        toast.error('Invalid OTP. Try 000000 for demo.')
-      }
-    }, 800)
+    setStep('pin')
   }
 
-  const handlePasswordSubmit = () => {
-    const result = passwordSchema.safeParse({ newPassword, confirmPassword })
-    if (!result.success) {
-      toast.error(result.error.issues[0].message)
-      return
-    }
-    setStep('security')
-  }
-
-  const handleSecuritySubmit = () => {
-    const finalQuestion = question === 'custom' ? customQuestion : question
-    const result = securitySchema.safeParse({ question: finalQuestion, answer })
+  const handlePinSubmit = async () => {
+    const result = pinSchema.safeParse({ pin, confirmPin })
     if (!result.success) {
       toast.error(result.error.issues[0].message)
       return
     }
 
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const res = await authApi.joinOrganization({ phone, otp, pin, confirmPin })
+      localStorage.setItem('auth_token', res.data.token)
+      localStorage.setItem('refresh_token', res.data.refreshToken)
       setStep('success')
-      setTimeout(() => {
-        navigate('/login', { state: { phone, setupComplete: true } })
-      }, 2000)
-    }, 1000)
+      setTimeout(() => navigate('/'), 1500)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Could not complete setup. Check your phone number and OTP.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, nextStep: () => void) => {
@@ -134,12 +104,12 @@ export function JoinOrganizationPage() {
         <div className="bg-white rounded-card shadow-card p-8 space-y-6">
           {/* Progress Indicator */}
           <div className="flex items-center justify-center gap-2 mb-6">
-            {(['phone', 'otp', 'password', 'security'] as Step[]).map((s, i) => (
+            {(['phone', 'otp', 'pin'] as Step[]).map((s, i) => (
               <div
                 key={s}
                 className={clsx(
                   "h-1.5 w-12 rounded-full transition-all",
-                  ['phone', 'otp', 'password', 'security'].indexOf(step) >= i
+                  ['phone', 'otp', 'pin'].indexOf(step) >= i
                     ? 'bg-secondary-500'
                     : 'bg-primary-100'
                 )}
@@ -152,7 +122,7 @@ export function JoinOrganizationPage() {
               <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
                 <Phone className="w-5 h-5 text-black flex-shrink-0" />
                 <p className="text-xs text-black leading-relaxed font-black">
-                  Enter your phone number to verify your identity.
+                  Enter the phone number your invite was sent to.
                 </p>
               </div>
 
@@ -170,19 +140,10 @@ export function JoinOrganizationPage() {
 
               <button
                 onClick={handlePhoneSubmit}
-                disabled={!phone.trim() || loading}
+                disabled={!phone.trim()}
                 className="w-full bg-secondary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-secondary-600 transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
               >
-                {loading ? (
-                  <>
-                    <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                    Sending OTP...
-                  </>
-                ) : (
-                  <>
-                    Send OTP <ChevronRight className="w-5 h-5" />
-                  </>
-                )}
+                Continue <ChevronRight className="w-5 h-5" />
               </button>
             </div>
           )}
@@ -192,7 +153,7 @@ export function JoinOrganizationPage() {
               <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
                 <Lock className="w-5 h-5 text-black flex-shrink-0" />
                 <p className="text-xs text-black leading-relaxed font-black">
-                  Enter the 6-digit code sent to your phone.
+                  Enter the 6-digit code from the invite SMS you already received.
                 </p>
               </div>
 
@@ -207,24 +168,17 @@ export function JoinOrganizationPage() {
                   placeholder="000000"
                   className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all text-center tracking-widest"
                 />
-                <p className="text-xs text-neutral-300">Use 000000 for demo</p>
+                <p className="text-xs text-neutral-300">
+                  Lost the code? Ask whoever invited you to resend it - there's no automatic resend here.
+                </p>
               </div>
 
               <button
                 onClick={handleOtpSubmit}
-                disabled={otp.length !== 6 || loading}
+                disabled={otp.length !== 6}
                 className="w-full bg-secondary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-secondary-600 transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
               >
-                {loading ? (
-                  <>
-                    <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  <>
-                    Verify OTP <ChevronRight className="w-5 h-5" />
-                  </>
-                )}
+                Continue <ChevronRight className="w-5 h-5" />
               </button>
 
               <button
@@ -236,131 +190,52 @@ export function JoinOrganizationPage() {
             </div>
           )}
 
-          {step === 'password' && (
+          {step === 'pin' && (
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
                 <Lock className="w-5 h-5 text-black flex-shrink-0" />
                 <p className="text-xs text-black leading-relaxed font-black">
-                  Create a strong password for your account.
+                  Set a 6-digit PIN. You'll use it (with your phone number) to sign in from now on.
                 </p>
               </div>
 
-              <div className="bg-primary-75 p-4 rounded-2xl border border-primary-100 space-y-3">
-                <p className="text-xs font-black uppercase tracking-wider text-black">Password Requirements:</p>
-                <div className="space-y-2 text-xs font-black">
-                  {[
-                    { label: 'At least 8 characters', check: getPasswordRequirements(newPassword).hasMinLength },
-                    { label: 'Uppercase letter (A-Z)', check: getPasswordRequirements(newPassword).hasUppercase },
-                    { label: 'Lowercase letter (a-z)', check: getPasswordRequirements(newPassword).hasLowercase },
-                    { label: 'Number (0-9)', check: getPasswordRequirements(newPassword).hasNumber },
-                    { label: 'Special character (!@#$%...)', check: getPasswordRequirements(newPassword).hasSpecial },
-                  ].map((req, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <span className={req.check ? 'text-accent-400' : 'text-neutral-300'}>
-                        {req.check ? '✓' : '○'}
-                      </span>
-                      <span className={req.check ? 'text-black' : 'text-neutral-300'}>{req.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <div className="space-y-2">
-                <label className="block text-xs font-black uppercase tracking-wider text-black">Password (8+ characters)</label>
+                <label className="block text-xs font-black uppercase tracking-wider text-black">6-Digit PIN</label>
                 <input
                   type="password"
-                  maxLength={20}
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
-                  placeholder="Create a strong password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={pin}
+                  onChange={e => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all tracking-[0.4em]"
+                  placeholder="••••••"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs font-black uppercase tracking-wider text-black">Confirm Password</label>
+                <label className="block text-xs font-black uppercase tracking-wider text-black">Confirm PIN</label>
                 <input
                   type="password"
-                  maxLength={20}
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={confirmPin}
+                  onChange={e => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onKeyDown={e => handleKeyDown(e, handlePinSubmit)}
                   className={clsx(
-                    "w-full h-[60px] bg-white border rounded-2xl px-5 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none focus:ring-4 transition-all",
-                    confirmPassword.length > 0 && passwordsMatch(newPassword, confirmPassword)
+                    "w-full h-[60px] bg-white border rounded-2xl px-5 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none focus:ring-4 transition-all tracking-[0.4em]",
+                    confirmPin.length > 0 && confirmPin === pin
                       ? 'border-secondary-300 focus:border-secondary-300 focus:ring-secondary-300/10'
-                      : confirmPassword.length > 0 && !passwordsMatch(newPassword, confirmPassword)
+                      : confirmPin.length > 0
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10'
                       : 'border-neutral-100 focus:border-secondary-300 focus:ring-secondary-300/10'
                   )}
-                  placeholder="Re-enter password"
+                  placeholder="••••••"
                 />
               </div>
 
               <button
-                onClick={handlePasswordSubmit}
-                disabled={!newPassword || !confirmPassword || !passwordsMatch(newPassword, confirmPassword) || newPassword.length < 8}
-                className="w-full bg-secondary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-secondary-600 transition-all duration-150 disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
-              >
-                Continue <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          )}
-
-          {step === 'security' && (
-            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-500">
-              <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
-                <Shield className="w-5 h-5 text-black flex-shrink-0" />
-                <p className="text-xs text-black leading-relaxed font-black">
-                  Set a security question to verify your identity later.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-xs font-black uppercase tracking-wider text-black">Select Question</label>
-                <div className="relative">
-                  <select
-                    value={question}
-                    onChange={e => setQuestion(e.target.value)}
-                    className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 pr-12 text-sm text-black font-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all appearance-none"
-                  >
-                    <option value="" disabled>Select a question...</option>
-                    <option value="What was your childhood nickname?">What was your childhood nickname?</option>
-                    <option value="What is the name of your favorite pet?">What is the name of your favorite pet?</option>
-                    <option value="In what city did you meet your spouse?">In what city did you meet your spouse?</option>
-                    <option value="What is your favorite movie?">What is your favorite movie?</option>
-                    <option value="What was your dream job as a child?">What was your dream job as a child?</option>
-                    <option value="custom">Other (Create your own question)</option>
-                  </select>
-                </div>
-              </div>
-
-              {question === 'custom' && (
-                <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                  <label className="block text-xs font-black uppercase tracking-wider text-black">Your Custom Question</label>
-                  <input
-                    type="text"
-                    value={customQuestion}
-                    onChange={e => setCustomQuestion(e.target.value)}
-                    className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 text-sm text-black font-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
-                    placeholder="Type your own security question"
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="block text-xs font-black uppercase tracking-wider text-black">Your Answer</label>
-                <input
-                  type="text"
-                  value={answer}
-                  onChange={e => setAnswer(e.target.value)}
-                  className="w-full h-[60px] bg-white border border-neutral-100 rounded-2xl px-5 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
-                  placeholder="Enter secret answer"
-                />
-              </div>
-
-              <button
-                onClick={handleSecuritySubmit}
-                disabled={!answer || loading}
+                onClick={handlePinSubmit}
+                disabled={pin.length !== 6 || confirmPin !== pin || loading}
                 className={clsx('w-full bg-secondary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-secondary-600 transition-all duration-150 flex items-center justify-center gap-2 mt-4', loading && 'opacity-70')}
               >
                 {loading
@@ -378,7 +253,7 @@ export function JoinOrganizationPage() {
               </div>
               <div>
                 <h2 className="text-2xl font-extrabold text-primary-500 mb-2">Welcome to Soole!</h2>
-                <p className="text-sm text-neutral-300">Your account is ready. Redirecting to login...</p>
+                <p className="text-sm text-neutral-300">Your account is ready. Redirecting...</p>
               </div>
             </div>
           )}

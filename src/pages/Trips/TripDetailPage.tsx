@@ -13,15 +13,10 @@ import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
 import { LiveTracker } from './components/LiveTracker'
 import { CommentsModal } from './components/CommentsModal'
+import { EditTripModal } from './components/EditTripModal'
 
 /** Fleet-wide hard speed limit in km/h */
 const SPEED_LIMIT_KMH = 100
-
-/** Estimate scheduled average speed in km/h */
-function calcAvgSpeed(distanceKm: number, durationMinutes: number): number {
-  if (!durationMinutes) return 0
-  return Math.round((distanceKm / durationMinutes) * 60)
-}
 
 export function TripDetailPage() {
   const { id } = useParams()
@@ -35,6 +30,7 @@ export function TripDetailPage() {
   const setNotifications = ctx?.setNotifications
 
   const [showAllComments, setShowAllComments] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   const trip = rawTrip ? adaptTrip(rawTrip) : null
 
@@ -80,8 +76,8 @@ export function TripDetailPage() {
     )
   }
 
-  const distanceKm = 0
-  const durationMinutes = 0
+  const { distanceKm, durationMinutes, avgSpeedKmh, estimatedFuelLiters } = trip
+  const hasTelemetry = distanceKm > 0
 
   const isLive = trip.status === 'boarding' || trip.status === 'in_progress'
   const isScheduled = trip.status === 'scheduled'
@@ -89,7 +85,7 @@ export function TripDetailPage() {
 
   const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
 
-  const handleEdit = () => guardAction(undefined, () => toast('Edit trip details'))
+  const handleEdit = () => guardAction(undefined, () => setShowEditModal(true))
   const handleCancel = () => guardAction(undefined, async () => {
     if (!orgUuid || !id) return
     try {
@@ -157,19 +153,17 @@ export function TripDetailPage() {
 
             {/* Completed trip summary stats — only for completed trips */}
             {isCompleted && (() => {
-              const avgSpeed = calcAvgSpeed(distanceKm, durationMinutes)
-              const estFuelL = Math.round((distanceKm / 100) * 10)
               const hrs = Math.floor(durationMinutes / 60)
               const mins = durationMinutes % 60
-              const timeTaken = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`
+              const timeTaken = hasTelemetry ? (hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`) : 'N/A'
 
               const driverObj = data.drivers?.find((d: any) => d.id === trip.driverId)
               const avgTripRating = driverObj?.avgRating ? driverObj.avgRating.toFixed(1) : '—'
 
               const completedStats = [
-                { icon: Navigation, label: 'Distance Covered', value: `${distanceKm} km`,  color: 'text-secondary-300' },
-                { icon: Gauge,      label: 'Avg Speed',        value: `${avgSpeed} km/h`,   color: 'text-primary-400'   },
-                { icon: Droplets,   label: 'Est. Fuel Used',   value: `${estFuelL} L`,      color: 'text-blue-400'      },
+                { icon: Navigation, label: 'Distance Covered', value: hasTelemetry ? `${distanceKm} km` : 'N/A',  color: 'text-secondary-300' },
+                { icon: Gauge,      label: 'Avg Speed',        value: hasTelemetry ? `${avgSpeedKmh} km/h` : 'N/A',   color: 'text-primary-400'   },
+                { icon: Droplets,   label: 'Est. Fuel Used',   value: hasTelemetry ? `${estimatedFuelLiters} L` : 'N/A',      color: 'text-blue-400'      },
                 { icon: Clock,      label: 'Time Taken',       value: timeTaken,             color: 'text-orange-400'    },
               ]
               return (
@@ -249,9 +243,24 @@ export function TripDetailPage() {
       {/* Comments Modal */}
       {showAllComments && (
         <CommentsModal
-          trip={trip}
-          data={data}
+          tripRouteName={trip.routeName}
+          comments={comments}
           onClose={() => setShowAllComments(false)}
+        />
+      )}
+
+      {/* Edit Trip Modal */}
+      {showEditModal && orgUuid && id && (
+        <EditTripModal
+          orgUuid={orgUuid}
+          tripId={id}
+          departureAt={trip.departureAt}
+          pricePerSeat={trip.fare}
+          onClose={() => setShowEditModal(false)}
+          onSaved={() => {
+            setShowEditModal(false)
+            window.location.reload()
+          }}
         />
       )}
     </div>

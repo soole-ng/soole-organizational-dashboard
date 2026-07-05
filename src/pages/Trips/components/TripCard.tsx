@@ -2,32 +2,13 @@ import { Link } from 'react-router-dom'
 import { Clock, Users, ArrowRight, MapPin } from 'lucide-react'
 import { clsx } from 'clsx'
 import { StatusPill } from '../../../components/ui/StatusPill'
+import { DriverAvatar } from '../../../components/ui/DriverAvatar'
 import type { Trip } from '../../../types'
 import { formatTime, formatMoney } from '../../../lib/formatters'
 
 interface TripCardProps {
   trip: Trip
   compact?: boolean
-}
-
-const getDriverAvatar = (name: string) => {
-  const avatars: Record<string, string> = {
-    'Akin Bello': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80',
-    'Chidi Okafor': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80',
-    'Ibrahim Musa': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&h=150&q=80',
-    'Funke Adeleke': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80',
-  }
-  return avatars[name] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'
-}
-
-function DriverAvatar({ name }: { name: string }) {
-  return (
-    <img
-      src={getDriverAvatar(name)}
-      alt={name}
-      className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-neutral-100/50"
-    />
-  )
 }
 
 export function TripCard({ trip, compact }: TripCardProps) {
@@ -93,7 +74,7 @@ export function TripCard({ trip, compact }: TripCardProps) {
           {/* Driver + Revenue row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <DriverAvatar name={trip.driverName} />
+              <DriverAvatar name={trip.driverName} size="sm" />
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold text-primary-500 truncate">{trip.driverName}</p>
                 <p className="text-[10px] text-neutral-200">{trip.vehiclePlate}</p>

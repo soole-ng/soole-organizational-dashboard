@@ -8,7 +8,8 @@ import { useOrg } from '../../lib/OrgContext'
 import { useQuery } from '@tanstack/react-query'
 import { tripsApi } from '../../api/trips'
 import { clsx } from 'clsx'
-import type { StatusVariant } from '../../types'
+import { isToday, isThisWeek } from 'date-fns'
+import type { StatusVariant, Trip } from '../../types'
 
 const tabs = ['Today', 'This Week', 'All']
 const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
@@ -20,9 +21,9 @@ const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
 ]
 
 export function TripsListPage() {
-  const { data: trips = [], isLoading } = useQuery({
+  const { data: trips = [], isLoading } = useQuery<Trip[]>({
     queryKey: ['trips'],
-    queryFn: tripsApi.getTrips
+    queryFn: () => tripsApi.getTrips()
   })
   const { guardAction } = useOrg()
   const navigate = useNavigate()
@@ -49,18 +50,25 @@ export function TripsListPage() {
 
   const filtered = trips.filter((t: any) => {
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
-    
+
+    let matchesTab = true;
+    const departureDate = t.departureAt ? new Date(t.departureAt) : null;
+    if (departureDate) {
+      if (activeTab === 'Today') matchesTab = isToday(departureDate);
+      else if (activeTab === 'This Week') matchesTab = isThisWeek(departureDate, { weekStartsOn: 1 });
+    }
+
     let matchesSearch = true;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      matchesSearch = 
+      matchesSearch =
         t.origin.toLowerCase().includes(q) ||
         t.destination.toLowerCase().includes(q) ||
         t.driverName.toLowerCase().includes(q) ||
         t.vehiclePlate.toLowerCase().includes(q);
     }
-    
-    return matchesStatus && matchesSearch;
+
+    return matchesStatus && matchesTab && matchesSearch;
   })
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);

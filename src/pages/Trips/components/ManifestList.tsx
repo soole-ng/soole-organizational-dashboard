@@ -5,6 +5,7 @@ import type { Passenger } from '../../../types'
 import { formatTime } from '../../../lib/formatters'
 import { requestRefund } from '../../../lib/refundApi'
 import { organizationApi } from '../../../api/client'
+import { DriverAvatar } from '../../../components/ui/DriverAvatar'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../../lib/OrgContext'
 
@@ -14,35 +15,6 @@ interface ManifestListProps {
   tripStatus: string
   /** Trip ID — sent to backend on refund request */
   tripId: string
-}
-
-/**
- * Map passenger names to realistic AI-generated portrait photos.
- * Uses randomuser.me portraits (seeded by index slot for consistency).
- */
-const FEMALE_PORTRAITS = [
-  'https://randomuser.me/api/portraits/women/44.jpg',
-  'https://randomuser.me/api/portraits/women/68.jpg',
-  'https://randomuser.me/api/portraits/women/25.jpg',
-  'https://randomuser.me/api/portraits/women/55.jpg',
-  'https://randomuser.me/api/portraits/women/12.jpg',
-]
-const MALE_PORTRAITS = [
-  'https://randomuser.me/api/portraits/men/32.jpg',
-  'https://randomuser.me/api/portraits/men/47.jpg',
-  'https://randomuser.me/api/portraits/men/64.jpg',
-  'https://randomuser.me/api/portraits/men/15.jpg',
-  'https://randomuser.me/api/portraits/men/78.jpg',
-]
-
-// Female names detector (simple — checks common Nigerian female name patterns)
-const FEMALE_NAMES = ['adaeze', 'halima', 'ngozi', 'funke', 'chioma', 'amaka', 'blessing', 'grace', 'mary', 'fatima']
-
-function getPortrait(name: string, index: number): string {
-  const firstName = name.split(' ')[0].toLowerCase()
-  const isFemale = FEMALE_NAMES.some(f => firstName.startsWith(f) || firstName === f)
-  const pool = isFemale ? FEMALE_PORTRAITS : MALE_PORTRAITS
-  return pool[index % pool.length]
 }
 
 export function ManifestList({ passengers: initial, tripStatus, tripId }: ManifestListProps) {
@@ -142,7 +114,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
 
       {/* Responsive grid — 2 columns on mobile, 3 columns on larger screens */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-        {passengers.map((pass, idx) => {
+        {passengers.map((pass) => {
           const isPaid = pass.paymentStatus === 'paid'
           const isRefunded = pass.paymentStatus === 'refunded'
           const isBoarded = pass.boardingStatus === 'boarded'
@@ -150,22 +122,13 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
           const showCheck = isBoarded || (isScheduled && isPaid)
           // Refundable: completed, paid, didn't board
           const canRefund = isCompleted && isPaid && !isBoarded
-          const portrait = getPortrait(pass.name, idx)
 
           return (
             <div
               key={pass.id}
               className="flex flex-col items-center gap-3 p-4 rounded-2xl border border-neutral-100 bg-white text-center transition-colors"
             >
-              {/* AI portrait photo */}
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-neutral-100 flex-shrink-0">
-                <img
-                  src={portrait}
-                  alt={pass.name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </div>
+              <DriverAvatar name={pass.name} size="lg" />
 
               {/* Name + status */}
               <div className="w-full min-w-0">

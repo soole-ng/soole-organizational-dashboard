@@ -15,7 +15,7 @@ export function DriverDetailModal({ selectedDriver, onClose }: DriverDetailModal
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white w-full max-w-2xl rounded-3xl shadow-float flex flex-col max-h-[90vh]">
         <div className="flex items-center gap-4 px-6 py-5 border-b border-neutral-100 flex-shrink-0">
-          <DriverAvatar driverId={selectedDriver.id} name={selectedDriver.name} size="lg" />
+          <DriverAvatar photoUrl={selectedDriver.photo} name={selectedDriver.name} size="lg" />
           <div className="flex-1 min-w-0">
             <h2 className="text-xl font-black text-black truncate">{selectedDriver.name}</h2>
             <div className="flex items-center gap-2 mt-1">

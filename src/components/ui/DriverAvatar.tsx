@@ -1,22 +1,42 @@
 import { clsx } from 'clsx'
 
-export const getDriverAvatar = (driverId: string) => {
-  const avatars: Record<string, string> = {
-    'd1': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&h=150&q=80',
-    'd2': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&h=150&q=80',
-    'd3': 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&h=150&q=80',
-    'd4': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&h=150&q=80',
-  }
-  return avatars[driverId] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'
+function initials(name: string): string {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0]?.toUpperCase() ?? '')
+    .join('')
 }
 
-export function DriverAvatar({ driverId, name, size = 'md' }: { driverId: string; name: string; size?: 'sm' | 'md' | 'lg' }) {
-  const sizeClass = size === 'lg' ? 'w-16 h-16' : size === 'md' ? 'w-10 h-10' : 'w-8 h-8'
+/**
+ * Shows the driver's real photo when one exists on their record; otherwise
+ * falls back to their initials. There is no stock-photo substitute here -
+ * the backend has no driver photo field populated yet for most drivers, and
+ * showing a stranger's stock photo as if it were theirs is worse than a
+ * plain initials avatar.
+ */
+export function DriverAvatar({ photoUrl, name, size = 'md' }: { photoUrl?: string; name: string; size?: 'sm' | 'md' | 'lg' }) {
+  const sizeClass = size === 'lg' ? 'w-16 h-16 text-xl' : size === 'md' ? 'w-10 h-10 text-sm' : 'w-8 h-8 text-xs'
+
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt={name}
+        className={clsx('rounded-full object-cover flex-shrink-0 border border-neutral-100/50', sizeClass)}
+      />
+    )
+  }
+
   return (
-    <img
-      src={getDriverAvatar(driverId)}
-      alt={name}
-      className={clsx('rounded-full object-cover flex-shrink-0 border border-neutral-100/50', sizeClass)}
-    />
+    <div
+      className={clsx(
+        'rounded-full flex-shrink-0 bg-[#042011] text-white font-bold flex items-center justify-center border border-neutral-100/50',
+        sizeClass
+      )}
+    >
+      {initials(name)}
+    </div>
   )
 }

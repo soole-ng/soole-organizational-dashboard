@@ -88,7 +88,7 @@ export function FleetPage() {
               return (
                 <div key={driver.id} className="flex flex-col items-center gap-1.5 flex-shrink-0 w-14">
                   <div className="relative">
-                    <DriverAvatar driverId={driver.id} name={driver.name} size="md" />
+                    <DriverAvatar photoUrl={driver.photo} name={driver.name} size="md" />
                     <span className={clsx('absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white', statusColor)} />
                   </div>
                   <p className="text-[9px] text-neutral-200 text-center truncate w-full font-medium">{driver.name.split(' ')[0]}</p>

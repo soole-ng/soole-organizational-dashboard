@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Plus, History, Car } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
@@ -23,20 +23,10 @@ export function VehiclesPage() {
   const { guardAction } = useOrg()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
-  
-  const [vehiclesList, setVehiclesList] = useState<any[]>([])
 
-  useEffect(() => {
-    if (data.vehicles.length > 0 && vehiclesList.length === 0) {
-      setVehiclesList(data.vehicles)
-    }
-  }, [data.vehicles])
-
-
-
-  const filtered = vehiclesList.filter(v => filter === 'all' || v.status === filter)
-  const totalSeats = vehiclesList.reduce((a, v) => a + v.capacity, 0)
-  const verified = vehiclesList.filter(v => v.status === 'verified').length
+  const filtered = data.vehicles.filter(v => filter === 'all' || v.status === filter)
+  const totalSeats = data.vehicles.reduce((a, v) => a + v.capacity, 0)
+  const verified = data.vehicles.filter(v => v.status === 'verified').length
 
   const vehicleTrips = historyVehicle
     ? data.trips.filter((t: any) => t.vehicleId === historyVehicle.id)

@@ -1,16 +1,17 @@
-import { useState, useRef } from 'react'
-import { Plus, Phone, Award, Users } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, Phone, Award, Users, RefreshCw, Loader2 } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useApiData } from '../../lib/useApiData'
 import { useOrg } from '../../lib/OrgContext'
+import { fleetApi } from '../../api/client'
 import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
-import toast from 'react-hot-toast'
 import { StarRating } from '../../components/ui/StarRating'
-import { DriverAvatar, getDriverAvatar } from '../../components/ui/DriverAvatar'
+import { DriverAvatar } from '../../components/ui/DriverAvatar'
 import { InviteDriverModal } from './components/InviteDriverModal'
 import { DriverDetailModal } from './components/DriverDetailModal'
+import toast from 'react-hot-toast'
 
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'All', value: 'all' },
@@ -23,10 +24,26 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
 
 export function DriversPage() {
   const { data, loading } = useApiData()
-  const { guardAction } = useOrg()
+  const { guardAction, orgUuid } = useOrg()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [showAddSheet, setShowAddSheet] = useState(false)
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null)
+  const [resendingId, setResendingId] = useState<string | null>(null)
+
+  const resendInvite = (driverId: string, driverName: string) => {
+    guardAction(undefined, async () => {
+      if (!orgUuid) return
+      setResendingId(driverId)
+      try {
+        const res = await fleetApi.resendInvite(orgUuid, driverId)
+        toast.success(res.message ?? `Invite resent to ${driverName}`)
+      } catch (err: any) {
+        toast.error(err?.message ?? 'Failed to resend invite')
+      } finally {
+        setResendingId(null)
+      }
+    })
+  }
 
   const filtered = data.drivers.filter(d => filter === 'all' || d.status === filter)
   const verified = data.drivers.filter(d => d.status === 'verified').length
@@ -119,11 +136,7 @@ export function DriversPage() {
                 {/* Header — dark green, 40% transparent */}
                 <div className="bg-[#042011]/60 px-4 py-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={getDriverAvatar(driver.id)}
-                      alt={driver.name}
-                      className="w-10 h-10 rounded-xl object-cover flex-shrink-0 border border-white/20"
-                    />
+                    <DriverAvatar photoUrl={driver.photo} name={driver.name} size="md" />
                     <div>
                       <p className="text-sm font-bold !text-white truncate">{driver.name}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
@@ -171,10 +184,15 @@ export function DriversPage() {
                     <div className="flex items-center gap-2">
                       {driver.status === 'pending' && (
                         <button
-                          onClick={e => { e.stopPropagation(); guardAction(e, () => toast.success(`Invite resent to ${driver.name}`)) }}
-                          className="text-[13px] text-secondary-300 font-bold border border-secondary-300 rounded-lg px-2 py-1"
+                          onClick={e => { e.stopPropagation(); resendInvite(driver.id, driver.name) }}
+                          disabled={resendingId === driver.id}
+                          className="flex items-center gap-1 text-[13px] text-secondary-300 font-bold border border-secondary-300 rounded-lg px-2 py-1 disabled:opacity-60"
                         >
-                          Resend invite
+                          {resendingId === driver.id
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <RefreshCw className="w-3.5 h-3.5" />
+                          }
+                          Resend
                         </button>
                       )}
                       <a

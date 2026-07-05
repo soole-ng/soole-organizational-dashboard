@@ -6,8 +6,19 @@ import { kVehicleMakeModels } from '../../lib/constants'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
-import { vehiclesApi } from '../../api/client'
+import { vehiclesApi, uploadApi } from '../../api/client'
 import { invalidateApiDataCache } from '../../lib/useApiData'
+
+/** Maps each upload step to the backend's VehicleDocType (organization/models.py). */
+const DOC_TYPE_BY_KEY: Record<string, string> = {
+  exteriorFront: 'photo',
+  exteriorSideRight: 'photo',
+  exteriorSideLeft: 'photo',
+  exteriorRear: 'photo',
+  registration: 'registration',
+  roadWorthiness: 'road_worthiness',
+  insurance: 'insurance',
+}
 
 const colors = ['White', 'Black', 'Silver', 'Grey', 'Blue', 'Red', 'Gold', 'Other']
 
@@ -76,6 +87,7 @@ export function AddVehiclePage() {
     insurance: null,
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitProgress, setSubmitProgress] = useState('')
 
   const brands = Object.keys(kVehicleMakeModels).sort()
   const models = brand && brand !== 'Other' ? kVehicleMakeModels[brand] || [] : []
@@ -413,9 +425,11 @@ export function AddVehiclePage() {
                     return
                   }
                   setIsSubmitting(true)
+                  let vehicle: any = null
                   try {
+                    setSubmitProgress('Registering vehicle...')
                     const vehicleTypeMap: Record<string, string> = { Hiace: 'bus', Coaster: 'bus', Sienna: 'van', Other: 'sedan' }
-                    await vehiclesApi.createVehicle(orgUuid, {
+                    vehicle = await vehiclesApi.createVehicle(orgUuid, {
                       plate_number: plate,
                       brand: finalBrand,
                       model: finalModel,
@@ -424,20 +438,44 @@ export function AddVehiclePage() {
                       capacity: parseInt(capacity, 10),
                       vehicle_type: vehicleTypeMap[type] ?? 'sedan',
                     })
-                    invalidateApiDataCache()
-                    toast.success('Vehicle registered and pending review!')
-                    navigate('/fleet/vehicles')
                   } catch (err: any) {
                     toast.error(err?.message ?? 'Failed to register vehicle')
+                    setIsSubmitting(false)
+                    setSubmitProgress('')
+                    return
+                  }
+
+                  // The vehicle record now exists regardless of what happens
+                  // below, so a document-upload failure gets its own message
+                  // rather than the misleading "Failed to register vehicle"
+                  // (which would suggest nothing was created and invite a
+                  // duplicate-plate error on retry).
+                  try {
+                    const entries = Object.entries(uploads).filter(([, v]) => v) as [string, { url: string; file: File }][]
+                    for (let i = 0; i < entries.length; i++) {
+                      const [key, { file }] = entries[i]
+                      setSubmitProgress(`Uploading document ${i + 1} of ${entries.length}...`)
+                      const publicUrl = await uploadApi.uploadFile(file, 'vehicle_document')
+                      await vehiclesApi.uploadDocument(orgUuid, vehicle.id, DOC_TYPE_BY_KEY[key], publicUrl)
+                    }
+                    invalidateApiDataCache()
+                    toast.success('Vehicle registered and pending review!')
+                  } catch (err: any) {
+                    invalidateApiDataCache()
+                    toast.error(
+                      `Vehicle registered, but document upload failed: ${err?.message ?? 'unknown error'}. Contact support to add the missing documents.`
+                    )
                   } finally {
                     setIsSubmitting(false)
+                    setSubmitProgress('')
                   }
+                  navigate('/fleet/vehicles')
                 }}
               >
-                {isSubmitting ? 'Submitting...' : 'Submit Vehicle'}
+                {isSubmitting ? (submitProgress || 'Submitting...') : 'Submit Vehicle'}
               </button>
               <p className="text-[10px] text-neutral-300 text-center mt-2">
-                Document photos are attached to this request but require a follow-up upload step once verification begins.
+                Your vehicle photos and documents will be uploaded and remain pending until verified by our team.
               </p>
             </div>
           </div>

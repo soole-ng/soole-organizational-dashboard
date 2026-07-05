@@ -3,7 +3,11 @@
  * Integrates with soole-backend REST API — no mock data.
  */
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || process.env.VITE_API_URL || 'http://localhost:8000/api'
+// Vite already surfaces VITE_-prefixed vars (from .env or the build-time shell
+// env) on import.meta.env - `process` doesn't exist in the browser bundle, so
+// a `process.env` fallback here throws ReferenceError and crashes the app
+// whenever VITE_API_URL isn't set (which is always, since no .env exists yet).
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api'
 
 interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -121,7 +125,7 @@ export const organizationApi = {
 export const reportsApi = {
   getTripsReport: async (orgUuid: string, filters?: any) => {
     const queryParams = new URLSearchParams(filters || {}).toString()
-    return apiRequest(`/organizations/${orgUuid}/reports/trips${queryParams ? '?' + queryParams : ''}`)
+    return apiRequest<{ trips: any[] }>(`/organizations/${orgUuid}/reports/trips${queryParams ? '?' + queryParams : ''}`)
   },
   getRevenueReport: async (orgUuid: string, filters?: any) => {
     const queryParams = new URLSearchParams(filters || {}).toString()
@@ -129,11 +133,11 @@ export const reportsApi = {
   },
   getDriverReport: async (orgUuid: string, filters?: any) => {
     const queryParams = new URLSearchParams(filters || {}).toString()
-    return apiRequest(`/organizations/${orgUuid}/reports/drivers${queryParams ? '?' + queryParams : ''}`)
+    return apiRequest<{ drivers: any[] }>(`/organizations/${orgUuid}/reports/drivers${queryParams ? '?' + queryParams : ''}`)
   },
   getVehicleReport: async (orgUuid: string, filters?: any) => {
     const queryParams = new URLSearchParams(filters || {}).toString()
-    return apiRequest(`/organizations/${orgUuid}/reports/vehicles${queryParams ? '?' + queryParams : ''}`)
+    return apiRequest<{ vehicles: any[] }>(`/organizations/${orgUuid}/reports/vehicles${queryParams ? '?' + queryParams : ''}`)
   },
   getRouteReport: async (orgUuid: string, filters?: any) => {
     const queryParams = new URLSearchParams(filters || {}).toString()
@@ -156,8 +160,34 @@ export const moneyApi = {
   },
   getWeeklyRevenue: async (orgUuid: string, weekOffset = 0) =>
     apiRequest(`/organizations/${orgUuid}/money/weekly-revenue?week_offset=${weekOffset}`),
-  initiateWithdrawal: async (orgUuid: string, payload: { amount: number; bank_account_id: string; description?: string }) =>
+  initiateWithdrawal: async (orgUuid: string, payload: { amount: number; bank_account_id: string; pin: string; security_answer: string; description?: string }) =>
     apiRequest(`/organizations/${orgUuid}/money/withdraw`, { method: 'POST', body: payload }),
+  /**
+   * Downloads the CSV export directly (not JSON, so this bypasses apiRequest
+   * and drives the browser's native file-save via a temporary blob link).
+   */
+  exportTransactionsCsv: async (orgUuid: string, startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams()
+    if (startDate) params.set('start_date', startDate)
+    if (endDate) params.set('end_date', endDate)
+    const query = params.toString()
+    const token = localStorage.getItem('auth_token')
+
+    const response = await fetch(`${API_BASE_URL}/organizations/${orgUuid}/money/transactions/export${query ? '?' + query : ''}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+    if (!response.ok) throw new Error('Failed to export transactions')
+
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `soole-transactions-${orgUuid}.csv`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  },
 }
 
 /**
@@ -180,6 +210,11 @@ export const vehiclesApi = {
     apiRequest(`/organizations/${orgUuid}/vehicles/${vehicleId}/history`),
   getVehicleLocations: async (orgUuid: string) =>
     apiRequest(`/organizations/${orgUuid}/live-tracking/vehicles`),
+  /** docType must be one of: registration, road_worthiness, insurance, photo (organization.models.VehicleDocType). */
+  uploadDocument: async (orgUuid: string, vehicleId: string, docType: string, fileUrl: string) =>
+    apiRequest(`/organizations/${orgUuid}/vehicles/${vehicleId}/documents`, {
+      method: 'POST', body: { doc_type: docType, file_url: fileUrl },
+    }),
 }
 
 /**
@@ -215,6 +250,11 @@ export const fleetApi = {
     apiRequest(`/fleet/${orgUuid}/drivers/${driverId}`, { method: 'PUT', body: payload }),
   removeDriver: async (orgUuid: string, driverId: string, payload: { reason?: string }) =>
     apiRequest(`/fleet/${orgUuid}/drivers/${driverId}`, { method: 'DELETE', body: payload }),
+  /** driverId here is the OrgInvitation's uuid for a still-pending (not yet signed up) driver. */
+  resendInvite: async (orgUuid: string, driverId: string) =>
+    apiRequest<{ success: boolean; driver_id: string; invite_status: string; message: string }>(
+      `/fleet/${orgUuid}/drivers/${driverId}/resend-invite`, { method: 'POST' }
+    ),
 }
 
 /**
@@ -246,6 +286,30 @@ export const notificationsApi = {
 }
 
 /**
+ * File upload API — common/api.py's file_upload_router, mounted at /permissions/
+ * (shared with mobile app - the same presigned-S3-upload flow used there).
+ */
+export const uploadApi = {
+  /**
+   * Uploads a file to S3 via a presigned URL and returns its permanent public URL.
+   * `purpose` namespaces the S3 key (e.g. 'org_logo', 'cac_document', 'vehicle_document').
+   */
+  uploadFile: async (file: File, purpose: string): Promise<string> => {
+    const { upload_url, public_url } = await apiRequest<{ upload_url: string; object_key: string; public_url: string }>(
+      '/permissions/generate-presigned-upload-url',
+      { method: 'POST', body: { filename: file.name, content_type: file.type, purpose } }
+    )
+    const putResponse = await fetch(upload_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    })
+    if (!putResponse.ok) throw new Error('Failed to upload file to storage')
+    return public_url
+  },
+}
+
+/**
  * Settings API — organization_settings_api.py, mounted at /organizations/
  */
 export const settingsApi = {
@@ -253,9 +317,7 @@ export const settingsApi = {
   updateSettings: async (orgUuid: string, payload: any) =>
     apiRequest(`/organizations/${orgUuid}/settings`, { method: 'PATCH', body: payload }),
   getMembers: async (orgUuid: string) =>
-    apiRequest<{ members: any[] }>(`/organizations/${orgUuid}/members`),
-  inviteMember: async (orgUuid: string, email: string, name: string, role: string) =>
-    apiRequest(`/organizations/${orgUuid}/members/invite`, { method: 'POST', body: { email, name, role } }),
+    apiRequest<any[]>(`/organizations/${orgUuid}/members/`),
   /**
    * Invite via phone + OTP/SMS (organization/api.py's invite_team_member_with_otp).
    * The backend wraps this response in {data, message, status_code, success} via
@@ -267,10 +329,12 @@ export const settingsApi = {
     )
     return res.data
   },
-  changeMemberRole: async (orgUuid: string, memberUuid: string, role: string) =>
-    apiRequest(`/organizations/${orgUuid}/members/${memberUuid}/role`, { method: 'PATCH', body: { role } }),
-  removeMember: async (orgUuid: string, memberUuid: string) =>
-    apiRequest(`/organizations/${orgUuid}/members/${memberUuid}`, { method: 'DELETE' }),
+  /** userUuid here is the member's USER uuid (organization.api.change_member_role takes it in the body, not the URL). */
+  changeMemberRole: async (orgUuid: string, userUuid: string, newRole: string) =>
+    apiRequest(`/organizations/${orgUuid}/members/role/`, { method: 'PATCH', body: { user_uuid: userUuid, new_role: newRole } }),
+  /** userUuid here is the member's USER uuid, matching organization.api.remove_member's path param. */
+  removeMember: async (orgUuid: string, userUuid: string) =>
+    apiRequest(`/organizations/${orgUuid}/members/${userUuid}/`, { method: 'DELETE' }),
   /** Returns a raw array - the real backend (organization/api.py) isn't wrapped in {accounts: [...]} */
   getBankAccounts: async (orgUuid: string) =>
     apiRequest<Array<{ uuid: string; bank_name: string; bank_code?: string; account_number: string; account_name: string; account_type: string; is_primary: boolean; verification_status: string; verification_date?: string }>>(
@@ -343,7 +407,10 @@ export const authApi = {
     }),
   signupOrganization: async (payload: {
     phone: string; pin: string; confirmPin: string; organizationName: string
-    organizationType: string; contactEmail?: string; contactPhone?: string; rcNumber?: string
+    organizationType: string; contactEmail?: string; contactPhone?: string; rcNumber: string
+    // Required - the backend rejects signup without a scanned CAC certificate
+    // (uploaded beforehand via uploadApi.uploadFile(file, 'cac_document')).
+    cacDocumentUrl: string
     // Required - the backend verifies this NIN against firstName+lastName+dob
     // (via Prembly) before creating anything. Enter exactly as it appears on
     // the NIN record, not a nickname or reordered name.
@@ -360,7 +427,38 @@ export const authApi = {
     ),
   refreshToken: async (refreshToken: string) =>
     apiRequest('/accounts/login/refresh-tokens', { method: 'POST', body: { refresh_token: refreshToken } }),
-  getCurrentUser: async () => apiRequest('/accounts/login/get-user-profile'),
+  /**
+   * Re-confirms the signed-in user's own 6-digit PIN without a full OTP
+   * re-login. Throws (via apiRequest) on an incorrect PIN - the caller
+   * doesn't need to inspect the response body, just catch the rejection.
+   */
+  verifyPin: async (pin: string) =>
+    apiRequest<{ data: boolean }>('/accounts/login/verify-pin', { method: 'POST', body: { pin } }),
+  /**
+   * Whether the signed-in user has a security question configured, and its
+   * text (never the answer). Withdrawals require one to be set up first.
+   */
+  getSecurityQuestionStatus: async () =>
+    apiRequest<{ data: { configured: boolean; question: string | null } }>('/accounts/login/security-question-status'),
+  setSecurityQuestion: async (question: string, answer: string) =>
+    apiRequest<{ data: { question: string } }>('/accounts/login/set-security-question', {
+      method: 'POST', body: { question, answer },
+    }),
+  /**
+   * Re-confirms the signed-in user's own security-question answer for a
+   * step-up check inside an already-logged-in session (e.g. before changing
+   * the security question itself, or before a withdrawal).
+   */
+  verifySecurityAnswerSelf: async (answer: string) =>
+    apiRequest<{ data: boolean }>('/accounts/login/verify-security-answer-self', {
+      method: 'POST', body: { answer },
+    }),
+  getCurrentUser: async () => {
+    const res = await apiRequest<{ data: { uuid: string; fullname: string; email?: string; phone_number?: string } }>(
+      '/accounts/login/get-user-profile'
+    )
+    return res.data
+  },
   logout: async () => {
     localStorage.removeItem('auth_token')
     localStorage.removeItem('refresh_token')
@@ -382,6 +480,7 @@ export const apiClient = {
   tracking: trackingApi,
   notifications: notificationsApi,
   settings: settingsApi,
+  upload: uploadApi,
   auth: authApi,
 }
 

@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppShell } from './components/layout/AppShell'
 import { LoginPage } from './pages/Auth/LoginPage'
-import { OnboardingFlow } from './pages/Auth/OnboardingFlow'
 import { JoinOrganizationPage } from './pages/Auth/JoinOrganizationPage'
 import { HomePage } from './pages/Home/HomePage'
 import { TripsListPage } from './pages/Trips/TripsListPage'
@@ -38,7 +37,6 @@ export default function App() {
         <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/join" element={<JoinOrganizationPage />} />
-      <Route path="/onboarding" element={<ProtectedRoute><OnboardingFlow /></ProtectedRoute>} />
 
       <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
         <Route path="/" element={<HomePage />} />
@@ -52,7 +50,7 @@ export default function App() {
         <Route path="/fleet/vehicles" element={<VehiclesPage />} />
         <Route path="/fleet/vehicles/new" element={<AddVehiclePage />} />
 
-        <Route path="/money" element={<RoleGuard allowedRoles={['admin', 'finance']}><MoneyPage /></RoleGuard>} />
+        <Route path="/money" element={<RoleGuard allowedRoles={['owner', 'finance']}><MoneyPage /></RoleGuard>} />
         <Route path="/live-map" element={<LiveMapPage />} />
         <Route path="/ai" element={<AIChatPage />} />
         <Route path="/reports" element={<ReportsPage />} />

@@ -1,18 +1,17 @@
 import { Navigate } from 'react-router-dom'
-import { useOrg } from '../../lib/OrgContext'
+import { useOrg, type OrgRole } from '../../lib/OrgContext'
 import toast from 'react-hot-toast'
 import { useEffect } from 'react'
 
 interface RoleGuardProps {
   children: JSX.Element
-  allowedRoles: Array<'admin' | 'dispatcher' | 'finance'>
+  allowedRoles: Array<OrgRole>
 }
 
 export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const { org } = useOrg()
-  const activeRole = org.activeRole || 'admin'
 
-  const isAllowed = allowedRoles.includes(activeRole)
+  const isAllowed = allowedRoles.includes(org.role)
 
   useEffect(() => {
     if (!isAllowed) {

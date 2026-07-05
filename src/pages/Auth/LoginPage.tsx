@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Shield, ChevronDown, Phone, Car, MapPin, CreditCard, Sparkles, HelpCircle, CheckCircle } from 'lucide-react'
+import { Eye, EyeOff, Shield, ChevronDown, Phone, Car, MapPin, CreditCard, Sparkles, HelpCircle, CheckCircle, Upload, Loader2, FileCheck } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
-import { authApi } from '../../api/client'
+import { authApi, uploadApi } from '../../api/client'
 import { z } from 'zod'
+import { PRESET_SECURITY_QUESTIONS, CUSTOM_SECURITY_QUESTION_OPTION } from '../../lib/securityQuestions'
 
 const loginSchema = z.object({
   phone: z.string().length(10, 'Phone must be exactly 10 digits'),
@@ -35,6 +36,7 @@ const signupSchema = z.object({
   suNin: z.string().length(11, 'NIN must be exactly 11 digits'),
   suCompany: z.string().min(1, 'Company name is required'),
   suReg: z.string().min(1, 'RC Number is required'),
+  suCacDocumentUrl: z.string().min(1, 'A scanned copy of your CAC certificate is required'),
   suPin: z.string().length(6, 'PIN must be exactly 6 digits').regex(/^\d+$/, 'PIN must be numeric'),
   suConfirmPin: z.string(),
 }).refine(data => data.suPin === data.suConfirmPin, {
@@ -48,7 +50,7 @@ const ORG_TYPES = [
   { value: 'corporate', label: 'Corporate Transport' },
 ]
 
-type Step = 'login' | 'otp' | 'security_question' | 'signup'
+type Step = 'login' | 'otp' | 'security_question' | 'signup' | 'security_setup'
 
 const COUNTRY_CODES = [
   { code: '+234', flag: 'https://flagcdn.com/w40/ng.png', name: 'Nigeria' },
@@ -81,9 +83,19 @@ export function LoginPage() {
   const [suNin, setSuNin] = useState('')
   const [suCompany, setSuCompany] = useState('')
   const [suReg, setSuReg] = useState('')
+  const [suCacDocumentUrl, setSuCacDocumentUrl] = useState('')
+  const [suCacFileName, setSuCacFileName] = useState('')
+  const [uploadingCac, setUploadingCac] = useState(false)
   const [suOrgType, setSuOrgType] = useState('transport_co')
   const [suPin, setSuPin] = useState('')
   const [suConfirmPin, setSuConfirmPin] = useState('')
+
+  // Post-signup security question setup (optional, skippable - can also be
+  // done/changed later from Settings)
+  const [suSecQuestionChoice, setSuSecQuestionChoice] = useState(PRESET_SECURITY_QUESTIONS[0])
+  const [suSecCustomQuestion, setSuSecCustomQuestion] = useState('')
+  const [suSecAnswer, setSuSecAnswer] = useState('')
+  const [savingSecurityQuestion, setSavingSecurityQuestion] = useState(false)
 
   const [showPw, setShowPw]     = useState(false)
   const [showCC, setShowCC]     = useState(false)
@@ -158,7 +170,7 @@ export function LoginPage() {
   }
 
   const handleSignup = async () => {
-    const result = signupSchema.safeParse({ suFirstName, suLastName, suPhone, suDob, suNin, suCompany, suReg, suPin, suConfirmPin })
+    const result = signupSchema.safeParse({ suFirstName, suLastName, suPhone, suDob, suNin, suCompany, suReg, suCacDocumentUrl, suPin, suConfirmPin })
     if (!result.success) {
       setErrors(result.error.issues.map(i => i.path[0] as string))
       toast.error(result.error.issues[0].message)
@@ -175,6 +187,7 @@ export function LoginPage() {
         organizationName: suCompany,
         organizationType: suOrgType,
         rcNumber: suReg,
+        cacDocumentUrl: suCacDocumentUrl,
         firstName: suFirstName,
         lastName: suLastName,
         dob: suDob,
@@ -184,13 +197,31 @@ export function LoginPage() {
       localStorage.setItem('refresh_token', res.data.refreshToken)
       updateOrg({ approvalStatus: 'pending' })
       toast.success('Organization created! Awaiting admin approval.')
-      navigate('/')
+      setStep('security_setup')
     } catch (err: any) {
       // The backend rejects a NIN that doesn't match the submitted name/DOB
       // with a 403 explaining to enter details exactly as NIN has them.
       toast.error(err?.message ?? 'Signup failed. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSaveSecurityQuestion = async () => {
+    const question = suSecQuestionChoice === CUSTOM_SECURITY_QUESTION_OPTION ? suSecCustomQuestion.trim() : suSecQuestionChoice
+    if (!question || !suSecAnswer.trim()) {
+      toast.error('Enter both a question and an answer')
+      return
+    }
+    setSavingSecurityQuestion(true)
+    try {
+      await authApi.setSecurityQuestion(question, suSecAnswer.trim())
+      toast.success('Security question saved')
+      navigate('/')
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to save security question')
+    } finally {
+      setSavingSecurityQuestion(false)
     }
   }
 
@@ -245,10 +276,10 @@ export function LoginPage() {
             <img src="/soole-icon.png" alt="Soole logo" className="h-full object-contain" />
           </div>
           <h1 className="text-3xl font-extrabold mb-2 font-display">
-            {step === 'login' ? 'Welcome back' : step === 'signup' ? 'Create Account' : 'Verify your phone'}
+            {step === 'login' ? 'Welcome back' : step === 'signup' ? 'Create Account' : step === 'security_setup' ? 'Secure your account' : 'Verify your phone'}
           </h1>
           <p className="text-primary-200 text-sm">
-            {step === 'login' ? 'Sign in to your organization account' : step === 'signup' ? 'Register your company on Soole' : 'Enter the verification code sent via SMS'}
+            {step === 'login' ? 'Sign in to your organization account' : step === 'signup' ? 'Register your company on Soole' : step === 'security_setup' ? 'Set up a security question for account recovery and withdrawals' : 'Enter the verification code sent via SMS'}
           </p>
         </div>
 
@@ -258,13 +289,15 @@ export function LoginPage() {
             {/* Desktop heading */}
             <div className="hidden lg:block mb-8">
               <h1 className="text-4xl font-extrabold text-primary-500 mb-2 font-display">
-                {step === 'login' ? 'Sign in' : step === 'signup' ? 'Register Company' : 'Verify your phone'}
+                {step === 'login' ? 'Sign in' : step === 'signup' ? 'Register Company' : step === 'security_setup' ? 'Secure your account' : 'Verify your phone'}
               </h1>
               <p className="text-neutral-300 text-base">
                 {step === 'login'
                   ? 'Enter your phone number and password to continue'
                   : step === 'signup'
                   ? 'Fill out your basic details to get started'
+                  : step === 'security_setup'
+                  ? 'Set up a security question - used for account recovery and required before withdrawals'
                   : 'Enter the 6-digit verification code sent to your phone'}
               </p>
             </div>
@@ -491,6 +524,51 @@ export function LoginPage() {
 
                   <div className="space-y-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      CAC Certificate <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="file"
+                      id="signup-cac-upload"
+                      accept="image/*,.pdf"
+                      className="hidden"
+                      disabled={uploadingCac}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        e.target.value = ''
+                        if (!file) return
+                        setUploadingCac(true)
+                        try {
+                          const publicUrl = await uploadApi.uploadFile(file, 'cac_document')
+                          setSuCacDocumentUrl(publicUrl)
+                          setSuCacFileName(file.name)
+                          setErrors(errors.filter(err => err !== 'suCacDocumentUrl'))
+                        } catch (err: any) {
+                          toast.error(err?.message ?? 'Failed to upload CAC certificate')
+                        } finally {
+                          setUploadingCac(false)
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="signup-cac-upload"
+                      className={clsx(
+                        "w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black transition-all flex items-center gap-2 cursor-pointer aria-disabled:opacity-60 aria-disabled:cursor-not-allowed",
+                        getBorderClass('suCacDocumentUrl')
+                      )}
+                      aria-disabled={uploadingCac}
+                    >
+                      {uploadingCac ? (
+                        <><Loader2 className="w-4 h-4 animate-spin text-neutral-300" /> Uploading…</>
+                      ) : suCacDocumentUrl ? (
+                        <><FileCheck className="w-4 h-4 text-secondary-300" /> <span className="truncate">{suCacFileName}</span></>
+                      ) : (
+                        <><Upload className="w-4 h-4 text-neutral-300" /> <span className="text-neutral-300 font-semibold">Upload scanned CAC certificate</span></>
+                      )}
+                    </label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">
                       Business Type <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -578,6 +656,68 @@ export function LoginPage() {
                   </button>
                   <button onClick={() => { setStep('login'); setOtp('') }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
                     ← Back to login
+                  </button>
+                </div>
+              ) : step === 'security_setup' ? (
+                <div className="space-y-7">
+                  <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
+                    <Shield className="w-5 h-5 text-black flex-shrink-0" />
+                    <p className="text-xs text-black leading-relaxed font-black">
+                      Choose a security question or write your own. You'll need to answer it before withdrawing funds, or if you ever forget your PIN.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">Question</label>
+                    <div className="relative">
+                      <select
+                        value={suSecQuestionChoice}
+                        onChange={e => setSuSecQuestionChoice(e.target.value)}
+                        className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-sm font-bold text-black appearance-none focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+                      >
+                        {PRESET_SECURITY_QUESTIONS.map(q => (
+                          <option key={q} value={q}>{q}</option>
+                        ))}
+                        <option value={CUSTOM_SECURITY_QUESTION_OPTION}>{CUSTOM_SECURITY_QUESTION_OPTION}</option>
+                      </select>
+                      <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {suSecQuestionChoice === CUSTOM_SECURITY_QUESTION_OPTION && (
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black">Your Question</label>
+                      <input
+                        type="text"
+                        value={suSecCustomQuestion}
+                        onChange={e => setSuSecCustomQuestion(e.target.value)}
+                        className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-sm font-bold text-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+                        placeholder="Write your own security question"
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">Answer</label>
+                    <input
+                      type="text"
+                      value={suSecAnswer}
+                      onChange={e => setSuSecAnswer(e.target.value)}
+                      className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-sm font-bold text-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+                      placeholder="Your answer"
+                      onKeyDown={e => e.key === 'Enter' && handleSaveSecurityQuestion()}
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSaveSecurityQuestion}
+                    disabled={savingSecurityQuestion || !suSecAnswer.trim() || (suSecQuestionChoice === CUSTOM_SECURITY_QUESTION_OPTION && !suSecCustomQuestion.trim())}
+                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2', savingSecurityQuestion && 'opacity-70')}
+                  >
+                    {savingSecurityQuestion ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving…</> : 'Save & Continue'}
+                  </button>
+                  <button onClick={() => navigate('/')} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
+                    Set up later in Settings
                   </button>
                 </div>
               ) : (

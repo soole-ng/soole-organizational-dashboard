@@ -4,12 +4,7 @@
  * The Soole platform logo is shown separately (powered by).
  */
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
-import { orgApi, settingsApi } from '../api/client'
-
-export interface SecurityQuestion {
-  question: string
-  answer: string
-}
+import { orgApi, settingsApi, authApi } from '../api/client'
 
 export interface BankAccount {
   id: string
@@ -19,18 +14,19 @@ export interface BankAccount {
   isPrimary: boolean
 }
 
+/** Matches organization.models.OrgMemberRole's real values. */
+export type OrgRole = 'owner' | 'finance' | 'manager' | 'viewer'
+
 interface OrgProfile {
   name: string
   logoUrl: string | null   // org's own uploaded logo
-  role: string
-  activeRole: 'admin' | 'dispatcher' | 'finance'
+  /** The signed-in user's real role in this org, fetched from GET /organizations/{org_uuid}/members/. */
+  role: OrgRole
   commissionPct: number
   email?: string
   phone?: string
-  securityQuestions?: SecurityQuestion[]
   bankAccounts?: BankAccount[]
   isBalanceHidden?: boolean
-  isNewUser?: boolean
   approvalStatus?: 'incomplete' | 'pending' | 'approved'
   registrationDetails?: {
     firstName?: string
@@ -53,22 +49,17 @@ interface OrgContextValue {
   guardAction: (e?: React.SyntheticEvent, callback?: () => void) => boolean
 }
 
+// Deliberately no fake company name/email/phone/security-answers here -
+// those used to be hardcoded ("Speedway Transport", "Ojota", etc.) and were
+// shown to users as if they were their own saved data before anything had
+// actually loaded from the backend.
 const DEFAULT_ORG: OrgProfile = {
-  name: 'Speedway Transport',
+  name: '',
   logoUrl: null,
-  role: 'Owner',
-  activeRole: 'admin',
+  role: 'viewer',
   commissionPct: 8,
-  email: 'contact@speedway.ng',
-  phone: '+234 803 123 4567',
-  securityQuestions: [
-    { question: 'What is your favourite food?', answer: 'Ojota' },
-    { question: 'What was the name of your first school?', answer: 'Lagos Primary' },
-    { question: 'What is your mother\'s maiden name?', answer: 'Alabi' },
-  ],
   bankAccounts: [],
   isBalanceHidden: false,
-  isNewUser: false,
   approvalStatus: 'approved'
 }
 
@@ -115,6 +106,21 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           }))
         } catch {
           // Settings fetch failing shouldn't block org_uuid bootstrap
+        }
+
+        try {
+          const [currentUser, members] = await Promise.all([
+            authApi.getCurrentUser(),
+            settingsApi.getMembers(primary.uuid) as Promise<any[]>,
+          ])
+          if (cancelled) return
+          const myMembership = members.find(m => m.user_uuid === currentUser.uuid)
+          if (myMembership) {
+            setOrg(prev => ({ ...prev, role: myMembership.role as OrgRole }))
+          }
+        } catch {
+          // Role fetch failing shouldn't block org_uuid bootstrap - default
+          // role stays 'viewer' (the safest/most restrictive fallback)
         }
       })
       .catch(() => {

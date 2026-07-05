@@ -180,8 +180,7 @@ export function ReportsPage() {
                 onClick={() => {
                   handleAction()
                   if (!isProfileIncomplete) {
-                    toast.loading('Generating PDF report...', { duration: 1500 })
-                    setTimeout(() => toast.success('PDF report downloaded successfully!'), 1500)
+                    toast('PDF export is coming soon', { icon: '🚧' })
                   }
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-primary-500 border border-neutral-100 transition-colors"
@@ -192,8 +191,7 @@ export function ReportsPage() {
                 onClick={() => {
                   handleAction()
                   if (!isProfileIncomplete) {
-                    toast.loading('Generating Excel sheet...', { duration: 1500 })
-                    setTimeout(() => toast.success('Excel sheet downloaded successfully!'), 1500)
+                    toast('Excel export is coming soon', { icon: '🚧' })
                   }
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-[#1D754C] border border-neutral-100 transition-colors"
@@ -244,8 +242,7 @@ export function ReportsPage() {
                     onClick={() => {
                       handleAction()
                       if (!isProfileIncomplete) {
-                        toast.loading(`Preparing ${label} (PDF)...`, { duration: 1500 })
-                        setTimeout(() => toast.success(`${label} downloaded as PDF`), 1500)
+                        toast(`${label} PDF export is coming soon`, { icon: '🚧' })
                       }
                     }}
                     className="w-8 h-8 rounded-xl bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center border border-neutral-100 text-primary-400 hover:text-primary-500 transition-colors"
@@ -257,8 +254,7 @@ export function ReportsPage() {
                     onClick={() => {
                       handleAction()
                       if (!isProfileIncomplete) {
-                        toast.loading(`Preparing ${label} (Excel)...`, { duration: 1500 })
-                        setTimeout(() => toast.success(`${label} downloaded as Excel`), 1500)
+                        toast(`${label} Excel export is coming soon`, { icon: '🚧' })
                       }
                     }}
                     className="w-8 h-8 rounded-xl bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center border border-neutral-100 text-[#1D754C] hover:text-[#16593a] transition-colors"

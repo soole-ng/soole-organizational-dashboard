@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Download, Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X, ChevronDown, Eye, EyeOff, Filter, AlertCircle } from 'lucide-react'
+import { Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X, ChevronDown, Eye, EyeOff, Filter, AlertCircle, Download, Loader2 } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { useApiData } from '../../lib/useApiData'
-import { moneyApi, settingsApi } from '../../api/client'
+import { moneyApi, settingsApi, authApi } from '../../api/client'
 import { formatDate, formatDateTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
+import { Link } from 'react-router-dom'
 
 const tabs = ['Transactions', 'Payouts']
 
@@ -54,11 +55,28 @@ export function MoneyPage() {
   const [showModal, setShowModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedAccountId, setSelectedAccountId] = useState('')
+  const [withdrawPin, setWithdrawPin] = useState('')
+  const [withdrawSecurityAnswer, setWithdrawSecurityAnswer] = useState('')
+  const [securityQuestion, setSecurityQuestion] = useState<string | null>(null)
+  const [securityQuestionConfigured, setSecurityQuestionConfigured] = useState<boolean | null>(null)
 
   // Filter states
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [exportingCsv, setExportingCsv] = useState(false)
+
+  const handleExportCsv = async () => {
+    if (!orgUuid) return
+    setExportingCsv(true)
+    try {
+      await moneyApi.exportTransactionsCsv(orgUuid, startDate || undefined, endDate || undefined)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to export transactions')
+    } finally {
+      setExportingCsv(false)
+    }
+  }
 
   const selectedAccount = bankAccounts.find(a => a.uuid === selectedAccountId) || primaryAccount
 
@@ -83,7 +101,15 @@ export function MoneyPage() {
     if (!isProfileIncomplete) {
       guardAction(undefined, () => {
         setSelectedAccountId(primaryAccount?.uuid || '')
+        setWithdrawPin('')
+        setWithdrawSecurityAnswer('')
         setShowModal(true)
+        authApi.getSecurityQuestionStatus()
+          .then((res: any) => {
+            setSecurityQuestionConfigured(!!res.data?.configured)
+            setSecurityQuestion(res.data?.question ?? null)
+          })
+          .catch(() => setSecurityQuestionConfigured(false))
       })
     }
   }
@@ -94,15 +120,27 @@ export function MoneyPage() {
       toast.error('Select a withdrawal account')
       return
     }
+    if (withdrawPin.length < 4) {
+      toast.error('Enter your PIN')
+      return
+    }
+    if (!withdrawSecurityAnswer.trim()) {
+      toast.error('Answer your security question to confirm')
+      return
+    }
 
     setIsProcessing(true)
     try {
       const res: any = await moneyApi.initiateWithdrawal(orgUuid, {
         amount: balance.withdrawable,
         bank_account_id: selectedAccountId,
+        pin: withdrawPin,
+        security_answer: withdrawSecurityAnswer,
       })
       toast.success(res.message ?? `Withdrawal of NGN ${balance.withdrawable.toLocaleString()} initiated`)
       setShowModal(false)
+      setWithdrawPin('')
+      setWithdrawSecurityAnswer('')
       refetch()
       moneyApi.getBalance(orgUuid).then((b: any) => setBalance({
         available: Number(b.available_balance ?? 0),
@@ -110,6 +148,8 @@ export function MoneyPage() {
       })).catch(() => {})
     } catch (err: any) {
       toast.error(err?.message ?? 'Withdrawal failed. Please try again.')
+      setWithdrawPin('')
+      setWithdrawSecurityAnswer('')
     } finally {
       setIsProcessing(false)
     }
@@ -207,8 +247,13 @@ export function MoneyPage() {
           >
             <Filter className="w-3.5 h-3.5" /> {startDate && endDate ? `${startDate} - ${endDate}` : 'Filter Date'}
           </button>
-          <button className="flex items-center gap-1.5 text-xs text-secondary-300 font-semibold hover:underline">
-            <Download className="w-3.5 h-3.5" /> Export CSV
+          <button
+            onClick={handleExportCsv}
+            disabled={exportingCsv}
+            className="flex items-center gap-1.5 text-xs text-secondary-300 font-semibold hover:underline disabled:opacity-60"
+          >
+            {exportingCsv ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+            Export CSV
           </button>
         </div>
 
@@ -395,9 +440,50 @@ export function MoneyPage() {
                 <p>Destination: {selectedAccount ? `${selectedAccount.bank_name} ****${selectedAccount.account_number?.slice(-4)}` : 'No account selected'}</p>
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Enter your login PIN to confirm</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={withdrawPin}
+                  onChange={e => setWithdrawPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="input-field bg-white text-center tracking-[0.5em] text-lg font-black"
+                  placeholder="••••••"
+                  autoFocus
+                />
+              </div>
+
+              {securityQuestionConfigured === false ? (
+                <div className="bg-secondary-500/10 border border-secondary-300 rounded-xl p-3 text-xs text-neutral-300">
+                  <p className="font-semibold text-primary-500">Security question required</p>
+                  <p className="mt-1">Set up a security question in Settings before you can withdraw.</p>
+                  <Link
+                    to="/settings"
+                    onClick={() => setShowModal(false)}
+                    className="mt-2 inline-block font-semibold text-secondary-600 underline"
+                  >
+                    Go to Settings
+                  </Link>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-semibold text-primary-400 mb-1.5">
+                    {securityQuestion ? securityQuestion : 'Answer your security question to confirm'}
+                  </label>
+                  <input
+                    type="text"
+                    value={withdrawSecurityAnswer}
+                    onChange={e => setWithdrawSecurityAnswer(e.target.value)}
+                    className="input-field bg-white"
+                    placeholder="Your answer"
+                  />
+                </div>
+              )}
+
               <button
                 type="submit"
-                disabled={isProcessing || !selectedAccountId}
+                disabled={isProcessing || !selectedAccountId || withdrawPin.length < 4 || !securityQuestionConfigured || !withdrawSecurityAnswer.trim()}
                 className="btn-primary w-full py-4 text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-400 active:scale-95 transition-all disabled:opacity-60"
               >
                 {isProcessing ? (

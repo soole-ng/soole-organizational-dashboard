@@ -15,7 +15,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
   const { org, guardAction, orgUuid } = useOrg()
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [memberToRemove, setMemberToRemove] = useState<any | null>(null)
-  const [inviteForm, setInviteForm] = useState({ name: '', phone: '', role: 'dispatcher' })
+  const [inviteForm, setInviteForm] = useState({ name: '', phone: '', role: 'manager' })
   const [showInvitePreview, setShowInvitePreview] = useState(false)
   const [invitePreview, setInvitePreview] = useState<{ otp: string; joinLink: string; smsMessage: string } | null>(null)
   const [sendingInvite, setSendingInvite] = useState(false)
@@ -56,7 +56,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
       setMembers(p => [...p, newMember])
       setShowInviteForm(false)
       setShowInvitePreview(false)
-      setInviteForm({ name: '', phone: '', role: 'dispatcher' })
+      setInviteForm({ name: '', phone: '', role: 'manager' })
       setInvitePreview(null)
       toast.success(`SMS invite sent to ${inviteForm.name}!`)
     })
@@ -100,7 +100,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
             <span className={clsx('text-[10px] font-bold uppercase tracking-wider', m.role === 'finance' ? 'text-primary-500' : 'text-primary-400')}>
               {m.role}
             </span>
-            {org.role === 'Owner' && m.role !== 'owner' && (
+            {org.role === 'owner' && m.role !== 'owner' && (
               <button
                 onClick={() => setMemberToRemove(m)}
                 className="p-1.5 rounded-lg text-neutral-200 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
@@ -148,10 +148,9 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
                   value={inviteForm.role}
                   onChange={e => setInviteForm(p => ({ ...p, role: e.target.value }))}
                 >
-                  <option value="finance">Finance (Money access only)</option>
-                  <option value="dispatcher">Dispatcher (All except Money)</option>
-                  <option value="driver">Driver (Trips & Fleet only)</option>
-                  <option value="manager">Manager (Full access)</option>
+                  <option value="finance">Finance (can access money & withdraw)</option>
+                  <option value="manager">Manager (trips, fleet & drivers — no money access)</option>
+                  <option value="viewer">Viewer (read-only)</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
               </div>
@@ -203,7 +202,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
             <button
               onClick={() => {
                 setShowInvitePreview(false)
-                setInviteForm({ name: '', phone: '', role: 'dispatcher' })
+                setInviteForm({ name: '', phone: '', role: 'manager' })
               }}
               className="px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-black transition-colors"
             >

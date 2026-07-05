@@ -103,6 +103,7 @@ export function PayoutSettings() {
         bank_name: tempDetails.bankName,
         account_number: tempDetails.accountNumber,
         account_name: tempDetails.accountName,
+        bank_code: tempDetails.bankCode,
       })
       setBankAccounts(prev => [...prev, {
         uuid: res.uuid,

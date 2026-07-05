@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Users, Wallet, Bell, RefreshCw, HelpCircle, ChevronRight, AlertTriangle, FileText } from 'lucide-react'
+import { Building2, Users, Wallet, Bell, RefreshCw, HelpCircle, ChevronRight, AlertTriangle, FileText, ShieldCheck } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { useApiData } from '../../lib/useApiData'
-import { settingsApi } from '../../api/client'
+import { settingsApi, authApi } from '../../api/client'
 import { clsx } from 'clsx'
 import { useOrg } from '../../lib/OrgContext'
 import toast from 'react-hot-toast'
 
 import { BusinessProfile } from './components/BusinessProfile'
 import { OrganizationTeam } from './components/OrganizationTeam'
-import { SecuritySettings } from './components/SecuritySettings'
 import { AlertSettings } from './components/AlertSettings'
 import { NotificationSettings } from './components/NotificationSettings'
 import { PayoutSettings } from './components/PayoutSettings'
+import { SecuritySettings } from './components/SecuritySettings'
 
 export function SettingsPage() {
   const { org, updateOrg, guardAction, orgUuid } = useOrg()
@@ -59,28 +59,48 @@ export function SettingsPage() {
     }
   }
   
-  // Secure Settings Verification States
-  const [showSecurityConfirm, setShowSecurityConfirm] = useState(false)
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [confirmSecretAnswer, setConfirmSecretAnswer] = useState('')
+  // Settings-changing actions require re-entering the account PIN, verified
+  // for real against POST /accounts/login/verify-pin (the same PIN used to
+  // log in - stored server-side as the user's Django password). This
+  // replaced an old "security confirmation" modal that asked for an account
+  // password and a secret question but checked neither against anything
+  // real: any password was accepted, and the secret answer fell back to a
+  // hardcoded default ("Ojota") baked into the shipped frontend bundle.
+  const [showPinConfirm, setShowPinConfirm] = useState(false)
+  const [pinValue, setPinValue] = useState('')
+  const [verifyingPin, setVerifyingPin] = useState(false)
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null)
-  const [activeQuestionIdx, setActiveQuestionIdx] = useState(0)
-
-  const activeQuestions = org.securityQuestions || [
-    { question: 'What is your favourite food?', answer: 'Ojota' }
-  ]
-  const activeSecQuestion = activeQuestions[activeQuestionIdx]?.question || 'What is your favourite food?'
-  const activeSecAnswer = activeQuestions[activeQuestionIdx]?.answer || 'Ojota'
 
   const executeSecuredAction = (action: () => void) => {
     guardAction(undefined, () => {
       setPendingAction(() => action)
-      const list = org.securityQuestions || []
-      if (list.length > 0) {
-        setActiveQuestionIdx(Math.floor(Math.random() * list.length))
-      }
-      setShowSecurityConfirm(true)
+      setPinValue('')
+      setShowPinConfirm(true)
     })
+  }
+
+  const closePinConfirm = () => {
+    setShowPinConfirm(false)
+    setPinValue('')
+    setPendingAction(null)
+  }
+
+  const handleConfirmPin = async () => {
+    if (pinValue.length < 4) {
+      toast.error('Enter your PIN')
+      return
+    }
+    setVerifyingPin(true)
+    try {
+      await authApi.verifyPin(pinValue)
+      pendingAction?.()
+      closePinConfirm()
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Incorrect PIN')
+      setPinValue('')
+    } finally {
+      setVerifyingPin(false)
+    }
   }
 
   useEffect(() => {
@@ -91,6 +111,7 @@ export function SettingsPage() {
     { icon: Building2, label: 'Business Profile', desc: 'Name, logo, contact and public page' },
     { icon: Users, label: 'Organization Team', desc: `${members.length} members`, badge: members.length },
     { icon: Wallet, label: 'Payout Settings', desc: 'Bank account and payout schedule' },
+    { icon: ShieldCheck, label: 'Security Question', desc: 'Required to withdraw funds' },
     { icon: Bell, label: 'Notifications', desc: 'Alerts and notification channels' },
     { icon: AlertTriangle, label: 'Alert Settings', desc: 'Speed limits and custom fleet safety alerts' },
     { icon: RefreshCw, label: 'Refund Policy', desc: 'Set your cancellation and refund rules' },
@@ -162,6 +183,10 @@ export function SettingsPage() {
                       <PayoutSettings />
                     )}
 
+                    {label === 'Security Question' && (
+                      <SecuritySettings />
+                    )}
+
                     {label === 'Notifications' && (
                       <NotificationSettings
                         alertChannels={alertChannels}
@@ -197,108 +222,53 @@ export function SettingsPage() {
           })}
         </div>
       </div>
-      {/* ── Global Settings Modification Security Confirmation Modal ── */}
-      {showSecurityConfirm && (
+
+      {/* ── PIN Confirmation Modal ── */}
+      {showPinConfirm && (
         <div
           className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
-          onClick={() => {
-            setShowSecurityConfirm(false)
-            setConfirmPassword('')
-            setConfirmSecretAnswer('')
-            setPendingAction(null)
-          }}
+          onClick={closePinConfirm}
         >
           <div
-            className="bg-white w-full max-w-md rounded-3xl shadow-float flex flex-col p-6 space-y-4"
+            className="bg-white w-full max-w-sm rounded-3xl shadow-float flex flex-col p-6 space-y-4"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-primary-500">Security Authorization</h3>
-                <p className="text-[10px] text-neutral-200">Verification required to apply changes</p>
+                <h3 className="text-sm font-bold text-primary-500">Confirm with PIN</h3>
+                <p className="text-[10px] text-neutral-200">Enter your 6-digit login PIN to continue</p>
               </div>
               <button
-                onClick={() => {
-                  setShowSecurityConfirm(false)
-                  setConfirmPassword('')
-                  setConfirmSecretAnswer('')
-                  setPendingAction(null)
-                }}
+                onClick={closePinConfirm}
                 className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-neutral-50 text-neutral-200 hover:text-primary-400 transition-colors"
               >&#x2715;</button>
             </div>
 
-            <div className="space-y-3">
-              <div className="bg-white p-3.5 rounded-2xl border border-neutral-100 text-xs text-neutral-300 leading-relaxed">
-                To confirm updates to your organization profile or alert parameters, please verify your credentials.
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">Account Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  className="input-field bg-white"
-                  placeholder="Enter account password"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-[10px] font-bold text-primary-400 uppercase">Secret Security Question</label>
-                </div>
-                <p className="text-xs text-primary-500 mb-1.5 font-semibold bg-neutral-50 p-2.5 rounded-xl border border-neutral-100">{activeSecQuestion}</p>
-                <input
-                  type="password"
-                  value={confirmSecretAnswer}
-                  onChange={e => setConfirmSecretAnswer(e.target.value)}
-                  className="input-field bg-white"
-                  placeholder="Enter secret answer"
-                />
-              </div>
-            </div>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={6}
+              autoFocus
+              value={pinValue}
+              onChange={e => setPinValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={e => e.key === 'Enter' && handleConfirmPin()}
+              className="input-field bg-white text-center tracking-[0.5em] text-lg font-black"
+              placeholder="••••••"
+            />
 
             <div className="flex gap-2 justify-end pt-2">
               <button
-                onClick={() => {
-                  setShowSecurityConfirm(false)
-                  setConfirmPassword('')
-                  setConfirmSecretAnswer('')
-                  setPendingAction(null)
-                }}
+                onClick={closePinConfirm}
                 className="px-4 py-2 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-black transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  if (!confirmPassword.trim()) {
-                    toast.error('Please enter your account password')
-                    return
-                  }
-                  if (!confirmSecretAnswer.trim()) {
-                    toast.error('Please enter your security question answer')
-                    return
-                  }
-                  // Verify security credentials
-                  if (confirmSecretAnswer.trim().toLowerCase() !== activeSecAnswer.toLowerCase()) {
-                    toast.error('Incorrect secret security answer')
-                    return
-                  }
-                  // Simulate password check (accepts any mock password)
-                  if (pendingAction) {
-                    pendingAction()
-                  }
-                  setShowSecurityConfirm(false)
-                  setConfirmPassword('')
-                  setConfirmSecretAnswer('')
-                  setPendingAction(null)
-                  toast.success('Configuration updated and saved securely!')
-                }}
-                className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+                onClick={handleConfirmPin}
+                disabled={verifyingPin || pinValue.length < 4}
+                className="px-4 py-2 bg-primary-500 hover:bg-primary-400 disabled:opacity-60 text-xs font-semibold rounded-xl text-white transition-colors"
               >
-                Authorize & Save
+                {verifyingPin ? 'Verifying…' : 'Confirm'}
               </button>
             </div>
           </div>

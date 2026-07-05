@@ -88,7 +88,7 @@ export function DriverSidebar({
               >
                 <div className="flex items-center gap-3">
                   <div className="relative flex-shrink-0">
-                    <DriverAvatar driverId={driver.id} name={driver.driver} size="sm" />
+                    <DriverAvatar name={driver.driver} size="sm" />
                     <span
                       className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-white"
                       style={{ background: markerColor(driver.status) }}

@@ -28,6 +28,7 @@ export function adaptDriverIdentity(raw: any): Driver {
     id: raw.uuid,
     name: raw.fullname,
     phone: raw.phone_number,
+    photo: raw.photo ?? undefined,
     status: toStatusVariant(raw.org_status),
     vehiclePlate: raw.assigned_vehicle_plate ?? undefined,
     tripsCompleted: 0,
@@ -98,6 +99,10 @@ export function adaptTrip(raw: any): Trip {
     grossRevenue: gross,
     netRevenue: net,
     passengers: (raw.passengers || []).map(adaptPassenger),
+    distanceKm: raw.distance_km ?? 0,
+    durationMinutes: raw.duration_minutes ?? 0,
+    avgSpeedKmh: raw.avg_speed_kmh ?? 0,
+    estimatedFuelLiters: raw.estimated_fuel_liters ?? 0,
   }
 }
 
@@ -165,11 +170,11 @@ export function adaptVehicleLocation(raw: any) {
 /** organization_settings_api.TeamMemberResponseSchema */
 export function adaptOrganizationMember(raw: any): OrganizationMember {
   return {
-    id: raw.id,
-    name: raw.name,
-    email: raw.email,
-    phone: raw.phone ?? undefined,
-    role: (['owner', 'admin', 'dispatcher', 'finance', 'viewer'].includes(raw.role) ? raw.role : 'viewer') as OrganizationMember['role'],
+    id: raw.user_uuid,
+    name: raw.user_fullname,
+    email: raw.user_email ?? undefined,
+    phone: raw.user_phone ?? undefined,
+    role: (['owner', 'finance', 'manager', 'viewer'].includes(raw.role) ? raw.role : 'viewer') as OrganizationMember['role'],
     joinedAt: raw.joined_at,
   }
 }

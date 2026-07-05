@@ -6,11 +6,11 @@ import { tripsApi } from '../../../api/trips'
 export function QuickStats() {
   const { data: weeklyRevenue = [] } = useQuery({
     queryKey: ['weeklyRevenue'],
-    queryFn: tripsApi.getRevenue
+    queryFn: () => tripsApi.getRevenue()
   })
   const { data: summary } = useQuery({
     queryKey: ['weeklyRevenueSummary'],
-    queryFn: tripsApi.getWeeklyRevenueSummary
+    queryFn: () => tripsApi.getWeeklyRevenueSummary()
   })
 
   const totalRevenue = Number(summary?.total_revenue ?? 0)
@@ -24,7 +24,7 @@ export function QuickStats() {
         <div className="bg-[#042011] p-3 rounded-xl border border-neutral-100/20 text-xs shadow-lg">
           <p className="font-bold text-white mb-1 uppercase tracking-wider text-[10px]">Revenue Trend</p>
           <div className="flex items-center gap-4 justify-between">
-            <span className="text-neutral-200">{data.day}day:</span>
+            <span className="text-neutral-200">{data.day}:</span>
             <span className="font-bold text-[#A7C957]">{formatMoneyCompact(data.net)}</span>
           </div>
         </div>

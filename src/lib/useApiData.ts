@@ -57,18 +57,27 @@ function getOrgUuid(): string | null {
 }
 
 async function fetchAll(orgUuid: string): Promise<ApiData> {
+  // These list endpoints are server-paginated (trips default to 12/page,
+  // vehicles/transactions/payouts to 20/page) - fetching with the default
+  // limit meant the dashboard only ever saw page 1, so any org with more
+  // than one page of trips/vehicles/transactions silently lost the rest
+  // regardless of which filter tab was clicked. Requesting a generous
+  // limit here is a stopgap; a real fix would thread pagination through
+  // each consuming page instead of the single shared useApiData cache.
+  const LIST_FETCH_LIMIT = 500
+
   const [
     driversRaw, driverStats, vehiclesRes, tripsRes, transactionsRes,
     payoutsRes, alertsRes, membersRes, weeklyRevenueRes, locationsRaw, routesRaw,
   ] = await Promise.all([
     driversApi.getDrivers(orgUuid).catch(() => []),
     reportsApi.getDriverReport(orgUuid).catch(() => ({ drivers: [] })),
-    vehiclesApi.getVehicles(orgUuid).catch(() => ({ vehicles: [], total: 0 })),
-    organizationApi.getTrips(orgUuid).catch(() => ({ trips: [], total: 0, page: 1, limit: 20 })),
-    moneyApi.getTransactions(orgUuid).catch(() => ({ transactions: [], total_count: 0, page: 1, limit: 20 })),
-    moneyApi.getPayouts(orgUuid).catch(() => ({ payouts: [], total_amount: 0, total_count: 0, page: 1, limit: 20 })),
+    vehiclesApi.getVehicles(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ vehicles: [], total: 0 })),
+    organizationApi.getTrips(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ trips: [], total: 0, page: 1, limit: 20 })),
+    moneyApi.getTransactions(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ transactions: [], total_count: 0, page: 1, limit: 20 })),
+    moneyApi.getPayouts(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ payouts: [], total_amount: 0, total_count: 0, page: 1, limit: 20 })),
     notificationsApi.getNotifications(orgUuid).catch(() => ({ notifications: [], total: 0, unread_count: 0 })),
-    settingsApi.getMembers(orgUuid).catch(() => ({ members: [] })),
+    settingsApi.getMembers(orgUuid).catch(() => []),
     moneyApi.getWeeklyRevenue(orgUuid).catch(() => ({ daily_breakdown: [] })),
     trackingApi.getVehiclesLocations(orgUuid).catch(() => []),
     organizationApi.getRoutes(orgUuid).catch(() => []),
@@ -92,7 +101,7 @@ async function fetchAll(orgUuid: string): Promise<ApiData> {
     transactions: (transactionsRes.transactions || []).map(adaptTransaction),
     payouts: (payoutsRes.payouts || []).map(adaptPayout),
     alerts: (alertsRes.notifications || []).map(adaptAlert),
-    organizationMembers: (membersRes.members || []).map(adaptOrganizationMember),
+    organizationMembers: (membersRes || []).map(adaptOrganizationMember),
     weeklyRevenue: (weeklyRevenueRes.daily_breakdown || []).map(adaptWeeklyRevenueDay),
     vehicleLocations: (locationsRaw || []).map(adaptVehicleLocation),
     aiAssistantSuggestions: [],

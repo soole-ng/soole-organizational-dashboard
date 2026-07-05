@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { tripsApi } from '../../../api/trips'
 import { formatTime, formatOccupancy } from '../../../lib/formatters'
 import { clsx } from 'clsx'
+import type { Trip } from '../../../types'
 
 function TripSkeleton() {
   return (
@@ -21,9 +22,9 @@ function TripSkeleton() {
 }
 
 export function UpcomingTrips() {
-  const { data: trips = [], isLoading: loading } = useQuery({
+  const { data: trips = [], isLoading: loading } = useQuery<Trip[]>({
     queryKey: ['trips'],
-    queryFn: tripsApi.getTrips
+    queryFn: () => tripsApi.getTrips()
   })
   const { guardAction } = useOrg()
 

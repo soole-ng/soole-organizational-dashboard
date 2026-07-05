@@ -98,13 +98,13 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
   const [confirmLogout, setConfirmLogout] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
 
-  const userRole = org.activeRole ? org.activeRole.toLowerCase() : 'admin'
+  const userRole = org.role
 
   const filteredGroups = navGroups.map(group => {
     const items = group.items.filter(item => {
       if (userRole === 'finance') {
         return ['/money', '/settings', '/help'].includes(item.to)
-      } else if (userRole === 'dispatcher') {
+      } else if (userRole === 'manager' || userRole === 'viewer') {
         return item.to !== '/money'
       }
       return true

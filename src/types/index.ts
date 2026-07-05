@@ -76,6 +76,10 @@ export interface Trip {
   grossRevenue: number
   netRevenue: number
   passengers: Passenger[]
+  distanceKm: number
+  durationMinutes: number
+  avgSpeedKmh: number
+  estimatedFuelLiters: number
 }
 
 export interface Passenger {
@@ -121,10 +125,11 @@ export interface Alert {
 }
 
 export interface OrganizationMember {
+  /** The member's USER uuid - remove/role-change endpoints operate on this, not a separate membership id. */
   id: string
   name: string
-  email: string
+  email?: string
   phone?: string
-  role: 'owner' | 'admin' | 'dispatcher' | 'finance' | 'viewer'
+  role: 'owner' | 'finance' | 'manager' | 'viewer'
   joinedAt: string
 }

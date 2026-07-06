@@ -108,7 +108,15 @@ export function JoinOrganizationPage() {
   const [country, setCountry] = useState(COUNTRY_CODES[0])
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
   const [phone, setPhone] = useState(prefillPhone)
-  const fullPhone = `${country.code}${phone.replace(/^0/, '')}`
+  // If we arrived via the invite link (SMS), prefillPhone is already a
+  // full normalized number (e.g. "2348022223333" - country code
+  // included, no leading 0) straight from the backend's join link.
+  // Re-prepending country.code in that case produces a malformed,
+  // double-country-code number for every API call in this flow -
+  // country.code is only needed when the phone came from manual entry.
+  const fullPhone = prefillPhone
+    ? `+${phone.replace(/^\+/, '')}`
+    : `${country.code}${phone.replace(/^0/, '')}`
 
   // Form fields
   const [otp, setOtp] = useState(prefillOtp)
@@ -124,10 +132,7 @@ export function JoinOrganizationPage() {
   const [secAnswer, setSecAnswer] = useState('')
 
   const [loading, setLoading] = useState(false)
-  const [resendLoading, setResendLoading] = useState(false)
   const [invitationDetails, setInvitationDetails] = useState<any>(null)
-  const [otpResendsLeft, setOtpResendsLeft] = useState(2)
-  const [otpCooldown, setOtpCooldown] = useState(0)
 
   const handleInviteValidation = async () => {
     const result = inviteSchema.safeParse({ phone })
@@ -139,13 +144,12 @@ export function JoinOrganizationPage() {
     setLoading(true)
     try {
       // Validate invitation exists for this phone (with country code)
-      // Invitation expires in 3 days
+      // Invitation expires in 3 days. The OTP was already sent by the org
+      // when they created the invitation (OrgInvitation.otp_code) - there's
+      // no separate send-otp call for this flow, they already have the code.
       const res = await authApi.validateOrgInvitation(fullPhone)
       setInvitationDetails(res.data)
-
-      // Send OTP for phone verification
-      await authApi.sendJoinOrgOtp(fullPhone)
-      toast.success('Invitation confirmed! Check your phone for the verification code.')
+      toast.success('Invitation confirmed! Enter the verification code from your invite SMS.')
       setStep('otp')
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'invite_validation'))
@@ -163,8 +167,10 @@ export function JoinOrganizationPage() {
 
     setLoading(true)
     try {
-      // Verify OTP (already sent during invite validation)
-      await authApi.verifyLoginOtp(fullPhone, otp, 0, 0)
+      // Verify against the invitation's own OTP (OrgInvitation.otp_code) -
+      // not verifyLoginOtp, which requires an existing user account and
+      // would 404 for every brand-new team member regardless of the code.
+      await authApi.verifyJoinOrgOtp(fullPhone, otp)
       toast.success('Your phone number is verified!')
       setStep('personal_info')
     } catch (err: any) {
@@ -174,30 +180,10 @@ export function JoinOrganizationPage() {
     }
   }
 
-  const handleResendOtp = async () => {
-    setResendLoading(true)
-    try {
-      const res = await authApi.resendLoginOtp(fullPhone)
-      setOtpResendsLeft(res.data.resends_left)
-      setOtpCooldown(res.data.seconds_until_next)
-      toast.success('OTP resent successfully')
-      setOtp('')
-    } catch (err: any) {
-      toast.error(err?.message ?? 'Failed to resend OTP')
-      const message = err?.message || ''
-      if (message.includes('wait') || message.includes('Locked')) {
-        const match = message.match(/(\d+)m (\d+)s/)
-        if (match) {
-          const mins = parseInt(match[1] || '0')
-          const secs = parseInt(match[2] || '0')
-          const totalSeconds = mins * 60 + secs
-          setOtpCooldown(totalSeconds)
-        }
-      }
-    } finally {
-      setResendLoading(false)
-    }
-  }
+  // No self-serve resend for this flow - the OTP lives on
+  // OrgInvitation.otp_code, set once when the org created the invite.
+  // There's no backend endpoint to regenerate it; if it's lost or
+  // expired, the org has to send a new invitation.
 
   const handlePersonalInfoSubmit = async () => {
     const result = personalInfoSchema.safeParse({ firstName, lastName, nin, dob })
@@ -405,13 +391,8 @@ export function JoinOrganizationPage() {
               value={otp}
               onChange={setOtp}
               onSubmit={handleOtpSubmit}
-              onResend={handleResendOtp}
               loading={loading}
-              resendLoading={resendLoading}
-              resendsLeft={otpResendsLeft}
-              secondsUntilNextResend={otpCooldown}
-              canResend={true}
-              description="We've sent a 5-digit code via SMS to your phone. Please enter it below."
+              description="Enter the 5-digit OTP from your invitation SMS. This is the same code from when your organization invited you - if it's expired or lost, ask them to send a new invitation."
             />
           )}
 

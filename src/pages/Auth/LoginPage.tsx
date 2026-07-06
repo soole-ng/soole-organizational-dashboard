@@ -255,12 +255,14 @@ export function LoginPage() {
   }
 
   const handleSignupOtp = async () => {
-    // Step 2: Verify OTP
+    // Step 2: Verify OTP - verifySignupOtp, not verifyLoginOtp, since no
+    // account exists yet at this point (that requirement made this 404
+    // "Phone number does not exist" for every brand-new signup regardless
+    // of whether the code was correct).
     if (otp.length !== 5) return
     setLoading(true)
     try {
-      // Verify OTP - move to password creation step
-      await authApi.verifyLoginOtp(fullSuPhone, otp, 0, 0)
+      await authApi.verifySignupOtp(fullSuPhone, otp)
       setStep('signup_password')
       setOtp('')
     } catch (err: any) {

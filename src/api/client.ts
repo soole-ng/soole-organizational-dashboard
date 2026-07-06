@@ -440,9 +440,17 @@ export const authApi = {
       method: 'POST', body: { phone }, token: null
     }),
 
-  sendJoinOrgOtp: async (phoneNumber: string) =>
-    apiRequest<LoginEnvelope<{ requires_otp: boolean }>>('/accounts/login/send-otp', {
-      method: 'POST', body: { phone_number: phoneNumber }, token: null
+  /**
+   * Verifies the OTP that was already sent when the org invited this
+   * person - lives on OrgInvitation.otp_code, a separate mechanism from
+   * accounts.OTP, so this can't go through verifyLoginOtp/verifySignupOtp.
+   * Doesn't mark the OTP used (joinOrganization does that when it
+   * actually creates the account) so a correct verify here doesn't block
+   * the real submission later.
+   */
+  verifyJoinOrgOtp: async (phone: string, otp: string) =>
+    apiRequest<LoginEnvelope<{ phone_number: string; verified: boolean }>>('/signup/join-organization/verify-otp', {
+      method: 'POST', body: { phone, otp }, token: null
     }),
 
   resendLoginOtp: async (phoneNumber: string) =>

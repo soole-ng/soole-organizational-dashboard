@@ -268,6 +268,8 @@ export function JoinOrganizationPage() {
                   className="w-full h-[44px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none focus:border-secondary-300"
                   placeholder="8031234567"
                 />
+              </div>
+
               <button
                 onClick={handleInviteValidation}
                 disabled={loading || phone.length !== 10}

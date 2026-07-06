@@ -110,10 +110,10 @@ export function LoginPage() {
   const [resendLoading, setResendLoading] = useState(false)
   const [errors, setErrors]     = useState<string[]>([])
 
-  // OTP resend tracking
-  const [loginOtpAttemptsLeft, setLoginOtpAttemptsLeft] = useState(3)
+  // OTP resend tracking (2 resends, 5 min gap, then 4-hour lockout)
+  const [loginOtpResendsLeft, setLoginOtpResendsLeft] = useState(2)
   const [loginOtpCooldown, setLoginOtpCooldown] = useState(0)
-  const [signupOtpAttemptsLeft, setSignupOtpAttemptsLeft] = useState(3)
+  const [signupOtpResendsLeft, setSignupOtpResendsLeft] = useState(2)
   const [signupOtpCooldown, setSignupOtpCooldown] = useState(0)
 
 
@@ -185,21 +185,19 @@ export function LoginPage() {
     setResendLoading(true)
     try {
       const res = await authApi.resendLoginOtp(fullPhone)
-      setLoginOtpAttemptsLeft(res.data.attempts_left)
+      setLoginOtpResendsLeft(res.data.resends_left)
       setLoginOtpCooldown(res.data.seconds_until_next)
       toast.success('OTP resent successfully')
       setOtp('')
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to resend OTP')
-      // Extract cooldown from error message if rate limited
       const message = err?.message || ''
-      if (message.includes('Too many attempts')) {
-        const match = message.match(/(\d+)h (\d+)m|(\d+)m (\d+)s/)
+      if (message.includes('wait') || message.includes('Locked')) {
+        const match = message.match(/(\d+)m (\d+)s/)
         if (match) {
-          const hours = parseInt(match[1] || '0')
-          const mins = parseInt(match[2] || match[3] || '0')
-          const secs = parseInt(match[4] || '0')
-          const totalSeconds = hours * 3600 + mins * 60 + secs
+          const mins = parseInt(match[1] || '0')
+          const secs = parseInt(match[2] || '0')
+          const totalSeconds = mins * 60 + secs
           setLoginOtpCooldown(totalSeconds)
         }
       }
@@ -212,20 +210,19 @@ export function LoginPage() {
     setResendLoading(true)
     try {
       const res = await authApi.resendSignupOtp(fullSuPhone)
-      setSignupOtpAttemptsLeft(res.data.attempts_left)
+      setSignupOtpResendsLeft(res.data.resends_left)
       setSignupOtpCooldown(res.data.seconds_until_next)
       toast.success('OTP resent successfully')
       setOtp('')
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to resend OTP')
       const message = err?.message || ''
-      if (message.includes('Too many attempts')) {
-        const match = message.match(/(\d+)h (\d+)m|(\d+)m (\d+)s/)
+      if (message.includes('wait') || message.includes('Locked')) {
+        const match = message.match(/(\d+)m (\d+)s/)
         if (match) {
-          const hours = parseInt(match[1] || '0')
-          const mins = parseInt(match[2] || match[3] || '0')
-          const secs = parseInt(match[4] || '0')
-          const totalSeconds = hours * 3600 + mins * 60 + secs
+          const mins = parseInt(match[1] || '0')
+          const secs = parseInt(match[2] || '0')
+          const totalSeconds = mins * 60 + secs
           setSignupOtpCooldown(totalSeconds)
         }
       }
@@ -598,10 +595,10 @@ export function LoginPage() {
                     onResend={handleResendSignupOtp}
                     loading={loading}
                     resendLoading={resendLoading}
-                    attemptsLeft={signupOtpAttemptsLeft}
+                    resendsLeft={signupOtpResendsLeft}
                     secondsUntilNextResend={signupOtpCooldown}
                     canResend={true}
-                    description="We've sent a 6-digit code via SMS to verify your phone number. Please enter it below."
+                    description="We've sent a 5-digit code via SMS to verify your phone number. Please enter it below."
                   />
                   <button onClick={() => { setStep('signup'); setOtp('') }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
                     ← Back
@@ -709,7 +706,7 @@ export function LoginPage() {
                     onResend={handleResendLoginOtp}
                     loading={loading}
                     resendLoading={resendLoading}
-                    attemptsLeft={loginOtpAttemptsLeft}
+                    resendsLeft={loginOtpResendsLeft}
                     secondsUntilNextResend={loginOtpCooldown}
                     canResend={true}
                   />

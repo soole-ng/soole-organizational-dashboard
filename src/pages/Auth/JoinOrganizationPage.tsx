@@ -126,7 +126,7 @@ export function JoinOrganizationPage() {
   const [loading, setLoading] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
   const [invitationDetails, setInvitationDetails] = useState<any>(null)
-  const [otpAttemptsLeft, setOtpAttemptsLeft] = useState(3)
+  const [otpResendsLeft, setOtpResendsLeft] = useState(2)
   const [otpCooldown, setOtpCooldown] = useState(0)
 
   const handleInviteValidation = async () => {
@@ -178,20 +178,19 @@ export function JoinOrganizationPage() {
     setResendLoading(true)
     try {
       const res = await authApi.resendLoginOtp(fullPhone)
-      setOtpAttemptsLeft(res.data.attempts_left)
+      setOtpResendsLeft(res.data.resends_left)
       setOtpCooldown(res.data.seconds_until_next)
       toast.success('OTP resent successfully')
       setOtp('')
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to resend OTP')
       const message = err?.message || ''
-      if (message.includes('Too many attempts')) {
-        const match = message.match(/(\d+)h (\d+)m|(\d+)m (\d+)s/)
+      if (message.includes('wait') || message.includes('Locked')) {
+        const match = message.match(/(\d+)m (\d+)s/)
         if (match) {
-          const hours = parseInt(match[1] || '0')
-          const mins = parseInt(match[2] || match[3] || '0')
-          const secs = parseInt(match[4] || '0')
-          const totalSeconds = hours * 3600 + mins * 60 + secs
+          const mins = parseInt(match[1] || '0')
+          const secs = parseInt(match[2] || '0')
+          const totalSeconds = mins * 60 + secs
           setOtpCooldown(totalSeconds)
         }
       }
@@ -409,10 +408,10 @@ export function JoinOrganizationPage() {
               onResend={handleResendOtp}
               loading={loading}
               resendLoading={resendLoading}
-              attemptsLeft={otpAttemptsLeft}
+              resendsLeft={otpResendsLeft}
               secondsUntilNextResend={otpCooldown}
               canResend={true}
-              description="We've sent a 6-digit code via SMS to your phone. Please enter it below."
+              description="We've sent a 5-digit code via SMS to your phone. Please enter it below."
             />
           )}
 

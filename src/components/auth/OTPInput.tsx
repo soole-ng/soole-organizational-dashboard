@@ -10,7 +10,7 @@ interface OTPInputProps {
   onResend?: () => Promise<void>
   loading?: boolean
   resendLoading?: boolean
-  attemptsLeft?: number
+  resendsLeft?: number
   secondsUntilNextResend?: number
   canResend?: boolean
   description?: string
@@ -23,13 +23,13 @@ export function OTPInput({
   onResend,
   loading = false,
   resendLoading = false,
-  attemptsLeft = 3,
+  resendsLeft = 2,
   secondsUntilNextResend = 0,
   canResend = true,
-  description = "We've sent a 6-digit code via SMS to your phone. Please enter it below.",
+  description = "We've sent a 5-digit code via SMS to your phone. Please enter it below.",
 }: OTPInputProps) {
   const [countdown, setCountdown] = useState(secondsUntilNextResend)
-  const [resendAttempts, setResendAttempts] = useState(3 - (attemptsLeft || 0))
+  const [resendCount, setResendCount] = useState(0)
 
   useEffect(() => {
     setCountdown(secondsUntilNextResend)
@@ -53,22 +53,21 @@ export function OTPInput({
 
   const handleResend = async () => {
     if (!onResend) return
-    if (!canResend || countdown > 0 || resendAttempts >= 3) return
+    if (!canResend || countdown > 0 || resendCount >= 2) return
 
     try {
       await onResend()
-      setResendAttempts((prev) => prev + 1)
-      setCountdown(0)
+      setResendCount((prev) => prev + 1)
+      setCountdown(300) // 5 minutes = 300 seconds
     } catch (err: any) {
       const message = err?.message || 'Failed to resend OTP'
-      if (message.includes('Too many attempts')) {
-        // Extract countdown from error message
-        const match = message.match(/(\d+)h (\d+)m|(\d+)m (\d+)s/)
+      if (message.includes('wait') || message.includes('Too many')) {
+        // Extract countdown from error message (format: "5m 30s")
+        const match = message.match(/(\d+)m (\d+)s/)
         if (match) {
-          const hours = parseInt(match[1] || '0')
-          const mins = parseInt(match[2] || match[3] || '0')
-          const secs = parseInt(match[4] || '0')
-          const totalSeconds = hours * 3600 + mins * 60 + secs
+          const mins = parseInt(match[1] || '0')
+          const secs = parseInt(match[2] || '0')
+          const totalSeconds = mins * 60 + secs
           setCountdown(totalSeconds)
         }
       }
@@ -176,11 +175,15 @@ export function OTPInput({
               Resending…
             </>
           ) : isRateLimited ? (
-            `Resend available in ${formatTime(countdown)}`
-          ) : resendAttempts >= 3 ? (
-            '❌ No more resends available'
+            countdown > 300 ? (
+              `❌ Locked. Try again in ${formatTime(countdown)}`
+            ) : (
+              `Resend available in ${formatTime(countdown)}`
+            )
+          ) : resendCount >= 2 ? (
+            '❌ No more resends (4-hour lockout)'
           ) : (
-            `Resend Code (${3 - resendAttempts}/3)`
+            `Resend Code (${2 - resendCount}/2)`
           )}
         </button>
       )}

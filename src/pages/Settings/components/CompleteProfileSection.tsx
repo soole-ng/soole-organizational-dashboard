@@ -51,7 +51,7 @@ export function CompleteProfileSection({ orgUuid, verificationStatus = 'incomple
 
     setLoading(true)
     try {
-      const response = await fetch(`http://localhost:8000/api/organizations/${orgUuid}/complete-profile/`, {
+      const response = await fetch(`https://soole-backend-8cku.onrender.com/api/organizations/${orgUuid}/complete-profile/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

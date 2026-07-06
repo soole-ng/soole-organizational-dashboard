@@ -7,7 +7,7 @@
 // env) on import.meta.env - `process` doesn't exist in the browser bundle, so
 // a `process.env` fallback here throws ReferenceError and crashes the app
 // whenever VITE_API_URL isn't set (which is always, since no .env exists yet).
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api'
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://soole-backend-8cku.onrender.com/api'
 
 interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'

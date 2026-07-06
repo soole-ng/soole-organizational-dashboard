@@ -587,9 +587,50 @@ export function LoginPage() {
                       className={clsx("w-full h-[44px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suPassword'))}
                       placeholder="Create a strong password"
                     />
-                    <p className="text-xs text-neutral-400">
-                      8+ characters, uppercase, lowercase, number, special character (!@#$%^&*)
-                    </p>
+                    {suPassword && (
+                      <div className="space-y-1.5 mt-3">
+                        <div className="flex items-center gap-2">
+                          <div className={clsx('w-4 h-4 rounded-full flex items-center justify-center', suPassword.length >= 8 ? 'bg-green-500' : 'bg-neutral-200')}>
+                            {suPassword.length >= 8 && <div className="w-2 h-2 bg-white rounded-full" />}
+                          </div>
+                          <span className={clsx('text-xs font-black', suPassword.length >= 8 ? 'text-green-600' : 'text-neutral-400')}>
+                            At least 8 characters
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={clsx('w-4 h-4 rounded-full flex items-center justify-center', /[A-Z]/.test(suPassword) ? 'bg-green-500' : 'bg-neutral-200')}>
+                            {/[A-Z]/.test(suPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
+                          </div>
+                          <span className={clsx('text-xs font-black', /[A-Z]/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
+                            Uppercase letter
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={clsx('w-4 h-4 rounded-full flex items-center justify-center', /[a-z]/.test(suPassword) ? 'bg-green-500' : 'bg-neutral-200')}>
+                            {/[a-z]/.test(suPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
+                          </div>
+                          <span className={clsx('text-xs font-black', /[a-z]/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
+                            Lowercase letter
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={clsx('w-4 h-4 rounded-full flex items-center justify-center', /\d/.test(suPassword) ? 'bg-green-500' : 'bg-neutral-200')}>
+                            {/\d/.test(suPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
+                          </div>
+                          <span className={clsx('text-xs font-black', /\d/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
+                            Number
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className={clsx('w-4 h-4 rounded-full flex items-center justify-center', /[!@#$%^&*]/.test(suPassword) ? 'bg-green-500' : 'bg-neutral-200')}>
+                            {/[!@#$%^&*]/.test(suPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
+                          </div>
+                          <span className={clsx('text-xs font-black', /[!@#$%^&*]/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
+                            Special character (!@#$%^&*)
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -603,11 +644,14 @@ export function LoginPage() {
                       className={clsx("w-full h-[44px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suConfirmPassword'))}
                       placeholder="Confirm password"
                     />
+                    {suConfirmPassword && suPassword !== suConfirmPassword && (
+                      <p className="text-xs text-red-500 font-black">Passwords do not match</p>
+                    )}
                   </div>
 
                   <button
                     onClick={handleSignupPassword}
-                    disabled={loading || !suPassword || !suConfirmPassword}
+                    disabled={loading || !suPassword || !suConfirmPassword || suPassword !== suConfirmPassword || suPassword.length < 8 || !/[A-Z]/.test(suPassword) || !/[a-z]/.test(suPassword) || !/\d/.test(suPassword) || !/[!@#$%^&*]/.test(suPassword)}
                     className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2', loading && 'opacity-70')}
                   >
                     {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Creating Account…</> : 'Create Account'}

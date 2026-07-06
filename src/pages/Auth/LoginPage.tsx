@@ -35,8 +35,12 @@ function getBrowserLocation(): Promise<{ latitude: number; longitude: number }> 
 
 const signupSchema = z.object({
   suOrgName: z.string().min(2, 'Company name is required'),
-  suOwnerName: z.string().min(2, 'Owner name is required'),
+  suOwnerFirstName: z.string().min(2, 'First name is required'),
+  suOwnerLastName: z.string().min(2, 'Last name is required'),
   suPhone: z.string().length(10, 'Phone must be exactly 10 digits'),
+})
+
+const passwordSchema = z.object({
   suPassword: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain an uppercase letter')
@@ -50,7 +54,7 @@ const signupSchema = z.object({
 })
 
 
-type Step = 'login' | 'otp' | 'security_question' | 'signup' | 'security_setup'
+type Step = 'login' | 'otp' | 'security_question' | 'signup' | 'signup_otp' | 'signup_password' | 'security_setup'
 
 const COUNTRY_CODES = [
   { code: '+234', flag: 'https://flagcdn.com/w40/ng.png', name: 'Nigeria' },
@@ -83,10 +87,12 @@ export function LoginPage() {
   const [secAnswer, setSecAnswer] = useState('')
   const [securityQuestion, setSecurityQuestion] = useState('')
 
-  // Signup fields - simplified for fast registration
+  // Signup fields - step 1: basic info
   const [suOrgName, setSuOrgName] = useState('')
-  const [suOwnerName, setSuOwnerName] = useState('')
+  const [suOwnerFirstName, setSuOwnerFirstName] = useState('')
+  const [suOwnerLastName, setSuOwnerLastName] = useState('')
   const [suPhone, setSuPhone] = useState('')
+  // Signup fields - step 2: password (after OTP)
   const [suPassword, setSuPassword] = useState('')
   const [suConfirmPassword, setSuConfirmPassword] = useState('')
 
@@ -167,8 +173,48 @@ export function LoginPage() {
     }
   }
 
-  const handleSignup = async () => {
-    const result = signupSchema.safeParse({ suOrgName, suOwnerName, suPhone, suPassword, suConfirmPassword })
+  const handleSignupInitiate = async () => {
+    // Step 1: Validate basic info and send OTP
+    const result = signupSchema.safeParse({ suOrgName, suOwnerFirstName, suOwnerLastName, suPhone })
+    if (!result.success) {
+      setErrors(result.error.issues.map(i => i.path[0] as string))
+      toast.error(result.error.issues[0].message)
+      return
+    }
+
+    setErrors([])
+    setLoading(true)
+    try {
+      // Send OTP to phone for organization signup verification
+      await authApi.initiateLogin(fullSuPhone, '')  // Or call a separate org signup OTP endpoint
+      toast.success('Verification code sent to your phone')
+      setStep('signup_otp')
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to send verification code.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSignupOtp = async () => {
+    // Step 2: Verify OTP
+    if (otp.length !== 6) return
+    setLoading(true)
+    try {
+      // Verify OTP - move to password creation step
+      await authApi.verifyLoginOtp(fullSuPhone, otp, 0, 0)
+      setStep('signup_password')
+      setOtp('')
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Invalid or expired code')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSignupPassword = async () => {
+    // Step 3: Create password
+    const result = passwordSchema.safeParse({ suPassword, suConfirmPassword })
     if (!result.success) {
       setErrors(result.error.issues.map(i => i.path[0] as string))
       toast.error(result.error.issues[0].message)
@@ -184,13 +230,13 @@ export function LoginPage() {
         confirmPassword: suConfirmPassword,
         organizationName: suOrgName,
         organizationType: 'transport_co',
-        firstName: suOwnerName,
-        lastName: '',
+        firstName: suOwnerFirstName,
+        lastName: suOwnerLastName,
       })
       localStorage.setItem('auth_token', res.data.token)
       localStorage.setItem('refresh_token', res.data.refreshToken)
       updateOrg({ approvalStatus: 'pending' })
-      toast.success('Organization created! Complete your profile to unlock full features.')
+      toast.success('Organization created! Set up security questions.')
       setStep('security_setup')
     } catch (err: any) {
       toast.error(err?.message ?? 'Signup failed. Please try again.')
@@ -416,30 +462,31 @@ export function LoginPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black">
-                      Company Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={suOrgName}
-                      onChange={e => { setSuOrgName(e.target.value); setErrors(errors.filter(err => err !== 'suOrgName')) }}
-                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOrgName'))}
-                      placeholder="E.g., Speedway Transport Ltd."
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black">
-                      Your Full Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={suOwnerName}
-                      onChange={e => { setSuOwnerName(e.target.value); setErrors(errors.filter(err => err !== 'suOwnerName')) }}
-                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOwnerName'))}
-                      placeholder="John Doe"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                        First Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={suOwnerFirstName}
+                        onChange={e => { setSuOwnerFirstName(e.target.value); setErrors(errors.filter(err => err !== 'suOwnerFirstName')) }}
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOwnerFirstName'))}
+                        placeholder="Adekemi"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                        Last Name (Surname) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={suOwnerLastName}
+                        onChange={e => { setSuOwnerLastName(e.target.value); setErrors(errors.filter(err => err !== 'suOwnerLastName')) }}
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOwnerLastName'))}
+                        placeholder="Chukuma"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -464,13 +511,80 @@ export function LoginPage() {
 
                   <div className="space-y-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      Company Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={suOrgName}
+                      onChange={e => { setSuOrgName(e.target.value); setErrors(errors.filter(err => err !== 'suOrgName')) }}
+                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOrgName'))}
+                      placeholder="E.g., Speedway Transport Ltd."
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSignupInitiate}
+                    disabled={loading || !suOrgName || !suOwnerFirstName || !suOwnerLastName || !suPhone}
+                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4', loading && 'opacity-70')}
+                  >
+                    {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Sending Code…</> : 'Continue'}
+                  </button>
+                  <button onClick={() => { setStep('login'); setErrors([]) }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
+                    ← Back to login
+                  </button>
+                </div>
+              ) : step === 'signup_otp' ? (
+                <div className="space-y-7">
+                  <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
+                    <Shield className="w-5 h-5 text-black flex-shrink-0" />
+                    <p className="text-xs text-black leading-relaxed font-black">
+                      We've sent a 6-digit code via SMS to verify your phone number. Please enter it below.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">6-digit code</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={otp}
+                      onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                      className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-center text-3xl tracking-[0.5em] font-black text-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all stat-number"
+                      placeholder="000000"
+                      onKeyDown={e => e.key === 'Enter' && handleSignupOtp()}
+                      autoFocus
+                    />
+                    <div className="flex justify-center gap-2 mt-3">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={i} className={clsx('w-2 h-2 rounded-full transition-colors', i < otp.length ? 'bg-primary-500' : 'bg-neutral-100')} />
+                      ))}
+                    </div>
+                  </div>
+                  <button onClick={handleSignupOtp} disabled={otp.length !== 6 || loading} className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2', loading && 'opacity-70')}>
+                    {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying…</> : 'Verify & Continue'}
+                  </button>
+                  <button onClick={() => { setStep('signup'); setOtp('') }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
+                    ← Back
+                  </button>
+                </div>
+              ) : step === 'signup_password' ? (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
+                    <Shield className="w-5 h-5 text-black flex-shrink-0" />
+                    <p className="text-xs text-black leading-relaxed font-black">
+                      Create a strong password to secure your organization account.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">
                       Password <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="password"
                       value={suPassword}
                       onChange={e => { setSuPassword(e.target.value); setErrors(errors.filter(err => err !== 'suPassword')) }}
-                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suPassword'))}
+                      className={clsx("w-full h-[44px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suPassword'))}
                       placeholder="Create a strong password"
                     />
                     <p className="text-xs text-neutral-400">
@@ -486,20 +600,20 @@ export function LoginPage() {
                       type="password"
                       value={suConfirmPassword}
                       onChange={e => { setSuConfirmPassword(e.target.value); setErrors(errors.filter(err => err !== 'suConfirmPassword')) }}
-                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suConfirmPassword'))}
+                      className={clsx("w-full h-[44px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suConfirmPassword'))}
                       placeholder="Confirm password"
                     />
                   </div>
 
                   <button
-                    onClick={handleSignup}
-                    disabled={loading}
-                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4', loading && 'opacity-70')}
+                    onClick={handleSignupPassword}
+                    disabled={loading || !suPassword || !suConfirmPassword}
+                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2', loading && 'opacity-70')}
                   >
                     {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Creating Account…</> : 'Create Account'}
                   </button>
-                  <button onClick={() => { setStep('login'); setErrors([]) }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
-                    ← Back to login
+                  <button onClick={() => { setStep('signup_otp'); setErrors([]) }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
+                    ← Back
                   </button>
                 </div>
               ) : step === 'otp' ? (

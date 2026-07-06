@@ -405,14 +405,21 @@ export const authApi = {
     apiRequest<LoginEnvelope<LoginTokenData>>('/accounts/login/verify-security-answer', {
       method: 'POST', body: { phone_number: phoneNumber, answer, latitude, longitude },
     }),
+  signupOrganizationSendOtp: async (phone: string) =>
+    apiRequest<LoginEnvelope<{ requires_otp: boolean }>>('/signup/signup-organization/send-otp', {
+      method: 'POST', body: { phone }, token: null
+    }),
+
   signupOrganization: async (payload: {
-    phone: string; pin: string; confirmPin: string; organizationName: string
+    phone: string; password: string; confirmPassword: string; organizationName: string
     organizationType: string; contactEmail?: string; contactPhone?: string; rcNumber?: string
     // Optional - for fast signup (completed later in Settings)
     cacDocumentUrl?: string
     // Optional - for fast signup (completed later in Settings)
     firstName?: string; lastName?: string; dob?: string; nin?: string
-  }) => apiRequest<LoginEnvelope<SignupOrgData>>('/signup/signup-organization', { method: 'POST', body: payload }),
+  }) => apiRequest<LoginEnvelope<SignupOrgData>>('/signup/signup-organization', {
+    method: 'POST', body: payload, token: null
+  }),
   /**
    * Team member completing signup from an invite SMS/link. One atomic call -
    * the OTP was already sent when the org invited them (no self-serve resend

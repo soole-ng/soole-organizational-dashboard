@@ -186,7 +186,7 @@ export function LoginPage() {
     setLoading(true)
     try {
       // Send OTP to phone for organization signup verification
-      await authApi.initiateLogin(fullSuPhone, '')  // Or call a separate org signup OTP endpoint
+      await authApi.signupOrganizationSendOtp(fullSuPhone)
       toast.success('Verification code sent to your phone')
       setStep('signup_otp')
     } catch (err: any) {

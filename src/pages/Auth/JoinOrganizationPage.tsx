@@ -24,7 +24,7 @@ const inviteSchema = z.object({
 })
 
 const otpSchema = z.object({
-  otp: z.string().length(6, 'OTP must be 6 digits')
+  otp: z.string().length(5, 'OTP must be 5 digits')
 })
 
 const personalInfoSchema = z.object({
@@ -157,7 +157,7 @@ export function JoinOrganizationPage() {
   const handleOtpSubmit = async () => {
     const result = otpSchema.safeParse({ otp })
     if (!result.success) {
-      toast.error('Please enter all 6 digits from your verification code')
+      toast.error('Please enter all 5 digits from your verification code')
       return
     }
 

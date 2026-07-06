@@ -149,7 +149,7 @@ export function LoginPage() {
   }
 
   const handleOtp = async () => {
-    if (otp.length !== 6) return
+    if (otp.length !== 5) return
     setLoading(true)
     try {
       const { latitude, longitude } = await getBrowserLocation()
@@ -256,7 +256,7 @@ export function LoginPage() {
 
   const handleSignupOtp = async () => {
     // Step 2: Verify OTP
-    if (otp.length !== 6) return
+    if (otp.length !== 5) return
     setLoading(true)
     try {
       // Verify OTP - move to password creation step
@@ -394,7 +394,7 @@ export function LoginPage() {
                   ? 'Fill out your basic details to get started'
                   : step === 'security_setup'
                   ? 'Set up a security question - used for account recovery and required before withdrawals'
-                  : 'Enter the 6-digit verification code sent to your phone'}
+                  : 'Enter the 5-digit verification code sent to your phone'}
               </p>
             </div>
 

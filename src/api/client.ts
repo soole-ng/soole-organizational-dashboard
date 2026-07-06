@@ -436,13 +436,13 @@ export const authApi = {
     }),
 
   resendLoginOtp: async (phoneNumber: string) =>
-    apiRequest<{ data: { attempts_left: number; seconds_until_next: number; can_resend: boolean }; message: string }>(
+    apiRequest<{ data: { resends_left: number; seconds_until_next: number; can_resend: boolean }; message: string }>(
       '/accounts/login/resend-otp',
       { method: 'POST', body: { phone_number: phoneNumber }, token: null }
     ),
 
   resendSignupOtp: async (phoneNumber: string) =>
-    apiRequest<{ data: { attempts_left: number; seconds_until_next: number; can_resend: boolean }; message: string }>(
+    apiRequest<{ data: { resends_left: number; seconds_until_next: number; can_resend: boolean }; message: string }>(
       '/signup/resend-otp',
       { method: 'POST', body: { phone_number: phoneNumber }, token: null }
     ),

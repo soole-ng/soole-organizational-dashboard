@@ -132,9 +132,9 @@ export function OTPInput({
       )}
 
       {/* Attempts Left */}
-      {attemptsLeft !== undefined && attemptsLeft > 0 && (
+      {resendsLeft !== undefined && resendsLeft > 0 && (
         <p className="text-xs text-neutral-400 text-center font-black">
-          {attemptsLeft} resend{attemptsLeft === 1 ? '' : 's'} remaining
+          {resendsLeft} resend{resendsLeft === 1 ? '' : 's'} remaining
         </p>
       )}
 

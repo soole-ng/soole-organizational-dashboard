@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Shield, ChevronRight, Lock, Phone, Eye, EyeOff, CheckCircle } from 'lucide-react'
+import { Shield, ChevronRight, Lock, Phone, Eye, EyeOff, CheckCircle, ChevronDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
 import { authApi } from '../../api/client'
 import { PRESET_SECURITY_QUESTIONS, CUSTOM_SECURITY_QUESTION_OPTION } from '../../lib/securityQuestions'
+
+const COUNTRY_CODES = [
+  { code: '+234', flag: 'https://flagcdn.com/w40/ng.png', name: 'Nigeria' },
+  { code: '+233', flag: 'https://flagcdn.com/w40/gh.png', name: 'Ghana' },
+  { code: '+254', flag: 'https://flagcdn.com/w40/ke.png', name: 'Kenya' },
+  { code: '+27', flag: 'https://flagcdn.com/w40/za.png', name: 'South Africa' },
+  { code: '+250', flag: 'https://flagcdn.com/w40/rw.png', name: 'Rwanda' },
+]
 
 // Multi-step team member signup with NIN validation and strong password
 type Step = 'invite_validation' | 'otp' | 'personal_info' | 'password' | 'security_questions' | 'success'
@@ -49,8 +57,13 @@ export function JoinOrganizationPage() {
     prefillPhone && prefillOtp ? 'personal_info' : prefillPhone ? 'otp' : 'invite_validation'
   )
 
-  // Form fields
+  // Country and phone
+  const [country, setCountry] = useState(COUNTRY_CODES[0])
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false)
   const [phone, setPhone] = useState(prefillPhone)
+  const fullPhone = `${country.code}${phone.replace(/^0/, '')}`
+
+  // Form fields
   const [otp, setOtp] = useState(prefillOtp)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -75,8 +88,8 @@ export function JoinOrganizationPage() {
 
     setLoading(true)
     try {
-      // Validate invitation exists for this phone
-      const res = await authApi.validateOrgInvitation(phone)
+      // Validate invitation exists for this phone (with country code)
+      const res = await authApi.validateOrgInvitation(fullPhone)
       setInvitationDetails(res.data)
       toast.success('Invitation found! Please verify your OTP.')
       setStep('otp')
@@ -96,7 +109,7 @@ export function JoinOrganizationPage() {
 
     setLoading(true)
     try {
-      await authApi.verifyLoginOtp(phone, otp, 0, 0)
+      await authApi.verifyLoginOtp(fullPhone, otp, 0, 0)
       toast.success('Phone verified!')
       setStep('personal_info')
     } catch (err: any) {
@@ -147,7 +160,7 @@ export function JoinOrganizationPage() {
     setLoading(true)
     try {
       const res = await authApi.joinOrganization({
-        phone,
+        phone: fullPhone,
         otp,
         password,
         confirmPassword,
@@ -212,14 +225,49 @@ export function JoinOrganizationPage() {
               <label className="block text-xs font-black uppercase tracking-wider text-black">
                 Phone Number <span className="text-red-500">*</span>
               </label>
-              <input
-                type="tel"
-                maxLength={10}
-                value={phone}
-                onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-                className="w-full h-[44px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none focus:border-secondary-300"
-                placeholder="8031234567"
-              />
+              <div className="flex gap-2 items-center">
+                {/* Country Code Selector */}
+                <div className="relative flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                    className="flex items-center gap-2 h-[44px] px-3 bg-white border border-neutral-100 rounded-xl text-sm font-black text-black transition-colors hover:bg-neutral-50"
+                  >
+                    <img src={country.flag} alt={country.name} className="w-6 h-4 object-cover rounded-sm" />
+                    <span className="text-sm font-black text-black">{country.code}</span>
+                    <ChevronDown className={clsx('w-4 h-4 text-black transition-transform', showCountryDropdown && 'rotate-180')} />
+                  </button>
+
+                  {showCountryDropdown && (
+                    <div className="absolute top-full left-0 mt-1 bg-white rounded-2xl shadow-lg border border-neutral-50 overflow-hidden z-30 min-w-48">
+                      {COUNTRY_CODES.map(c => (
+                        <button
+                          key={c.code}
+                          type="button"
+                          onClick={() => { setCountry(c); setShowCountryDropdown(false) }}
+                          className={clsx(
+                            'w-full flex items-center gap-2.5 px-4 py-3 text-sm transition-colors hover:bg-primary-75 text-left',
+                            country.code === c.code ? 'bg-primary-75 font-black text-black' : 'text-neutral-400'
+                          )}
+                        >
+                          <img src={c.flag} alt={c.name} className="w-6 h-4 object-cover rounded-sm flex-shrink-0" />
+                          <span className="font-black text-xs text-black">{c.code}</span>
+                          <span className="flex-1 text-xs font-black text-black">{c.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Phone Input */}
+                <input
+                  type="tel"
+                  maxLength={10}
+                  value={phone}
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').replace(/^0/, ''))}
+                  className="w-full h-[44px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none focus:border-secondary-300"
+                  placeholder="8031234567"
+                />
               <button
                 onClick={handleInviteValidation}
                 disabled={loading || phone.length !== 10}

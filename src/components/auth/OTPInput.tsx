@@ -87,7 +87,7 @@ export function OTPInput({
 
   const isRateLimited = countdown > 0
   const canShowResend = onResend && !loading
-  const resendDisabled = isRateLimited || resendAttempts >= 3 || resendLoading
+  const resendDisabled = isRateLimited || resendCount >= 2 || resendLoading
 
   return (
     <div className="space-y-7">

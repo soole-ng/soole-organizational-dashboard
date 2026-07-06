@@ -5,12 +5,14 @@ import { Toaster } from 'react-hot-toast'
 import App from './App'
 import './index.css'
 
+const isMobile = window.innerWidth < 768
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
       <Toaster
-        position="top-center"
+        position={isMobile ? 'bottom-center' : 'bottom-right'}
         toastOptions={{
           duration: 3000,
           style: {
@@ -19,9 +21,16 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             borderRadius: '12px',
             fontSize: '14px',
             fontWeight: 500,
+            padding: '12px 16px',
           },
-          success: { iconTheme: { primary: '#1d754c', secondary: '#fff' } },
-          error: { iconTheme: { primary: '#ff3f3f', secondary: '#fff' } },
+          success: {
+            duration: 2500,
+            iconTheme: { primary: '#1d754c', secondary: '#fff' }
+          },
+          error: {
+            duration: 5000,
+            iconTheme: { primary: '#ff3f3f', secondary: '#fff' }
+          },
         }}
       />
     </BrowserRouter>

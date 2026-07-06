@@ -29,7 +29,6 @@ export function OTPInput({
   description = "We've sent a 5-digit code via SMS to your phone. Please enter it below.",
 }: OTPInputProps) {
   const [countdown, setCountdown] = useState(secondsUntilNextResend)
-  const [resendCount, setResendCount] = useState(0)
 
   useEffect(() => {
     setCountdown(secondsUntilNextResend)
@@ -53,11 +52,10 @@ export function OTPInput({
 
   const handleResend = async () => {
     if (!onResend) return
-    if (!canResend || countdown > 0 || resendCount >= 2) return
+    if (!canResend || countdown > 0 || resendsLeft <= 0) return
 
     try {
       await onResend()
-      setResendCount((prev) => prev + 1)
       setCountdown(300) // 5 minutes = 300 seconds
     } catch (err: any) {
       const message = err?.message || 'Failed to resend OTP'
@@ -87,7 +85,7 @@ export function OTPInput({
 
   const isRateLimited = countdown > 0
   const canShowResend = onResend && !loading
-  const resendDisabled = isRateLimited || resendCount >= 2 || resendLoading
+  const resendDisabled = isRateLimited || resendsLeft <= 0 || resendLoading
 
   return (
     <div className="space-y-7">
@@ -180,10 +178,10 @@ export function OTPInput({
             ) : (
               `Resend available in ${formatTime(countdown)}`
             )
-          ) : resendCount >= 2 ? (
+          ) : resendsLeft <= 0 ? (
             '❌ No more resends (4-hour lockout)'
           ) : (
-            `Resend Code (${2 - resendCount}/2)`
+            `Resend Code (${resendsLeft}/${resendsLeft === 2 ? 2 : 2})`
           )}
         </button>
       )}

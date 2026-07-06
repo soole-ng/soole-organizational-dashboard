@@ -426,11 +426,6 @@ export function LoginPage() {
                         {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
-                    {!showPw && (
-                      <p className="text-xs text-neutral-400">
-                        8+ characters, uppercase, lowercase, number, special character (!@#$%^&*)
-                      </p>
-                    )}
                   </div>
 
                   <button

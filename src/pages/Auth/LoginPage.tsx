@@ -10,7 +10,12 @@ import { PRESET_SECURITY_QUESTIONS, CUSTOM_SECURITY_QUESTION_OPTION } from '../.
 
 const loginSchema = z.object({
   phone: z.string().length(10, 'Phone must be exactly 10 digits'),
-  pin: z.string().length(6, 'PIN must be exactly 6 digits').regex(/^\d+$/, 'PIN must be numeric')
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/[a-z]/, 'Password must contain a lowercase letter')
+    .regex(/\d/, 'Password must contain a number')
+    .regex(/[!@#$%^&*]/, 'Password must contain a special character (!@#$%^&*)')
 })
 
 /** Backend requires latitude/longitude on every login step; falls back to 0,0 if denied. */
@@ -32,7 +37,12 @@ const signupSchema = z.object({
   suOrgName: z.string().min(2, 'Company name is required'),
   suOwnerName: z.string().min(2, 'Owner name is required'),
   suPhone: z.string().length(10, 'Phone must be exactly 10 digits'),
-  suPassword: z.string().length(6, 'Password must be exactly 6 digits').regex(/^\d+$/, 'Password must be numeric'),
+  suPassword: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/[a-z]/, 'Password must contain a lowercase letter')
+    .regex(/\d/, 'Password must contain a number')
+    .regex(/[!@#$%^&*]/, 'Password must contain a special character (!@#$%^&*)'),
   suConfirmPassword: z.string(),
 }).refine(data => data.suPassword === data.suConfirmPassword, {
   message: 'Passwords do not match',
@@ -68,7 +78,7 @@ export function LoginPage() {
 
   // Login fields
   const [phone, setPhone]       = useState('')
-  const [pin, setPin]           = useState('')
+  const [password, setPassword] = useState('')
   const [otp, setOtp]           = useState('')
   const [secAnswer, setSecAnswer] = useState('')
   const [securityQuestion, setSecurityQuestion] = useState('')
@@ -105,7 +115,7 @@ export function LoginPage() {
   }
 
   const handleLogin = async () => {
-    const result = loginSchema.safeParse({ phone, pin })
+    const result = loginSchema.safeParse({ phone, password })
     if (!result.success) {
       setErrors(result.error.issues.map(i => i.path[0] as string))
       toast.error(result.error.issues[0].message)
@@ -114,11 +124,11 @@ export function LoginPage() {
     setErrors([])
     setLoading(true)
     try {
-      await authApi.initiateLogin(fullPhone, pin)
+      await authApi.initiateLogin(fullPhone, password)
       toast.success('Verification code sent to your phone')
       setStep('otp')
     } catch (err: any) {
-      toast.error(err?.message ?? 'Login failed. Check your phone number and PIN.')
+      toast.error(err?.message ?? 'Login failed. Check your phone number and password.')
     } finally {
       setLoading(false)
     }
@@ -170,8 +180,8 @@ export function LoginPage() {
     try {
       const res = await authApi.signupOrganization({
         phone: fullSuPhone,
-        pin: suPassword,
-        confirmPin: suConfirmPassword,
+        password: suPassword,
+        confirmPassword: suConfirmPassword,
         organizationName: suOrgName,
         organizationType: 'transport_co',
         firstName: suOwnerName,
@@ -344,23 +354,21 @@ export function LoginPage() {
                     </div>
                   </div>
 
-                  {/* PIN field */}
+                  {/* Password field */}
                   <div className="space-y-2">
                     <label className="text-xs font-black uppercase tracking-wider text-black">
-                      6-Digit PIN <span className="text-red-500">*</span>
+                      Password <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                       <input
                         type={showPw ? 'text' : 'password'}
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={pin}
+                        value={password}
                         onChange={e => {
-                          setPin(e.target.value.replace(/\D/g, '').slice(0, 6))
-                          setErrors(errors.filter(err => err !== 'pin'))
+                          setPassword(e.target.value)
+                          setErrors(errors.filter(err => err !== 'password'))
                         }}
-                        className={clsx("w-full h-[44px] bg-white border rounded-xl px-5 py-0 pr-12 text-sm text-black font-black placeholder:text-neutral-100 focus:outline-none transition-all tracking-[0.3em]", getBorderClass('pin'))}
-                        placeholder="••••••"
+                        className={clsx("w-full h-[44px] bg-white border rounded-xl px-5 py-0 pr-12 text-sm text-black font-black placeholder:text-neutral-100 focus:outline-none transition-all", getBorderClass('password'))}
+                        placeholder="Password"
                         autoComplete="current-password"
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
                       />
@@ -372,6 +380,11 @@ export function LoginPage() {
                         {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
                     </div>
+                    {!showPw && (
+                      <p className="text-xs text-neutral-400">
+                        8+ characters, uppercase, lowercase, number, special character (!@#$%^&*)
+                      </p>
+                    )}
                   </div>
 
                   <button
@@ -449,35 +462,33 @@ export function LoginPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-wider text-black">
-                        6-Digit Password <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={suPassword}
-                        onChange={e => { setSuPassword(e.target.value.replace(/\D/g, '').slice(0, 6)); setErrors(errors.filter(err => err !== 'suPassword')) }}
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all tracking-[0.3em]", getBorderClass('suPassword'))}
-                        placeholder="••••••"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-wider text-black">
-                        Confirm <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="password"
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={suConfirmPassword}
-                        onChange={e => { setSuConfirmPassword(e.target.value.replace(/\D/g, '').slice(0, 6)); setErrors(errors.filter(err => err !== 'suConfirmPassword')) }}
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all tracking-[0.3em]", getBorderClass('suConfirmPassword'))}
-                        placeholder="••••••"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      Password <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={suPassword}
+                      onChange={e => { setSuPassword(e.target.value); setErrors(errors.filter(err => err !== 'suPassword')) }}
+                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suPassword'))}
+                      placeholder="Create a strong password"
+                    />
+                    <p className="text-xs text-neutral-400">
+                      8+ characters, uppercase, lowercase, number, special character (!@#$%^&*)
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      Confirm Password <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={suConfirmPassword}
+                      onChange={e => { setSuConfirmPassword(e.target.value); setErrors(errors.filter(err => err !== 'suConfirmPassword')) }}
+                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suConfirmPassword'))}
+                      placeholder="Confirm password"
+                    />
                   </div>
 
                   <button

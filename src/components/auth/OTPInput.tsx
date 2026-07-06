@@ -100,21 +100,21 @@ export function OTPInput({
       {/* OTP Input */}
       <div className="space-y-2">
         <label className="block text-xs font-black uppercase tracking-wider text-black">
-          6-digit code
+          5-digit code
         </label>
         <input
           type="text"
           inputMode="numeric"
-          maxLength={6}
+          maxLength={5}
           value={value}
           onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))}
           className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-center text-3xl tracking-[0.5em] font-black text-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
-          placeholder="000000"
-          onKeyDown={(e) => e.key === 'Enter' && value.length === 6 && !loading && onSubmit()}
+          placeholder="00000"
+          onKeyDown={(e) => e.key === 'Enter' && value.length === 5 && !loading && onSubmit()}
           autoFocus
         />
         <div className="flex justify-center gap-2 mt-3">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
               className={clsx('w-2 h-2 rounded-full transition-colors', i < value.length ? 'bg-primary-500' : 'bg-neutral-100')}
@@ -142,7 +142,7 @@ export function OTPInput({
       {/* Verify Button */}
       <button
         onClick={onSubmit}
-        disabled={value.length !== 6 || loading || isRateLimited}
+        disabled={value.length !== 5 || loading || isRateLimited}
         className={clsx(
           'w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2',
           (loading || isRateLimited) && 'opacity-70'
@@ -154,7 +154,7 @@ export function OTPInput({
             Verifying…
           </>
         ) : isRateLimited ? (
-          `Verify (blocked {formatTime(countdown)})`
+          `Verify (blocked ${formatTime(countdown)})`
         ) : (
           'Verify & Continue'
         )}

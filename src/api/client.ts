@@ -425,9 +425,18 @@ export const authApi = {
    * the OTP was already sent when the org invited them (no self-serve resend
    * for this flow), so phone+otp+pin+confirmPin all go together.
    */
-  joinOrganization: async (payload: { phone: string; otp: string; pin: string; confirmPin: string }) =>
+  validateOrgInvitation: async (phone: string) =>
+    apiRequest<LoginEnvelope<{ invitation_valid: boolean; organization_name: string; role: string }>>('/signup/join-organization/validate-invite', {
+      method: 'POST', body: { phone }, token: null
+    }),
+
+  joinOrganization: async (payload: {
+    phone: string; otp: string; password: string; confirmPassword: string;
+    firstName: string; lastName: string; nin: string; dob: string;
+    securityQuestion?: string; securityAnswer?: string;
+  }) =>
     apiRequest<LoginEnvelope<{ userId: string; phone: string; role: string; token: string; refreshToken: string; organizationId: string }>>(
-      '/signup/join-organization', { method: 'POST', body: payload }
+      '/signup/join-organization', { method: 'POST', body: payload, token: null }
     ),
   refreshToken: async (refreshToken: string) =>
     apiRequest('/accounts/login/refresh-tokens', { method: 'POST', body: { refresh_token: refreshToken } }),

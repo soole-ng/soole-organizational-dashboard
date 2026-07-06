@@ -291,25 +291,25 @@ export function JoinOrganizationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-primary-75 flex flex-col lg:flex-row items-center justify-center p-6">
-      <div className="w-full max-w-[500px]">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-secondary-500 rounded-2xl shadow-sm">
-            <Shield className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-primary-75 flex flex-col lg:flex-row items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-sm sm:max-w-md">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mx-auto mb-3 sm:mb-4 bg-secondary-500 rounded-2xl shadow-sm">
+            <Shield className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-extrabold text-primary-500 mb-2 font-display">Join Organization</h1>
-          <p className="text-neutral-300 text-sm">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-primary-500 mb-2 font-display">Join Organization</h1>
+          <p className="text-neutral-300 text-xs sm:text-sm">
             Complete your setup to get started with Soole.
           </p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl p-8 space-y-6">
+        <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-8 space-y-6">
           {/* Step Indicator */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center mb-6 sm:mb-8 gap-1">
             {['Invite', 'OTP', 'Info', 'Password', 'Security'].map((label, idx) => (
-              <div key={label} className="flex items-center">
+              <div key={label} className="flex items-center gap-0.5 sm:gap-1 flex-1">
                 <div className={clsx(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-xs font-black',
+                  'w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0',
                   ['invite_validation', 'otp', 'personal_info', 'password', 'security_questions'][idx] === step
                     ? 'bg-primary-500 text-white'
                     : ['invite_validation', 'otp', 'personal_info', 'password', 'security_questions'].indexOf(step) > idx
@@ -322,7 +322,7 @@ export function JoinOrganizationPage() {
                     idx + 1
                   )}
                 </div>
-                {idx < 4 && <div className="w-8 h-0.5 bg-neutral-100 mx-1" />}
+                {idx < 4 && <div className="flex-1 h-0.5 bg-neutral-100 mx-0.5 sm:mx-1 min-w-1" />}
               </div>
             ))}
           </div>
@@ -330,7 +330,7 @@ export function JoinOrganizationPage() {
           {/* Invite Validation Step */}
           {step === 'invite_validation' && (
             <div className="space-y-4">
-              <label className="block text-xs font-black uppercase tracking-wider text-black">
+              <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
                 Phone Number <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-2 items-center">

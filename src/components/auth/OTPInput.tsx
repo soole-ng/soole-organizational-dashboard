@@ -88,15 +88,15 @@ export function OTPInput({
   const resendDisabled = isRateLimited || resendsLeft <= 0 || resendLoading
 
   return (
-    <div className="space-y-7">
-      <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
-        <Shield className="w-5 h-5 text-black flex-shrink-0" />
-        <p className="text-xs text-black leading-relaxed font-black">{description}</p>
+    <div className="space-y-5 sm:space-y-7">
+      <div className="flex items-center gap-3 p-3 sm:p-4 bg-primary-75 rounded-2xl border border-primary-100">
+        <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
+        <p className="text-xs sm:text-sm text-black leading-relaxed font-black">{description}</p>
       </div>
 
       {/* OTP Input */}
       <div className="space-y-2">
-        <label className="block text-xs font-black uppercase tracking-wider text-black">
+        <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
           5-digit code
         </label>
         <input
@@ -141,7 +141,7 @@ export function OTPInput({
         onClick={onSubmit}
         disabled={value.length !== 5 || loading || isRateLimited}
         className={clsx(
-          'w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2',
+          'w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-3 sm:py-4 text-sm sm:text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 min-h-12 sm:min-h-14',
           (loading || isRateLimited) && 'opacity-70'
         )}
       >
@@ -163,7 +163,7 @@ export function OTPInput({
           onClick={handleResend}
           disabled={resendDisabled}
           className={clsx(
-            'w-full text-black font-black rounded-2xl px-4 py-3 transition-all text-sm',
+            'w-full text-black font-black rounded-2xl px-4 py-2 sm:py-3 transition-all text-xs sm:text-sm min-h-10 sm:min-h-12',
             resendDisabled ? 'opacity-50 cursor-not-allowed bg-neutral-100' : 'hover:bg-primary-75 bg-primary-75'
           )}
         >

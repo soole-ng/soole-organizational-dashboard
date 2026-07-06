@@ -405,6 +405,16 @@ export const authApi = {
     apiRequest<LoginEnvelope<LoginTokenData>>('/accounts/login/verify-security-answer', {
       method: 'POST', body: { phone_number: phoneNumber, answer, latitude, longitude },
     }),
+  /**
+   * Verifies an OTP for a multi-step signup flow (no account exists yet).
+   * Deliberately NOT verifyLoginOtp - that endpoint requires an existing
+   * user and 404s ("Phone number does not exist") for every brand-new
+   * signup regardless of whether the code is correct.
+   */
+  verifySignupOtp: async (phoneNumber: string, otpCode: string) =>
+    apiRequest<LoginEnvelope<{ phone_number: string; verified: boolean }>>('/accounts/login/verify-signup-otp', {
+      method: 'POST', body: { phone_number: phoneNumber, otp_code: otpCode }, token: null,
+    }),
   signupOrganizationSendOtp: async (phone: string) =>
     apiRequest<LoginEnvelope<{ requires_otp: boolean }>>('/signup/signup-organization/send-otp', {
       method: 'POST', body: { phone }, token: null

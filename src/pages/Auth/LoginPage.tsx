@@ -380,8 +380,8 @@ export function LoginPage() {
         </div>
 
         {/* Form card container */}
-        <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-          <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-[500px]" : "max-w-[400px]")}>
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
+          <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-sm sm:max-w-md lg:max-w-lg" : "max-w-sm sm:max-w-md")}>
             {/* Desktop heading */}
             <div className="hidden lg:block mb-8">
               <h1 className="text-4xl font-extrabold text-primary-500 mb-2 font-display">
@@ -398,12 +398,12 @@ export function LoginPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-card shadow-card p-8 lg:p-10 relative z-10">
+            <div className="bg-white rounded-card shadow-card p-6 sm:p-8 lg:p-10 relative z-10">
               {step === 'login' ? (
-                <div className="space-y-7">
+                <div className="space-y-5 sm:space-y-7">
                   {/* Phone field */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+                    <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black flex items-center gap-1.5">
                       <Phone className="w-3.5 h-3.5 text-black" />
                       Phone Number <span className="text-red-500">*</span>
                     </label>

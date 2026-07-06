@@ -28,6 +28,7 @@ interface OrgProfile {
   bankAccounts?: BankAccount[]
   isBalanceHidden?: boolean
   approvalStatus?: 'incomplete' | 'pending' | 'approved'
+  verificationStatus?: 'incomplete' | 'complete'  // Whether owner completed NIN/DOB/RC/CAC verification
   registrationDetails?: {
     firstName?: string
     lastName?: string
@@ -60,7 +61,8 @@ const DEFAULT_ORG: OrgProfile = {
   commissionPct: 8,
   bankAccounts: [],
   isBalanceHidden: false,
-  approvalStatus: 'approved'
+  approvalStatus: 'approved',
+  verificationStatus: 'incomplete'
 }
 
 const OrgContext = createContext<OrgContextValue>({

@@ -14,6 +14,7 @@ import { AlertSettings } from './components/AlertSettings'
 import { NotificationSettings } from './components/NotificationSettings'
 import { PayoutSettings } from './components/PayoutSettings'
 import { SecuritySettings } from './components/SecuritySettings'
+import { CompleteProfileSection } from './components/CompleteProfileSection'
 
 export function SettingsPage() {
   const { org, updateOrg, guardAction, orgUuid } = useOrg()
@@ -108,6 +109,9 @@ export function SettingsPage() {
   }, [data.organizationMembers])
 
   const sections = [
+    ...(org.verificationStatus === 'incomplete' ? [
+      { icon: AlertTriangle, label: 'Complete Business Verification', desc: 'Add NIN, DOB, RC number, and CAC certificate', priority: true }
+    ] : []),
     { icon: Building2, label: 'Business Profile', desc: 'Name, logo, contact and public page' },
     { icon: Users, label: 'Organization Team', desc: `${members.length} members`, badge: members.length },
     { icon: Wallet, label: 'Payout Settings', desc: 'Bank account and payout schedule' },
@@ -129,7 +133,7 @@ export function SettingsPage() {
         <DesktopPageHeader title="Settings" subtitle="Organization profile, team and account settings" />
 
         <div className="card p-0 overflow-hidden divide-y divide-neutral-50">
-          {sections.map(({ icon: Icon, label, desc, badge, to, href }) => {
+          {sections.map(({ icon: Icon, label, desc, badge, to, href, priority }: any) => {
             const isOpen = activeSection === label;
             return (
               <div key={label} className="transition-colors hover:bg-primary-75/30">
@@ -167,6 +171,17 @@ export function SettingsPage() {
                 {/* Accordion Content */}
                 {isOpen && !to && (
                   <div className="px-5 pb-5 pt-4 bg-white border-t border-neutral-100/50">
+                    {label === 'Complete Business Verification' && (
+                      <CompleteProfileSection
+                        orgUuid={orgUuid || ''}
+                        verificationStatus={org.verificationStatus as 'incomplete' | 'complete' | undefined}
+                        onSuccess={() => {
+                          updateOrg({ verificationStatus: 'complete' })
+                          setActiveSection(null)
+                        }}
+                      />
+                    )}
+
                     {label === 'Business Profile' && (
                       <BusinessProfile executeSecuredAction={executeSecuredAction} onSave={saveBusinessProfile} />
                     )}

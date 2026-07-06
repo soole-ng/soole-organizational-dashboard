@@ -58,7 +58,7 @@ export function SignupChoicePage() {
                     Join Organization Team
                   </h3>
                   <p className="text-sm text-neutral-300 leading-relaxed">
-                    You've been invited to an organization. Use your invite PIN to join the team and start working.
+                    You've been invited to an organization. Use your invited Phone Number to join the team and start working.
                   </p>
                 </div>
               </div>

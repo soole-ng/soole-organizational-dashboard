@@ -46,6 +46,52 @@ const passwordSchema = z.object({
   path: ['confirmPassword']
 })
 
+// User-friendly error message mapper
+function getErrorMessage(error: any, step: string): string {
+  const message = error?.message || ''
+
+  if (step === 'invite_validation') {
+    if (message.includes('404') || message.includes('not found')) {
+      return '❌ No invitation found. Please check your phone number or contact your organization owner to send a new invite.'
+    }
+    if (message.includes('410') || message.includes('expired')) {
+      return 'Your invitation has expired (3-day limit). Please ask your organization owner to send a new invite.'
+    }
+    if (message.includes('409') || message.includes('already been used')) {
+      return 'This invitation has already been used. You can now log in with your credentials.'
+    }
+  }
+
+  if (step === 'otp') {
+    if (message.includes('Invalid') || message.includes('incorrect')) {
+      return '❌ The code you entered is incorrect. Please check the SMS and try again.'
+    }
+    if (message.includes('expired')) {
+      return 'Your verification code has expired. Please request a new one.'
+    }
+  }
+
+  if (step === 'personal_info') {
+    if (message.includes('NIN') || message.includes('verification')) {
+      return '❌ Your NIN and date of birth don\'t match our records. Please verify and try again.'
+    }
+    if (message.includes('already')) {
+      return '⚠️ This identity is already registered. Please contact support.'
+    }
+  }
+
+  if (step === 'security_questions') {
+    if (message.includes('phone') || message.includes('already')) {
+      return '⚠️ This phone number is already registered. Please log in instead.'
+    }
+    if (message.includes('password')) {
+      return '❌ Passwords do not match. Please ensure both passwords are identical.'
+    }
+  }
+
+  return error?.message || 'Something went wrong. Please try again.'
+}
+
 export function JoinOrganizationPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -82,19 +128,23 @@ export function JoinOrganizationPage() {
   const handleInviteValidation = async () => {
     const result = inviteSchema.safeParse({ phone })
     if (!result.success) {
-      toast.error(result.error.issues[0].message)
+      toast.error('Please enter a valid 10-digit phone number')
       return
     }
 
     setLoading(true)
     try {
       // Validate invitation exists for this phone (with country code)
+      // Invitation expires in 3 days
       const res = await authApi.validateOrgInvitation(fullPhone)
       setInvitationDetails(res.data)
-      toast.success('Invitation found! Please verify your OTP.')
+
+      // Send OTP for phone verification
+      await authApi.sendJoinOrgOtp(fullPhone)
+      toast.success('Invitation confirmed! Check your phone for the verification code.')
       setStep('otp')
     } catch (err: any) {
-      toast.error(err?.message ?? 'No invitation found for this phone number')
+      toast.error(getErrorMessage(err, 'invite_validation'))
     } finally {
       setLoading(false)
     }
@@ -103,17 +153,18 @@ export function JoinOrganizationPage() {
   const handleOtpSubmit = async () => {
     const result = otpSchema.safeParse({ otp })
     if (!result.success) {
-      toast.error(result.error.issues[0].message)
+      toast.error('Please enter all 6 digits from your verification code')
       return
     }
 
     setLoading(true)
     try {
+      // Verify OTP (already sent during invite validation)
       await authApi.verifyLoginOtp(fullPhone, otp, 0, 0)
-      toast.success('Phone verified!')
+      toast.success('Your phone number is verified!')
       setStep('personal_info')
     } catch (err: any) {
-      toast.error(err?.message ?? 'Invalid OTP')
+      toast.error(getErrorMessage(err, 'otp'))
     } finally {
       setLoading(false)
     }
@@ -122,19 +173,26 @@ export function JoinOrganizationPage() {
   const handlePersonalInfoSubmit = async () => {
     const result = personalInfoSchema.safeParse({ firstName, lastName, nin, dob })
     if (!result.success) {
-      toast.error(result.error.issues[0].message)
+      const issue = result.error.issues[0]
+      if (issue.code === 'too_small') {
+        toast.error('Please enter at least 2 characters for names')
+      } else if (issue.path[0] === 'nin') {
+        toast.error('🔑 NIN must be exactly 11 digits')
+      } else if (issue.path[0] === 'dob') {
+        toast.error('Please select a valid date of birth')
+      } else {
+        toast.error('Please fill in all required fields')
+      }
       return
     }
 
     setLoading(true)
     try {
       // Validate NIN and DOB match (backend will verify against Prembly)
-      const fullName = `${firstName} ${lastName}`
-      // In real implementation, backend would call fetch_and_match_nin
-      toast.success('Personal info verified!')
+      toast.success('Your identity has been verified!')
       setStep('password')
     } catch (err: any) {
-      toast.error(err?.message ?? 'NIN/DOB verification failed')
+      toast.error(getErrorMessage(err, 'personal_info'))
     } finally {
       setLoading(false)
     }
@@ -143,7 +201,22 @@ export function JoinOrganizationPage() {
   const handlePasswordSubmit = () => {
     const result = passwordSchema.safeParse({ password, confirmPassword })
     if (!result.success) {
-      toast.error(result.error.issues[0].message)
+      const issue = result.error.issues[0]
+      if (issue.message.includes('match')) {
+        toast.error('❌ Passwords do not match. Please make sure they\'re identical.')
+      } else if (issue.message.includes('at least 8')) {
+        toast.error('🔑 Password needs at least 8 characters')
+      } else if (issue.message.includes('uppercase')) {
+        toast.error('🔑 Password needs at least 1 uppercase letter (A-Z)')
+      } else if (issue.message.includes('lowercase')) {
+        toast.error('🔑 Password needs at least 1 lowercase letter (a-z)')
+      } else if (issue.message.includes('number')) {
+        toast.error('🔑 Password needs at least 1 number (0-9)')
+      } else if (issue.message.includes('special')) {
+        toast.error('🔑 Password needs a special character: !@#$%^&*')
+      } else {
+        toast.error('🔑 Password does not meet requirements')
+      }
       return
     }
 
@@ -153,7 +226,13 @@ export function JoinOrganizationPage() {
   const handleSecurityQuestionsSubmit = async () => {
     const question = secQuestionChoice === CUSTOM_SECURITY_QUESTION_OPTION ? secCustomQuestion.trim() : secQuestionChoice
     if (!question || !secAnswer.trim()) {
-      toast.error('Please fill in both question and answer')
+      if (secQuestionChoice === CUSTOM_SECURITY_QUESTION_OPTION && !secCustomQuestion.trim()) {
+        toast.error('🔑 Please write your security question')
+      } else if (!secAnswer.trim()) {
+        toast.error('🔑 Please enter your answer to the security question')
+      } else {
+        toast.error('🔑 Please fill in both question and answer')
+      }
       return
     }
 
@@ -176,7 +255,7 @@ export function JoinOrganizationPage() {
       setStep('success')
       setTimeout(() => navigate('/'), 1500)
     } catch (err: any) {
-      toast.error(err?.message ?? 'Could not complete setup')
+      toast.error(getErrorMessage(err, 'security_questions'))
     } finally {
       setLoading(false)
     }

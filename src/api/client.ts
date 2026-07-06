@@ -430,6 +430,11 @@ export const authApi = {
       method: 'POST', body: { phone }, token: null
     }),
 
+  sendJoinOrgOtp: async (phoneNumber: string) =>
+    apiRequest<LoginEnvelope<{ requires_otp: boolean }>>('/accounts/login/send-otp', {
+      method: 'POST', body: { phone_number: phoneNumber }, token: null
+    }),
+
   joinOrganization: async (payload: {
     phone: string; otp: string; password: string; confirmPassword: string;
     firstName: string; lastName: string; nin: string; dob: string;

@@ -22,7 +22,7 @@ export function SignupChoicePage() {
         <div className="space-y-4">
           {/* New Organization Option */}
           <button
-            onClick={() => navigate('/login?signupPath=new-org')}
+            onClick={() => navigate('/login', { state: { showSignup: true } })}
             className="w-full bg-white rounded-2xl p-6 shadow-card hover:shadow-lg transition-all text-left group border border-neutral-50"
           >
             <div className="flex items-start justify-between">

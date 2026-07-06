@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Eye, EyeOff, Shield, ChevronDown, Phone, Car, MapPin, CreditCard, Sparkles, HelpCircle, CheckCircle } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
@@ -54,9 +54,17 @@ const COUNTRY_CODES = [
 
 export function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { updateOrg } = useOrg()
   const [step, setStep]         = useState<Step>('login')
   const [country, setCountry]   = useState(COUNTRY_CODES[0])
+
+  // If navigated from SignupChoicePage with showSignup state, show signup form
+  useEffect(() => {
+    if ((location.state as any)?.showSignup) {
+      setStep('signup')
+    }
+  }, [location.state])
 
   // Login fields
   const [phone, setPhone]       = useState('')
@@ -378,7 +386,7 @@ export function LoginPage() {
                     <p className="text-xs text-primary-500 text-center leading-relaxed font-black">
                       Don't have an account?{' '}
                       <button
-                        onClick={() => { setStep('signup'); setErrors([]) }}
+                        onClick={() => navigate('/signup')}
                         className="text-teal-300 font-black underline hover:text-teal-200 transition-colors inline"
                       >
                         Sign up your organization

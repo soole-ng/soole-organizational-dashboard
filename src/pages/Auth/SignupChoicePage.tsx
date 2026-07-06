@@ -35,7 +35,7 @@ export function SignupChoicePage() {
                     Start a New Organization
                   </h3>
                   <p className="text-sm text-neutral-300 leading-relaxed">
-                    I'm creating my own transport company. Quick signup, then complete verification for full access.
+                    I'm creating a new organization. Quick signup, then complete verification for full access.
                   </p>
                 </div>
               </div>

@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { z } from 'zod'
 import { authApi } from '../../api/client'
 import { PRESET_SECURITY_QUESTIONS, CUSTOM_SECURITY_QUESTION_OPTION } from '../../lib/securityQuestions'
+import { OTPInput } from '../../components/auth/OTPInput'
 
 const COUNTRY_CODES = [
   { code: '+234', flag: 'https://flagcdn.com/w40/ng.png', name: 'Nigeria' },
@@ -123,7 +124,10 @@ export function JoinOrganizationPage() {
   const [secAnswer, setSecAnswer] = useState('')
 
   const [loading, setLoading] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
   const [invitationDetails, setInvitationDetails] = useState<any>(null)
+  const [otpAttemptsLeft, setOtpAttemptsLeft] = useState(3)
+  const [otpCooldown, setOtpCooldown] = useState(0)
 
   const handleInviteValidation = async () => {
     const result = inviteSchema.safeParse({ phone })
@@ -167,6 +171,32 @@ export function JoinOrganizationPage() {
       toast.error(getErrorMessage(err, 'otp'))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    setResendLoading(true)
+    try {
+      const res = await authApi.resendLoginOtp(fullPhone)
+      setOtpAttemptsLeft(res.data.attempts_left)
+      setOtpCooldown(res.data.seconds_until_next)
+      toast.success('OTP resent successfully')
+      setOtp('')
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to resend OTP')
+      const message = err?.message || ''
+      if (message.includes('Too many attempts')) {
+        const match = message.match(/(\d+)h (\d+)m|(\d+)m (\d+)s/)
+        if (match) {
+          const hours = parseInt(match[1] || '0')
+          const mins = parseInt(match[2] || match[3] || '0')
+          const secs = parseInt(match[4] || '0')
+          const totalSeconds = hours * 3600 + mins * 60 + secs
+          setOtpCooldown(totalSeconds)
+        }
+      }
+    } finally {
+      setResendLoading(false)
     }
   }
 
@@ -372,33 +402,18 @@ export function JoinOrganizationPage() {
 
           {/* OTP Step */}
           {step === 'otp' && (
-            <div className="space-y-4">
-              <label className="block text-xs font-black uppercase tracking-wider text-black">6-Digit Code</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={otp}
-                onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-                className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-center text-3xl tracking-[0.5em] font-black text-black focus:outline-none"
-                placeholder="000000"
-              />
-              <div className="flex justify-center gap-2">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className={clsx('w-2 h-2 rounded-full', i < otp.length ? 'bg-primary-500' : 'bg-neutral-100')} />
-                ))}
-              </div>
-              <button
-                onClick={handleOtpSubmit}
-                disabled={loading || otp.length !== 6}
-                className={clsx(
-                  'w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all',
-                  loading && 'opacity-70'
-                )}
-              >
-                {loading ? 'Verifying...' : 'Verify Code'}
-              </button>
-            </div>
+            <OTPInput
+              value={otp}
+              onChange={setOtp}
+              onSubmit={handleOtpSubmit}
+              onResend={handleResendOtp}
+              loading={loading}
+              resendLoading={resendLoading}
+              attemptsLeft={otpAttemptsLeft}
+              secondsUntilNextResend={otpCooldown}
+              canResend={true}
+              description="We've sent a 6-digit code via SMS to your phone. Please enter it below."
+            />
           )}
 
           {/* Personal Info Step */}

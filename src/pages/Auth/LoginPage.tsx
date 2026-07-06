@@ -7,6 +7,7 @@ import { useOrg } from '../../lib/OrgContext'
 import { authApi } from '../../api/client'
 import { z } from 'zod'
 import { PRESET_SECURITY_QUESTIONS, CUSTOM_SECURITY_QUESTION_OPTION } from '../../lib/securityQuestions'
+import { OTPInput } from '../../components/auth/OTPInput'
 
 const loginSchema = z.object({
   phone: z.string().length(10, 'Phone must be exactly 10 digits'),
@@ -106,7 +107,14 @@ export function LoginPage() {
   const [showPw, setShowPw]     = useState(false)
   const [showCC, setShowCC]     = useState(false)
   const [loading, setLoading]   = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
   const [errors, setErrors]     = useState<string[]>([])
+
+  // OTP resend tracking
+  const [loginOtpAttemptsLeft, setLoginOtpAttemptsLeft] = useState(3)
+  const [loginOtpCooldown, setLoginOtpCooldown] = useState(0)
+  const [signupOtpAttemptsLeft, setSignupOtpAttemptsLeft] = useState(3)
+  const [signupOtpCooldown, setSignupOtpCooldown] = useState(0)
 
 
   const fullPhone = `${country.code}${phone.replace(/^0/, '')}`
@@ -170,6 +178,59 @@ export function LoginPage() {
       toast.error(err?.message ?? 'Incorrect answer to security question!')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleResendLoginOtp = async () => {
+    setResendLoading(true)
+    try {
+      const res = await authApi.resendLoginOtp(fullPhone)
+      setLoginOtpAttemptsLeft(res.data.attempts_left)
+      setLoginOtpCooldown(res.data.seconds_until_next)
+      toast.success('OTP resent successfully')
+      setOtp('')
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to resend OTP')
+      // Extract cooldown from error message if rate limited
+      const message = err?.message || ''
+      if (message.includes('Too many attempts')) {
+        const match = message.match(/(\d+)h (\d+)m|(\d+)m (\d+)s/)
+        if (match) {
+          const hours = parseInt(match[1] || '0')
+          const mins = parseInt(match[2] || match[3] || '0')
+          const secs = parseInt(match[4] || '0')
+          const totalSeconds = hours * 3600 + mins * 60 + secs
+          setLoginOtpCooldown(totalSeconds)
+        }
+      }
+    } finally {
+      setResendLoading(false)
+    }
+  }
+
+  const handleResendSignupOtp = async () => {
+    setResendLoading(true)
+    try {
+      const res = await authApi.resendSignupOtp(fullSuPhone)
+      setSignupOtpAttemptsLeft(res.data.attempts_left)
+      setSignupOtpCooldown(res.data.seconds_until_next)
+      toast.success('OTP resent successfully')
+      setOtp('')
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to resend OTP')
+      const message = err?.message || ''
+      if (message.includes('Too many attempts')) {
+        const match = message.match(/(\d+)h (\d+)m|(\d+)m (\d+)s/)
+        if (match) {
+          const hours = parseInt(match[1] || '0')
+          const mins = parseInt(match[2] || match[3] || '0')
+          const secs = parseInt(match[4] || '0')
+          const totalSeconds = hours * 3600 + mins * 60 + secs
+          setSignupOtpCooldown(totalSeconds)
+        }
+      }
+    } finally {
+      setResendLoading(false)
     }
   }
 
@@ -529,35 +590,19 @@ export function LoginPage() {
                   </button>
                 </div>
               ) : step === 'signup_otp' ? (
-                <div className="space-y-7">
-                  <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
-                    <Shield className="w-5 h-5 text-black flex-shrink-0" />
-                    <p className="text-xs text-black leading-relaxed font-black">
-                      We've sent a 6-digit code via SMS to verify your phone number. Please enter it below.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black">6-digit code</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={otp}
-                      onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-                      className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-center text-3xl tracking-[0.5em] font-black text-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all stat-number"
-                      placeholder="000000"
-                      onKeyDown={e => e.key === 'Enter' && handleSignupOtp()}
-                      autoFocus
-                    />
-                    <div className="flex justify-center gap-2 mt-3">
-                      {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className={clsx('w-2 h-2 rounded-full transition-colors', i < otp.length ? 'bg-primary-500' : 'bg-neutral-100')} />
-                      ))}
-                    </div>
-                  </div>
-                  <button onClick={handleSignupOtp} disabled={otp.length !== 6 || loading} className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2', loading && 'opacity-70')}>
-                    {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying…</> : 'Verify & Continue'}
-                  </button>
+                <div className="space-y-4">
+                  <OTPInput
+                    value={otp}
+                    onChange={setOtp}
+                    onSubmit={handleSignupOtp}
+                    onResend={handleResendSignupOtp}
+                    loading={loading}
+                    resendLoading={resendLoading}
+                    attemptsLeft={signupOtpAttemptsLeft}
+                    secondsUntilNextResend={signupOtpCooldown}
+                    canResend={true}
+                    description="We've sent a 6-digit code via SMS to verify your phone number. Please enter it below."
+                  />
                   <button onClick={() => { setStep('signup'); setOtp('') }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
                     ← Back
                   </button>
@@ -656,35 +701,18 @@ export function LoginPage() {
                   </button>
                 </div>
               ) : step === 'otp' ? (
-                <div className="space-y-7">
-                  <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
-                    <Shield className="w-5 h-5 text-black flex-shrink-0" />
-                    <p className="text-xs text-black leading-relaxed font-black">
-                      We've sent a 6-digit code via SMS to your phone. Please enter it below.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black">6-digit code</label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      value={otp}
-                      onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-                      className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-center text-3xl tracking-[0.5em] font-black text-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all stat-number"
-                      placeholder="000000"
-                      onKeyDown={e => e.key === 'Enter' && handleOtp()}
-                      autoFocus
-                    />
-                    <div className="flex justify-center gap-2 mt-3">
-                      {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className={clsx('w-2 h-2 rounded-full transition-colors', i < otp.length ? 'bg-primary-500' : 'bg-neutral-100')} />
-                      ))}
-                    </div>
-                  </div>
-                  <button onClick={handleOtp} disabled={otp.length !== 6 || loading} className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2', loading && 'opacity-70')}>
-                    {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying…</> : 'Verify & Sign in'}
-                  </button>
+                <div className="space-y-4">
+                  <OTPInput
+                    value={otp}
+                    onChange={setOtp}
+                    onSubmit={handleOtp}
+                    onResend={handleResendLoginOtp}
+                    loading={loading}
+                    resendLoading={resendLoading}
+                    attemptsLeft={loginOtpAttemptsLeft}
+                    secondsUntilNextResend={loginOtpCooldown}
+                    canResend={true}
+                  />
                   <button onClick={() => { setStep('login'); setOtp('') }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
                     ← Back to login
                   </button>

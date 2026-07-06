@@ -35,7 +35,7 @@ export function SignupChoicePage() {
                     Start a New Organization
                   </h3>
                   <p className="text-sm text-neutral-300 leading-relaxed">
-                    I'm creating a new organization. Quick signup, then complete verification for full access.
+                    Register your organization. Complete quick signup, then verify your details to unlock full access.
                   </p>
                 </div>
               </div>
@@ -58,7 +58,7 @@ export function SignupChoicePage() {
                     Join as Team Member
                   </h3>
                   <p className="text-sm text-neutral-300 leading-relaxed">
-                    I was invited by an organization owner. Use your invite PIN to sign up and get immediate access.
+                    You've been invited to an organization. Use your invite PIN to join the team and start working.
                   </p>
                 </div>
               </div>

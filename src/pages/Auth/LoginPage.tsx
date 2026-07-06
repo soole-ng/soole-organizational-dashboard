@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Shield, ChevronDown, Phone, Car, MapPin, CreditCard, Sparkles, HelpCircle, CheckCircle, Upload, Loader2, FileCheck } from 'lucide-react'
+import { Eye, EyeOff, Shield, ChevronDown, Phone, Car, MapPin, CreditCard, Sparkles, HelpCircle, CheckCircle } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
-import { authApi, uploadApi } from '../../api/client'
+import { authApi } from '../../api/client'
 import { z } from 'zod'
 import { PRESET_SECURITY_QUESTIONS, CUSTOM_SECURITY_QUESTION_OPTION } from '../../lib/securityQuestions'
 
@@ -29,26 +29,16 @@ function getBrowserLocation(): Promise<{ latitude: number; longitude: number }> 
 }
 
 const signupSchema = z.object({
-  suFirstName: z.string().min(1, 'First name is required'),
-  suLastName: z.string().min(1, 'Last name is required'),
+  suOrgName: z.string().min(2, 'Company name is required'),
+  suOwnerName: z.string().min(2, 'Owner name is required'),
   suPhone: z.string().length(10, 'Phone must be exactly 10 digits'),
-  suDob: z.string().min(1, 'Date of birth is required'),
-  suNin: z.string().length(11, 'NIN must be exactly 11 digits'),
-  suCompany: z.string().min(1, 'Company name is required'),
-  suReg: z.string().min(1, 'RC Number is required'),
-  suCacDocumentUrl: z.string().min(1, 'A scanned copy of your CAC certificate is required'),
-  suPin: z.string().length(6, 'PIN must be exactly 6 digits').regex(/^\d+$/, 'PIN must be numeric'),
-  suConfirmPin: z.string(),
-}).refine(data => data.suPin === data.suConfirmPin, {
-  message: 'PINs do not match',
-  path: ['suConfirmPin'],
+  suPassword: z.string().length(6, 'Password must be exactly 6 digits').regex(/^\d+$/, 'Password must be numeric'),
+  suConfirmPassword: z.string(),
+}).refine(data => data.suPassword === data.suConfirmPassword, {
+  message: 'Passwords do not match',
+  path: ['suConfirmPassword'],
 })
 
-const ORG_TYPES = [
-  { value: 'transport_co', label: 'Transport Company' },
-  { value: 'shuttle', label: 'Shuttle Service' },
-  { value: 'corporate', label: 'Corporate Transport' },
-]
 
 type Step = 'login' | 'otp' | 'security_question' | 'signup' | 'security_setup'
 
@@ -75,20 +65,12 @@ export function LoginPage() {
   const [secAnswer, setSecAnswer] = useState('')
   const [securityQuestion, setSecurityQuestion] = useState('')
 
-  // Signup fields
-  const [suFirstName, setSuFirstName] = useState('')
-  const [suLastName, setSuLastName] = useState('')
+  // Signup fields - simplified for fast registration
+  const [suOrgName, setSuOrgName] = useState('')
+  const [suOwnerName, setSuOwnerName] = useState('')
   const [suPhone, setSuPhone] = useState('')
-  const [suDob, setSuDob] = useState('')
-  const [suNin, setSuNin] = useState('')
-  const [suCompany, setSuCompany] = useState('')
-  const [suReg, setSuReg] = useState('')
-  const [suCacDocumentUrl, setSuCacDocumentUrl] = useState('')
-  const [suCacFileName, setSuCacFileName] = useState('')
-  const [uploadingCac, setUploadingCac] = useState(false)
-  const [suOrgType, setSuOrgType] = useState('transport_co')
-  const [suPin, setSuPin] = useState('')
-  const [suConfirmPin, setSuConfirmPin] = useState('')
+  const [suPassword, setSuPassword] = useState('')
+  const [suConfirmPassword, setSuConfirmPassword] = useState('')
 
   // Post-signup security question setup (optional, skippable - can also be
   // done/changed later from Settings)
@@ -102,8 +84,6 @@ export function LoginPage() {
   const [loading, setLoading]   = useState(false)
   const [errors, setErrors]     = useState<string[]>([])
 
-  const today = new Date()
-  const maxDobDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate()).toISOString().split('T')[0]
 
   const fullPhone = `${country.code}${phone.replace(/^0/, '')}`
   const fullSuPhone = `${country.code}${suPhone.replace(/^0/, '')}`
@@ -170,7 +150,7 @@ export function LoginPage() {
   }
 
   const handleSignup = async () => {
-    const result = signupSchema.safeParse({ suFirstName, suLastName, suPhone, suDob, suNin, suCompany, suReg, suCacDocumentUrl, suPin, suConfirmPin })
+    const result = signupSchema.safeParse({ suOrgName, suOwnerName, suPhone, suPassword, suConfirmPassword })
     if (!result.success) {
       setErrors(result.error.issues.map(i => i.path[0] as string))
       toast.error(result.error.issues[0].message)
@@ -182,25 +162,19 @@ export function LoginPage() {
     try {
       const res = await authApi.signupOrganization({
         phone: fullSuPhone,
-        pin: suPin,
-        confirmPin: suConfirmPin,
-        organizationName: suCompany,
-        organizationType: suOrgType,
-        rcNumber: suReg,
-        cacDocumentUrl: suCacDocumentUrl,
-        firstName: suFirstName,
-        lastName: suLastName,
-        dob: suDob,
-        nin: suNin,
+        pin: suPassword,
+        confirmPin: suConfirmPassword,
+        organizationName: suOrgName,
+        organizationType: 'transport_co',
+        firstName: suOwnerName,
+        lastName: '',
       })
       localStorage.setItem('auth_token', res.data.token)
       localStorage.setItem('refresh_token', res.data.refreshToken)
       updateOrg({ approvalStatus: 'pending' })
-      toast.success('Organization created! Awaiting admin approval.')
+      toast.success('Organization created! Complete your profile to unlock full features.')
       setStep('security_setup')
     } catch (err: any) {
-      // The backend rejects a NIN that doesn't match the submitted name/DOB
-      // with a 403 explaining to enter details exactly as NIN has them.
       toast.error(err?.message ?? 'Signup failed. Please try again.')
     } finally {
       setLoading(false)
@@ -417,34 +391,34 @@ export function LoginPage() {
                   <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
                     <Shield className="w-5 h-5 text-black flex-shrink-0" />
                     <p className="text-xs text-black leading-relaxed font-black">
-                      Enter your name and date of birth exactly as they appear on your NIN record - we verify your NIN against these before your account is created.
+                      Quick signup. You'll complete additional verification later to unlock all features.
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-wider text-black">
-                        First Name <span className="text-red-500">*</span>
-                      </label>
-                      <input 
-                        type="text" 
-                        value={suFirstName} 
-                        onChange={e => { setSuFirstName(e.target.value); setErrors(errors.filter(err => err !== 'suFirstName')) }} 
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suFirstName'))} 
-                        placeholder="Folake" 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-wider text-black">
-                        Last Name <span className="text-red-500">*</span>
-                      </label>
-                      <input 
-                        type="text" 
-                        value={suLastName} 
-                        onChange={e => { setSuLastName(e.target.value); setErrors(errors.filter(err => err !== 'suLastName')) }} 
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suLastName'))} 
-                        placeholder="Okafor" 
-                      />
-                    </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      Company Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={suOrgName}
+                      onChange={e => { setSuOrgName(e.target.value); setErrors(errors.filter(err => err !== 'suOrgName')) }}
+                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOrgName'))}
+                      placeholder="E.g., Speedway Transport Ltd."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      Your Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={suOwnerName}
+                      onChange={e => { setSuOwnerName(e.target.value); setErrors(errors.filter(err => err !== 'suOwnerName')) }}
+                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOwnerName'))}
+                      placeholder="John Doe"
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -456,13 +430,13 @@ export function LoginPage() {
                         <img src={country.flag} alt={country.name} className="w-5 h-3.5 object-cover rounded-sm" />
                         {country.code}
                       </div>
-                      <input 
-                        type="tel" 
+                      <input
+                        type="tel"
                         maxLength={10}
-                        value={suPhone} 
-                        onChange={e => { setSuPhone(e.target.value.replace(/\D/g, '').replace(/^0/, '')); setErrors(errors.filter(err => err !== 'suPhone')) }} 
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suPhone'))} 
-                        placeholder="8031234567" 
+                        value={suPhone}
+                        onChange={e => { setSuPhone(e.target.value.replace(/\D/g, '').replace(/^0/, '')); setErrors(errors.filter(err => err !== 'suPhone')) }}
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suPhone'))}
+                        placeholder="8031234567"
                       />
                     </div>
                   </div>
@@ -470,144 +444,29 @@ export function LoginPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="block text-xs font-black uppercase tracking-wider text-black">
-                        Date of Birth <span className="text-red-500">*</span>
-                      </label>
-                      <input 
-                        type="date" 
-                        max={maxDobDate}
-                        value={suDob} 
-                        onChange={e => { setSuDob(e.target.value); setErrors(errors.filter(err => err !== 'suDob')) }} 
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suDob'))} 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-wider text-black">
-                        NIN <span className="text-red-500">*</span>
-                      </label>
-                      <input 
-                        type="text" 
-                        maxLength={11}
-                        value={suNin} 
-                        onChange={e => { setSuNin(e.target.value.replace(/\D/g, '')); setErrors(errors.filter(err => err !== 'suNin')) }} 
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suNin'))} 
-                        placeholder="11-digit NIN" 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black">
-                      Company Name <span className="text-red-500">*</span>
-                    </label>
-                    <input 
-                      type="text" 
-                      value={suCompany} 
-                      onChange={e => { setSuCompany(e.target.value); setErrors(errors.filter(err => err !== 'suCompany')) }} 
-                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suCompany'))} 
-                      placeholder="E.g., Speedway Transport Ltd." 
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black">
-                      Company Registration Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={10}
-                      value={suReg}
-                      onChange={e => { setSuReg(e.target.value); setErrors(errors.filter(err => err !== 'suReg')) }}
-                      className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suReg'))}
-                      placeholder="RC Number"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black">
-                      CAC Certificate <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="file"
-                      id="signup-cac-upload"
-                      accept="image/*,.pdf"
-                      className="hidden"
-                      disabled={uploadingCac}
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0]
-                        e.target.value = ''
-                        if (!file) return
-                        setUploadingCac(true)
-                        try {
-                          const publicUrl = await uploadApi.uploadFile(file, 'cac_document')
-                          setSuCacDocumentUrl(publicUrl)
-                          setSuCacFileName(file.name)
-                          setErrors(errors.filter(err => err !== 'suCacDocumentUrl'))
-                        } catch (err: any) {
-                          toast.error(err?.message ?? 'Failed to upload CAC certificate')
-                        } finally {
-                          setUploadingCac(false)
-                        }
-                      }}
-                    />
-                    <label
-                      htmlFor="signup-cac-upload"
-                      className={clsx(
-                        "w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black transition-all flex items-center gap-2 cursor-pointer aria-disabled:opacity-60 aria-disabled:cursor-not-allowed",
-                        getBorderClass('suCacDocumentUrl')
-                      )}
-                      aria-disabled={uploadingCac}
-                    >
-                      {uploadingCac ? (
-                        <><Loader2 className="w-4 h-4 animate-spin text-neutral-300" /> Uploading…</>
-                      ) : suCacDocumentUrl ? (
-                        <><FileCheck className="w-4 h-4 text-secondary-300" /> <span className="truncate">{suCacFileName}</span></>
-                      ) : (
-                        <><Upload className="w-4 h-4 text-neutral-300" /> <span className="text-neutral-300 font-semibold">Upload scanned CAC certificate</span></>
-                      )}
-                    </label>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black">
-                      Business Type <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={suOrgType}
-                      onChange={e => setSuOrgType(e.target.value)}
-                      className="w-full h-[40px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none transition-all"
-                    >
-                      {ORG_TYPES.map(t => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-wider text-black">
-                        6-Digit PIN <span className="text-red-500">*</span>
+                        6-Digit Password <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="password"
                         inputMode="numeric"
                         maxLength={6}
-                        value={suPin}
-                        onChange={e => { setSuPin(e.target.value.replace(/\D/g, '').slice(0, 6)); setErrors(errors.filter(err => err !== 'suPin')) }}
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all tracking-[0.3em]", getBorderClass('suPin'))}
+                        value={suPassword}
+                        onChange={e => { setSuPassword(e.target.value.replace(/\D/g, '').slice(0, 6)); setErrors(errors.filter(err => err !== 'suPassword')) }}
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all tracking-[0.3em]", getBorderClass('suPassword'))}
                         placeholder="••••••"
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="block text-xs font-black uppercase tracking-wider text-black">
-                        Confirm PIN <span className="text-red-500">*</span>
+                        Confirm <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="password"
                         inputMode="numeric"
                         maxLength={6}
-                        value={suConfirmPin}
-                        onChange={e => { setSuConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 6)); setErrors(errors.filter(err => err !== 'suConfirmPin')) }}
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all tracking-[0.3em]", getBorderClass('suConfirmPin'))}
+                        value={suConfirmPassword}
+                        onChange={e => { setSuConfirmPassword(e.target.value.replace(/\D/g, '').slice(0, 6)); setErrors(errors.filter(err => err !== 'suConfirmPassword')) }}
+                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all tracking-[0.3em]", getBorderClass('suConfirmPassword'))}
                         placeholder="••••••"
                       />
                     </div>
@@ -618,7 +477,7 @@ export function LoginPage() {
                     disabled={loading}
                     className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4', loading && 'opacity-70')}
                   >
-                    {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Creating Account…</> : 'Register Company'}
+                    {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Creating Account…</> : 'Create Account'}
                   </button>
                   <button onClick={() => { setStep('login'); setErrors([]) }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
                     ← Back to login

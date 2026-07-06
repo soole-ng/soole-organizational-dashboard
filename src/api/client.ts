@@ -407,14 +407,11 @@ export const authApi = {
     }),
   signupOrganization: async (payload: {
     phone: string; pin: string; confirmPin: string; organizationName: string
-    organizationType: string; contactEmail?: string; contactPhone?: string; rcNumber: string
-    // Required - the backend rejects signup without a scanned CAC certificate
-    // (uploaded beforehand via uploadApi.uploadFile(file, 'cac_document')).
-    cacDocumentUrl: string
-    // Required - the backend verifies this NIN against firstName+lastName+dob
-    // (via Prembly) before creating anything. Enter exactly as it appears on
-    // the NIN record, not a nickname or reordered name.
-    firstName: string; lastName: string; dob: string; nin: string
+    organizationType: string; contactEmail?: string; contactPhone?: string; rcNumber?: string
+    // Optional - for fast signup (completed later in Settings)
+    cacDocumentUrl?: string
+    // Optional - for fast signup (completed later in Settings)
+    firstName?: string; lastName?: string; dob?: string; nin?: string
   }) => apiRequest<LoginEnvelope<SignupOrgData>>('/signup/signup-organization', { method: 'POST', body: payload }),
   /**
    * Team member completing signup from an invite SMS/link. One atomic call -

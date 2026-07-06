@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppShell } from './components/layout/AppShell'
 import { LoginPage } from './pages/Auth/LoginPage'
 import { JoinOrganizationPage } from './pages/Auth/JoinOrganizationPage'
+import { SignupChoicePage } from './pages/Auth/SignupChoicePage'
 import { HomePage } from './pages/Home/HomePage'
 import { TripsListPage } from './pages/Trips/TripsListPage'
 import { TripCreatePage } from './pages/Trips/TripCreatePage'
@@ -35,6 +36,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <OrgProvider>
         <Routes>
+      <Route path="/signup" element={<SignupChoicePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/join" element={<JoinOrganizationPage />} />
 

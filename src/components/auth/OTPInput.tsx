@@ -181,7 +181,7 @@ export function OTPInput({
           ) : resendsLeft <= 0 ? (
             '❌ No more resends (4-hour lockout)'
           ) : (
-            `Resend Code (${resendsLeft}/${resendsLeft === 2 ? 2 : 2})`
+            `Resend Code (${resendsLeft}/3)`
           )}
         </button>
       )}

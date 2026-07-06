@@ -32,7 +32,7 @@ export function SignupChoicePage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-black mb-1">
-                    Start a New Organization
+                    Signup Organization
                   </h3>
                   <p className="text-sm text-neutral-300 leading-relaxed">
                     Register your organization. Complete quick signup, then verify your details to unlock full access.
@@ -55,7 +55,7 @@ export function SignupChoicePage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-black text-black mb-1">
-                    Join as Team Member
+                    Join Organization Team
                   </h3>
                   <p className="text-sm text-neutral-300 leading-relaxed">
                     You've been invited to an organization. Use your invite PIN to join the team and start working.

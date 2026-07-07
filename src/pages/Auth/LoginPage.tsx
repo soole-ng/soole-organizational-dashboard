@@ -369,21 +369,22 @@ export function LoginPage() {
       {/* Right panel */}
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
         {/* Mobile header */}
-        <div className="bg-primary-500 px-6 pt-16 pb-12 text-white lg:hidden flex-shrink-0">
-          <div className="w-16 h-16 flex items-center justify-start mb-6">
+        <div className="bg-primary-500 px-6 pt-8 pb-6 text-white lg:hidden flex-shrink-0 flex flex-col items-center">
+          <div className="w-20 h-20 flex items-center justify-center mb-2">
             <img src="/soole-icon.png" alt="Soole logo" className="h-full object-contain" />
           </div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 font-display">
+          <h2 className="text-xl font-extrabold text-white mb-4 font-display">Soole</h2>
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 font-display text-center">
             {step === 'login' ? 'Welcome back' : step === 'signup' ? 'Create Account' : step === 'security_setup' ? 'Secure your account' : 'Verify your phone'}
           </h1>
-          <p className="text-primary-200 text-base sm:text-lg">
+          <p className="text-primary-200 text-base sm:text-lg text-center">
             {step === 'login' ? 'Sign in to your organization account' : step === 'signup' ? 'Register your company on Soole' : step === 'security_setup' ? 'Set up a security question for account recovery and withdrawals' : 'Enter the verification code sent via SMS'}
           </p>
         </div>
 
         {/* Form card container */}
-        <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
-          <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-sm sm:max-w-md lg:max-w-lg" : "max-w-sm sm:max-w-md")}>
+        <div className="flex-1 flex items-start justify-center p-3 sm:p-4 lg:p-12 pt-4 sm:pt-6">
+          <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-full sm:max-w-md lg:max-w-lg" : "max-w-full sm:max-w-md")}>
             {/* Desktop heading */}
             <div className="hidden lg:block mb-8">
               <h1 className="text-5xl lg:text-6xl font-extrabold text-primary-500 mb-2 font-display">

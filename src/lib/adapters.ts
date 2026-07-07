@@ -3,7 +3,7 @@
  * into the dashboard's frontend types (types/index.ts).
  */
 import type {
-  Driver, Vehicle, Trip, Transaction, Payout, Alert, OrganizationMember,
+  Driver, DriverReview, Vehicle, Trip, Transaction, Payout, Alert, OrganizationMember,
   Passenger, VehicleDocument, StatusVariant,
 } from '../types'
 
@@ -18,7 +18,7 @@ function toStatusVariant(status: string | null | undefined): StatusVariant {
   const known: StatusVariant[] = [
     'verified', 'pending', 'rejected', 'suspended', 'active', 'inactive',
     'scheduled', 'boarding', 'in_progress', 'completed', 'cancelled', 'draft',
-    'sent', 'received', 'failed',
+    'sent', 'received', 'failed', 'retired',
   ]
   if ((known as string[]).includes(s)) return s as StatusVariant
   if (s === 'upcoming' || s === 'available') return 'scheduled'
@@ -73,8 +73,24 @@ export function adaptFleetDriver(raw: any): Driver {
     tripsCompleted: raw.trips_completed ?? 0,
     joinedAt: raw.joined_at ?? '',
     avgRating: raw.avg_rating ?? 0,
-    reviews: [],
+    // Backend now actually populates this (previously hardcoded []
+    // server-side too - DriverDetailModal's whole "Passenger Comments"
+    // section had nothing to show regardless of real review data).
+    reviews: (raw.reviews || []).map(adaptDriverReview),
     isPendingInvite: raw.is_pending_invite ?? false,
+  }
+}
+
+/** fleet.api.DriverReviewSchema / DriverDetailSchema.reviews — {id, passenger_name, rating, comment, date} */
+export function adaptDriverReview(raw: any): DriverReview {
+  return {
+    id: raw.id,
+    passengerName: raw.passenger_name,
+    rating: raw.rating,
+    comment: raw.comment ?? '',
+    date: raw.date,
+    tripId: raw.trip_id ?? undefined,
+    tripRoute: raw.trip_route ?? undefined,
   }
 }
 
@@ -95,7 +111,15 @@ export function adaptVehicle(raw: any): Vehicle {
     capacity: raw.capacity,
     type: (['Sienna', 'Hiace', 'Coaster'].includes(raw.vehicle_type) ? raw.vehicle_type : 'Other') as Vehicle['type'],
     fuelType: 'petrol',
-    status: raw.verification_status === 'verified' ? 'verified' : toStatusVariant(raw.status),
+    // verification_status and status (operational) are independent backend
+    // fields - a suspended/retired vehicle keeps whatever verification_status
+    // it already had, so showing "verified" unconditionally once documents
+    // were approved would hide a real suspension/retirement from staff.
+    // Operational status wins whenever it's not the default "active".
+    status: raw.status && raw.status !== 'active'
+      ? toStatusVariant(raw.status)
+      : (raw.verification_status === 'verified' ? 'verified' : toStatusVariant(raw.status)),
+    operationalStatus: (['active', 'suspended', 'retired'].includes(raw.status) ? raw.status : 'active') as Vehicle['operationalStatus'],
     assignedDriverId: raw.assigned_driver_id ?? undefined,
     assignedDriverName: raw.assigned_driver_name ?? undefined,
     fuelLevel: 0,

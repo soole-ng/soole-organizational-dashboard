@@ -17,6 +17,7 @@ const config: Record<StatusVariant, { label: string; color: string }> = {
   suspended:   { label: 'Suspended',   color: '#9CA3AF' },
   inactive:    { label: 'Inactive',    color: '#9CA3AF' },
   draft:       { label: 'Draft',       color: '#9CA3AF' },
+  retired:     { label: 'Retired',     color: '#9CA3AF' },
 }
 
 interface Props {

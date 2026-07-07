@@ -296,14 +296,30 @@ export function JoinOrganizationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-primary-75 flex flex-col lg:flex-row items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-sm sm:max-w-md">
+    <div className="min-h-screen bg-primary-75 flex flex-col">
+      {/* Mobile header with logo */}
+      <div className="bg-primary-500 px-6 pt-8 pb-6 text-white lg:hidden flex-shrink-0 flex flex-col items-center">
+        <div className="w-20 h-20 flex items-center justify-center mb-2">
+          <Shield className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-xl font-extrabold text-white mb-4 font-display">Soole</h2>
+        <h1 className="text-4xl font-extrabold text-center mb-1 font-display">Join Organization</h1>
+        <p className="text-primary-200 text-sm text-center">Complete your setup to get started with Soole.</p>
+      </div>
+
+      {/* Mobile view - form stretches full width */}
+      <div className="lg:hidden flex-1 flex flex-col items-center justify-start p-3 sm:p-4 pt-4">
+      <div className="w-full">
+
+      {/* Desktop view */}
+      <div className="hidden lg:flex items-center justify-center p-6 flex-1">
+      <div className="w-full max-w-md">
         <div className="text-center mb-6 sm:mb-8">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center mx-auto mb-3 sm:mb-4 bg-secondary-500 rounded-2xl shadow-sm">
-            <Shield className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+          <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-secondary-500 rounded-2xl shadow-sm">
+            <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-primary-500 mb-2 font-display">Join Organization</h1>
-          <p className="text-neutral-300 text-xs sm:text-sm">
+          <h1 className="text-3xl font-extrabold text-primary-500 mb-2 font-display">Join Organization</h1>
+          <p className="text-neutral-300 text-sm">
             Complete your setup to get started with Soole.
           </p>
         </div>
@@ -609,6 +625,8 @@ export function JoinOrganizationPage() {
           )}
         </div>
       </div>
+      </div> {/* Close desktop view container */}
+      </div> {/* Close mobile form wrapper */}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 export type StatusVariant =
   | 'verified' | 'pending' | 'rejected' | 'suspended' | 'active' | 'inactive'
   | 'scheduled' | 'boarding' | 'in_progress' | 'completed' | 'cancelled' | 'draft'
-  | 'sent' | 'received' | 'failed'
+  | 'sent' | 'received' | 'failed' | 'retired'
 
 export interface DriverReview {
   id: string
@@ -9,6 +9,8 @@ export interface DriverReview {
   rating: number
   comment: string
   date: string
+  tripId?: string
+  tripRoute?: string
 }
 
 export interface Driver {
@@ -36,6 +38,10 @@ export interface Vehicle {
   type: 'Sienna' | 'Hiace' | 'Coaster' | 'Other'
   fuelType: 'petrol' | 'diesel'
   status: StatusVariant
+  /** The real operational status (active/suspended/retired) - `status` above overlays
+   *  document-verification state on top of this and shouldn't be used to decide
+   *  whether the vehicle is actually suspended/retired. */
+  operationalStatus: 'active' | 'suspended' | 'retired'
   assignedDriverId?: string
   assignedDriverName?: string
   photo?: string

@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Plus, Phone, Award, Users, RefreshCw, Loader2 } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { useApiData } from '../../lib/useApiData'
+import { useApiData, invalidateApiDataCache } from '../../lib/useApiData'
 import { useOrg } from '../../lib/OrgContext'
-import { fleetApi } from '../../api/client'
+import { fleetApi, driversApi } from '../../api/client'
 import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 import { StarRating } from '../../components/ui/StarRating'
@@ -23,12 +23,16 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
 
 
 export function DriversPage() {
-  const { data, loading } = useApiData()
-  const { guardAction, orgUuid } = useOrg()
+  const { data, loading, refetch } = useApiData()
+  const { guardAction, orgUuid, org } = useOrg()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [showAddSheet, setShowAddSheet] = useState(false)
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null)
   const [resendingId, setResendingId] = useState<string | null>(null)
+  const [statusChangingId, setStatusChangingId] = useState<string | null>(null)
+  // Matches the backend's own gate (org_trip_api.py's suspend/reinstate
+  // both require OWNER or ADMIN/"finance" role).
+  const canChangeDriverStatus = org.role === 'owner' || org.role === 'finance'
 
   const resendInvite = (driverId: string, driverName: string) => {
     guardAction(undefined, async () => {
@@ -41,6 +45,40 @@ export function DriversPage() {
         toast.error(err?.message ?? 'Failed to resend invite')
       } finally {
         setResendingId(null)
+      }
+    })
+  }
+
+  const suspendDriver = (driverId: string, driverName: string) => {
+    guardAction(undefined, async () => {
+      if (!orgUuid) return
+      setStatusChangingId(driverId)
+      try {
+        await driversApi.suspendDriver(orgUuid, driverId)
+        toast.success(`${driverName} has been suspended`)
+        invalidateApiDataCache()
+        refetch()
+      } catch (err: any) {
+        toast.error(err?.message ?? 'Failed to suspend driver')
+      } finally {
+        setStatusChangingId(null)
+      }
+    })
+  }
+
+  const reinstateDriver = (driverId: string, driverName: string) => {
+    guardAction(undefined, async () => {
+      if (!orgUuid) return
+      setStatusChangingId(driverId)
+      try {
+        await driversApi.reinstateDriver(orgUuid, driverId)
+        toast.success(`${driverName} has been reinstated`)
+        invalidateApiDataCache()
+        refetch()
+      } catch (err: any) {
+        toast.error(err?.message ?? 'Failed to reinstate driver')
+      } finally {
+        setStatusChangingId(null)
       }
     })
   }
@@ -204,6 +242,30 @@ export function DriversPage() {
                       </a>
                     </div>
                   </div>
+
+                  {canChangeDriverStatus && !driver.isPendingInvite && (
+                    <div className="pt-1">
+                      {driver.status === 'suspended' ? (
+                        <button
+                          onClick={e => { e.stopPropagation(); reinstateDriver(driver.id, driver.name) }}
+                          disabled={statusChangingId === driver.id}
+                          className="w-full text-xs text-secondary-300 font-bold flex items-center justify-center gap-1.5 py-2 rounded-xl border border-secondary-300 hover:bg-secondary-50 transition-colors disabled:opacity-60"
+                        >
+                          {statusChangingId === driver.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          Reinstate
+                        </button>
+                      ) : (
+                        <button
+                          onClick={e => { e.stopPropagation(); suspendDriver(driver.id, driver.name) }}
+                          disabled={statusChangingId === driver.id}
+                          className="w-full text-xs text-red-500 font-bold flex items-center justify-center gap-1.5 py-2 rounded-xl border border-red-200 hover:bg-red-50 transition-colors disabled:opacity-60"
+                        >
+                          {statusChangingId === driver.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                          Suspend
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

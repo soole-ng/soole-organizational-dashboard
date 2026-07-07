@@ -401,9 +401,9 @@ export function LoginPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-card shadow-card p-6 sm:p-8 lg:p-10 relative z-10">
+            <div className="bg-white rounded-card shadow-card p-4 sm:p-8 lg:p-10 relative z-10">
               {step === 'login' ? (
-                <div className="space-y-5 sm:space-y-7">
+                <div className="space-y-6 sm:space-y-8">
                   {/* Phone field */}
                   <div className="space-y-2">
                     <label className="block text-sm sm:text-base font-black uppercase tracking-wider text-black flex items-center gap-1.5">
@@ -498,7 +498,7 @@ export function LoginPage() {
                   </button>
 
                   <div className="rounded-2xl bg-primary-75 p-4 border border-primary-100">
-                    <p className="text-xs text-primary-500 text-center leading-relaxed font-black">
+                    <p className="text-sm sm:text-xs text-primary-500 text-center leading-relaxed font-black">
                       Don't have an account?{' '}
                       <button
                         onClick={() => navigate('/signup')}

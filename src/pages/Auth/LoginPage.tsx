@@ -370,10 +370,8 @@ export function LoginPage() {
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
         {/* Mobile header */}
         <div className="bg-primary-500 px-6 pt-8 pb-6 text-white lg:hidden flex-shrink-0 flex flex-col items-center">
-          <div className="w-20 h-20 flex items-center justify-center mb-2">
-            <img src="/soole-icon.png" alt="Soole logo" className="h-full object-contain" />
-          </div>
-          <h2 className="text-xl font-extrabold text-white mb-4 font-display">Soole</h2>
+          <img src="/soole-icon.png" alt="Soole logo" className="w-16 h-auto object-contain z-10" />
+          <h2 className="text-3xl font-extrabold text-white mb-4 -mt-1 font-display tracking-tight z-10">Soole</h2>
           <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 font-display text-center">
             {step === 'login' ? 'Welcome back' : step === 'signup' ? 'Create Account' : step === 'security_setup' ? 'Secure your account' : 'Verify your phone'}
           </h1>
@@ -383,8 +381,8 @@ export function LoginPage() {
         </div>
 
         {/* Form card container */}
-        <div className="flex-1 flex items-start lg:items-center justify-center p-1 sm:p-6 lg:p-12 pt-4 sm:pt-6">
-          <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-full lg:max-w-lg" : "max-w-full lg:max-w-md")}>
+        <div className="flex-1 flex items-start lg:items-center justify-center p-1 sm:p-6 lg:p-12 pt-12 sm:pt-6">
+          <div className={clsx("w-[85%] mx-auto sm:w-full transition-all duration-300", step === 'signup' ? "max-w-full lg:max-w-lg" : "max-w-full lg:max-w-md mt-6 sm:mt-0")}>
             {/* Desktop heading */}
             <div className="hidden lg:block mb-8">
               <h1 className="text-5xl lg:text-6xl font-extrabold text-primary-500 mb-2 font-display">
@@ -401,7 +399,7 @@ export function LoginPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-card shadow-card p-4 sm:p-8 lg:p-10 relative z-10">
+            <div className="bg-white rounded-3xl sm:rounded-card shadow-card p-6 sm:p-8 lg:p-10 relative z-10 w-full mb-8 sm:mb-0 mt-4 sm:mt-0">
               {step === 'login' ? (
                 <div className="space-y-6 sm:space-y-8">
                   {/* Phone field */}
@@ -416,7 +414,7 @@ export function LoginPage() {
                         <button
                           type="button"
                           onClick={() => setShowCC(!showCC)}
-                          className={clsx("flex items-center gap-2 h-[44px] px-3 bg-white border rounded-xl text-sm font-black text-black transition-colors", getBorderClass('phone'))}
+                          className={clsx("flex items-center gap-2 h-[52px] px-4 bg-white border rounded-xl text-base font-black text-black transition-colors", getBorderClass('phone'))}
                         >
                           <img src={country.flag} alt={country.name} className="w-6 h-4 object-cover rounded-sm" />
                           <span className="text-sm font-black text-black">{country.code}</span>
@@ -452,7 +450,7 @@ export function LoginPage() {
                           setPhone(e.target.value.replace(/\D/g, '').replace(/^0/, ''))
                           setErrors(errors.filter(err => err !== 'phone'))
                         }}
-                        className={clsx("w-full h-[44px] bg-white border rounded-xl px-4 py-0 text-sm text-black font-black placeholder:text-neutral-100 focus:outline-none transition-all", getBorderClass('phone'))}
+                        className={clsx("w-full h-[52px] bg-white border rounded-xl px-5 py-0 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none transition-all", getBorderClass('phone'))}
                         placeholder="8031234567"
                         autoComplete="tel"
                         inputMode="tel"
@@ -474,7 +472,7 @@ export function LoginPage() {
                           setPassword(e.target.value)
                           setErrors(errors.filter(err => err !== 'password'))
                         }}
-                        className={clsx("w-full h-[44px] bg-white border rounded-xl px-5 py-0 pr-12 text-sm text-black font-black placeholder:text-neutral-100 focus:outline-none transition-all", getBorderClass('password'))}
+                        className={clsx("w-full h-[52px] bg-white border rounded-xl px-5 py-0 pr-12 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none transition-all", getBorderClass('password'))}
                         placeholder="Password"
                         autoComplete="current-password"
                         onKeyDown={e => e.key === 'Enter' && handleLogin()}
@@ -492,13 +490,13 @@ export function LoginPage() {
                   <button
                     onClick={handleLogin}
                     disabled={loading}
-                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-2 mb-3', loading && 'opacity-70')}
+                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 h-[56px] text-lg active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4 mb-4', loading && 'opacity-70')}
                   >
                     {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Signing in…</> : 'Sign in'}
                   </button>
 
-                  <div className="rounded-2xl bg-primary-75 p-4 border border-primary-100">
-                    <p className="text-sm sm:text-xs text-primary-500 text-center leading-relaxed font-black">
+                  <div className="rounded-2xl bg-primary-75 p-5 border border-primary-100">
+                    <p className="text-base text-primary-500 text-center leading-relaxed font-black">
                       Don't have an account?{' '}
                       <button
                         onClick={() => navigate('/signup')}
@@ -508,6 +506,10 @@ export function LoginPage() {
                       </button>
                     </p>
                   </div>
+                  
+                  {step === 'login' && (
+                    <p className="block sm:hidden text-center text-xs text-neutral-300 mt-6 font-medium pb-4">Protected by Soole · 2FA required</p>
+                  )}
                 </div>
               ) : step === 'signup' ? (
                 <div className="space-y-6">
@@ -809,7 +811,7 @@ export function LoginPage() {
               )}
             </div>
             {step === 'login' && (
-              <p className="text-center text-xs text-neutral-200 mt-8 font-medium">Protected by Soole · 2FA required for all organization accounts</p>
+              <p className="hidden sm:block text-center text-xs text-neutral-200 mt-8 font-medium">Protected by Soole · 2FA required for all organization accounts</p>
             )}
           </div>
         </div>

@@ -4,7 +4,7 @@ import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { useApiData } from '../../lib/useApiData'
-import { moneyApi, settingsApi, authApi } from '../../api/client'
+import { moneyApi, authApi } from '../../api/client'
 import { formatDate, formatDateTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
@@ -27,23 +27,20 @@ export function MoneyPage() {
   }
   const [activeTab, setActiveTab] = useState('Transactions')
   const [balance, setBalance] = useState({ available: 0, withdrawable: 0 })
-  const [bankAccounts, setBankAccounts] = useState<Array<{ uuid: string; bank_name: string; account_number: string; account_name: string; is_primary: boolean }>>([])
+  // Sourced from the shared useApiData cache, not a page-local fetch - so
+  // adding/removing/set-primary in Settings > Payout (which invalidates
+  // that cache) is reflected here without needing a reload.
+  const bankAccounts = data.bankAccounts
 
   useEffect(() => {
     if (!orgUuid) return
     let cancelled = false
-    Promise.all([
-      moneyApi.getBalance(orgUuid).catch(() => null),
-      settingsApi.getBankAccounts(orgUuid).catch(() => []),
-    ]).then(([balanceRes, accountsRes]: [any, any]) => {
-      if (cancelled) return
-      if (balanceRes) {
-        setBalance({
-          available: Number(balanceRes.available_balance ?? 0),
-          withdrawable: Number(balanceRes.withdrawable_balance ?? 0),
-        })
-      }
-      setBankAccounts(accountsRes || [])
+    moneyApi.getBalance(orgUuid).catch(() => null).then((balanceRes: any) => {
+      if (cancelled || !balanceRes) return
+      setBalance({
+        available: Number(balanceRes.available_balance ?? 0),
+        withdrawable: Number(balanceRes.withdrawable_balance ?? 0),
+      })
     })
     return () => { cancelled = true }
   }, [orgUuid])

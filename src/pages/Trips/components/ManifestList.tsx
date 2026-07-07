@@ -5,6 +5,7 @@ import type { Passenger } from '../../../types'
 import { formatTime } from '../../../lib/formatters'
 import { requestRefund } from '../../../lib/refundApi'
 import { organizationApi } from '../../../api/client'
+import { invalidateApiDataCache } from '../../../lib/useApiData'
 import { DriverAvatar } from '../../../components/ui/DriverAvatar'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../../lib/OrgContext'
@@ -40,6 +41,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
       setBoardingIds(prev => new Set(prev).add(id))
       try {
         await organizationApi.boardPassenger(orgUuid, tripId, id)
+        invalidateApiDataCache()
         setPassengers(p =>
           p.map(pa => pa.id === id
             ? { ...pa, boardingStatus: 'boarded' as const, boardedAt: new Date().toISOString() }
@@ -74,6 +76,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
           amount: pass.fare ?? 0,
           reason: 'Did not board — refund requested by operator',
         })
+        invalidateApiDataCache()
         setPassengers(p =>
           p.map(pa => pa.id === id ? { ...pa, paymentStatus: 'refunded' as const } : pa)
         )

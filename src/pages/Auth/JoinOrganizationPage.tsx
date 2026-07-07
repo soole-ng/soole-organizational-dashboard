@@ -134,6 +134,23 @@ export function JoinOrganizationPage() {
   const [loading, setLoading] = useState(false)
   const [invitationDetails, setInvitationDetails] = useState<any>(null)
 
+  // Arriving via the invite SMS link (prefillPhone set) skips the
+  // 'invite_validation' step entirely, which is the only place
+  // invitationDetails normally gets populated - without this, the final
+  // success screen's "Welcome to {organization_name}!" renders with the
+  // name missing for the primary, most-common entry path into this flow.
+  useEffect(() => {
+    if (!prefillPhone || invitationDetails) return
+    authApi.validateOrgInvitation(fullPhone)
+      .then(res => setInvitationDetails(res.data))
+      .catch(() => {
+        // Silent - this is a background enrichment for the success screen's
+        // org name, not a gate; the real validation still happens via OTP/
+        // final submit either way.
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillPhone])
+
   const handleInviteValidation = async () => {
     const result = inviteSchema.safeParse({ phone })
     if (!result.success) {
@@ -203,8 +220,10 @@ export function JoinOrganizationPage() {
 
     setLoading(true)
     try {
-      // Validate NIN and DOB match (backend will verify against Prembly)
-      toast.success('Your identity has been verified!')
+      // NIN/DOB are only actually verified against Prembly at the final
+      // joinOrganization submit - this step just collects them, so the
+      // toast must not claim verification already happened here.
+      toast.success('Details saved!')
       setStep('password')
     } catch (err: any) {
       toast.error(getErrorMessage(err, 'personal_info'))

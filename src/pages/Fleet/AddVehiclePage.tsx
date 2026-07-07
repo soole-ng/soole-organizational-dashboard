@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle2, ChevronLeft, Upload, Camera, ChevronRight, X, Trash2 } from 'lucide-react'
+import { CheckCircle2, Camera, Trash2 } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { kVehicleMakeModels } from '../../lib/constants'
 import { clsx } from 'clsx'
@@ -256,7 +256,8 @@ export function AddVehiclePage() {
               )}
             </div>
 
-            <div className="mt-auto pt-8">
+            <div className="grid grid-cols-2 gap-3 mt-auto pt-8">
+              <button onClick={() => setCurrentStep(1)} className="btn-secondary w-full">Back</button>
               <button
                 className="btn-primary w-full"
                 disabled={!finalColor}
@@ -323,13 +324,21 @@ export function AddVehiclePage() {
                     <p className="text-xs text-neutral-300 max-w-[200px]">{step.description}</p>
                   </div>
 
-                  <button
-                    className="btn-primary w-full mt-auto"
-                    disabled={!hasImage}
-                    onClick={() => setCurrentPhotoStep(c => c + 1)}
-                  >
-                    Continue
-                  </button>
+                  <div className="grid grid-cols-2 gap-3 mt-auto">
+                    <button
+                      className="btn-secondary w-full"
+                      onClick={() => currentPhotoStep === 0 ? setCurrentStep(2) : setCurrentPhotoStep(c => c - 1)}
+                    >
+                      Back
+                    </button>
+                    <button
+                      className="btn-primary w-full"
+                      disabled={!hasImage}
+                      onClick={() => setCurrentPhotoStep(c => c + 1)}
+                    >
+                      Continue
+                    </button>
+                  </div>
                 </div>
               )
             })() : (

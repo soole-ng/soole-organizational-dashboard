@@ -5,11 +5,10 @@ import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { TripCard } from './components/TripCard'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useOrg } from '../../lib/OrgContext'
-import { useQuery } from '@tanstack/react-query'
-import { tripsApi } from '../../api/trips'
+import { useApiData } from '../../lib/useApiData'
 import { clsx } from 'clsx'
 import { isToday, isThisWeek } from 'date-fns'
-import type { StatusVariant, Trip } from '../../types'
+import type { StatusVariant } from '../../types'
 
 const tabs = ['Today', 'This Week', 'All']
 const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
@@ -21,10 +20,13 @@ const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
 ]
 
 export function TripsListPage() {
-  const { data: trips = [], isLoading } = useQuery<Trip[]>({
-    queryKey: ['trips'],
-    queryFn: () => tripsApi.getTrips()
-  })
+  // Reads from the shared useApiData cache instead of its own react-query
+  // fetch (which duplicated the exact same backend call/adapter) - trip
+  // cancel/board/refund actions elsewhere already call
+  // invalidateApiDataCache(), so this list now actually picks those up
+  // instead of only refreshing incidentally via react-query's remount refetch.
+  const { data, loading: isLoading } = useApiData()
+  const trips = data.trips
   const { guardAction } = useOrg()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('Today')

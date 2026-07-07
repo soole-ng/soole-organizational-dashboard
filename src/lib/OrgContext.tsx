@@ -84,9 +84,17 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
   const [orgUuid, setOrgUuid] = useState<string | null>(() => localStorage.getItem('org_uuid'))
 
-  // Bootstrap the real org_uuid + profile from the backend on first load.
+  // Bootstrap the real org profile (role, approval/verification status,
+  // settings) from the backend on every mount - not gated on orgUuid
+  // already being known. role/approvalStatus/verificationStatus are never
+  // persisted to localStorage['soole_org_profile'] (only updateOrg() persists,
+  // and this effect intentionally bypasses it so stale cached values can't
+  // shadow the backend's current truth) - so skipping this fetch just
+  // because orgUuid was already cached from a prior session left `org.role`
+  // (and approval/verification status) permanently stuck at DEFAULT_ORG's
+  // fallback values after the very first page load.
   useEffect(() => {
-    if (orgUuid || !localStorage.getItem('auth_token')) return
+    if (!localStorage.getItem('auth_token')) return
     let cancelled = false
 
     orgApi.getMine()
@@ -95,6 +103,13 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         const primary = orgs[0]
         localStorage.setItem('org_uuid', primary.uuid)
         setOrgUuid(primary.uuid)
+        setOrg(prev => ({
+          ...prev,
+          approvalStatus: primary.verification_status === 'incomplete'
+            ? 'incomplete'
+            : primary.approval_status === 'approved' ? 'approved' : 'pending',
+          verificationStatus: primary.verification_status as 'incomplete' | 'complete',
+        }))
 
         try {
           const settings = await settingsApi.getSettings(primary.uuid) as any
@@ -130,7 +145,7 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       })
 
     return () => { cancelled = true }
-  }, [orgUuid])
+  }, [])
 
   const updateOrg = useCallback((patch: Partial<OrgProfile>) => {
     setOrg(prev => {
@@ -141,22 +156,23 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const guardAction = useCallback((e?: React.SyntheticEvent, callback?: () => void) => {
-    let allowed = true
-    setOrg(currentOrg => {
-      if (currentOrg.approvalStatus === 'incomplete') {
-        if (e) e.preventDefault()
-        window.dispatchEvent(new Event('require-profile-completion'))
-        allowed = false
-      } else if (currentOrg.approvalStatus === 'pending') {
-        if (e) e.preventDefault()
-        window.dispatchEvent(new CustomEvent('require-approval-toast', { detail: 'Your account is pending approval. You are currently in read-only mode.' }))
-        allowed = false
-      }
-      return currentOrg
-    })
-    if (allowed && callback) callback()
-    return allowed
-  }, [])
+    // Reads `org` directly from closure instead of going through setOrg's
+    // updater - setOrg is async/deferred in React 18, so a synchronous
+    // `allowed` flag set inside the updater was always still `true` by the
+    // time it was read below, making this check a permanent no-op.
+    if (org.approvalStatus === 'incomplete') {
+      if (e) e.preventDefault()
+      window.dispatchEvent(new Event('require-profile-completion'))
+      return false
+    }
+    if (org.approvalStatus === 'pending') {
+      if (e) e.preventDefault()
+      window.dispatchEvent(new CustomEvent('require-approval-toast', { detail: 'Your account is pending approval. You are currently in read-only mode.' }))
+      return false
+    }
+    if (callback) callback()
+    return true
+  }, [org.approvalStatus])
 
   return (
     <OrgContext.Provider value={{ org, orgUuid, updateOrg, guardAction }}>

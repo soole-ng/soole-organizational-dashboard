@@ -67,8 +67,13 @@ function getOrgUuid(): string {
  * Organization core (organization/api.py)
  */
 export const orgApi = {
-  getMine: async () => apiRequest<Array<{ uuid: string; name: string; slug: string; org_type?: string; contact_email?: string; contact_phone?: string; logo_url?: string; status: string; rc_number?: string }>>('/organizations/mine/'),
+  getMine: async () => apiRequest<Array<{ uuid: string; name: string; slug: string; org_type?: string; contact_email?: string; contact_phone?: string; logo_url?: string; status: string; rc_number?: string; approval_status: string; verification_status: string }>>('/organizations/mine/'),
   getOrganization: async (orgUuid: string) => apiRequest(`/organizations/${orgUuid}/`),
+  /** Owner completes NIN/DOB/RC/CAC verification (organization.api.complete_organization_profile). */
+  completeProfile: async (orgUuid: string, payload: { nin: string; date_of_birth: string; rc_number: string; cac_document_url: string }) =>
+    apiRequest<{ verification_status: string; approval_status: string }>(`/organizations/${orgUuid}/complete-profile/`, {
+      method: 'POST', body: payload,
+    }),
 }
 
 /**
@@ -96,6 +101,9 @@ export const organizationApi = {
 
   updateTripStatus: async (orgUuid: string, tripUuid: string, status: string) =>
     apiRequest(`/organizations/${orgUuid}/trips/${tripUuid}/status`, { method: 'PATCH', body: { status } }),
+
+  reassignTrip: async (orgUuid: string, tripUuid: string, payload: { driver_uuid: string; vehicle_uuid?: string }) =>
+    apiRequest(`/organizations/${orgUuid}/trips/${tripUuid}/reassign`, { method: 'PATCH', body: payload }),
 
   cancelTrip: async (orgUuid: string, tripUuid: string, reason?: string) =>
     apiRequest(`/organizations/${orgUuid}/trips/${tripUuid}`, { method: 'DELETE', body: reason ? { reason } : undefined }),
@@ -242,6 +250,16 @@ export const driversApi = {
  * (owner/admin/dispatcher/viewer), not drivers.
  */
 export const fleetApi = {
+  /**
+   * Richer than organizations-trips's driver list - includes real
+   * total_earnings, search/pagination, and (uniquely) surfaces drivers
+   * who were invited but haven't signed up yet as pending rows (id is an
+   * OrgInvitation uuid in that case, matching resendInvite below).
+   */
+  getDrivers: async (orgUuid: string, filters?: { status?: string; search?: string; page?: number; limit?: number }) =>
+    apiRequest<{ drivers: any[]; pagination: { page: number; limit: number; total: number; pages: number } }>(
+      `/fleet/${orgUuid}/drivers${filters ? '?' + new URLSearchParams(filters as any).toString() : ''}`
+    ),
   inviteDriver: async (orgUuid: string, payload: { name: string; phone: string; email?: string }) =>
     apiRequest<{ success: boolean; driver_id: string; invite_status: string; message: string }>(
       `/fleet/${orgUuid}/drivers/invite`, { method: 'POST', body: payload }
@@ -283,6 +301,10 @@ export const notificationsApi = {
     apiRequest(`/organizations/${orgUuid}/notifications/${notificationUuid}/read`, { method: 'PATCH', body: {} }),
   getSummary: async (orgUuid: string) =>
     apiRequest(`/organizations/${orgUuid}/notifications/summary`),
+  dismiss: async (orgUuid: string, notificationUuid: string) =>
+    apiRequest(`/organizations/${orgUuid}/notifications/${notificationUuid}`, { method: 'DELETE' }),
+  clearAll: async (orgUuid: string) =>
+    apiRequest(`/organizations/${orgUuid}/notifications`, { method: 'DELETE' }),
 }
 
 /**
@@ -335,6 +357,14 @@ export const settingsApi = {
   /** userUuid here is the member's USER uuid, matching organization.api.remove_member's path param. */
   removeMember: async (orgUuid: string, userUuid: string) =>
     apiRequest(`/organizations/${orgUuid}/members/${userUuid}/`, { method: 'DELETE' }),
+  /**
+   * Cancels a still-pending invite (invited via inviteTeamMemberWithOtp but
+   * not yet accepted) - invitationUuid here is the OrgInvitation's id, NOT
+   * a user id, since no User row exists yet for someone who hasn't joined.
+   * removeMember's endpoint 404s if pointed at this id instead.
+   */
+  revokeInvitation: async (orgUuid: string, invitationUuid: string) =>
+    apiRequest(`/organizations/${orgUuid}/invitations/${invitationUuid}/`, { method: 'DELETE' }),
   /** Returns a raw array - the real backend (organization/api.py) isn't wrapped in {accounts: [...]} */
   getBankAccounts: async (orgUuid: string) =>
     apiRequest<Array<{ uuid: string; bank_name: string; bank_code?: string; account_number: string; account_name: string; account_type: string; is_primary: boolean; verification_status: string; verification_date?: string }>>(

@@ -17,6 +17,7 @@ import { clsx } from 'clsx'
 import { useState, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { useOrg, orgInitials } from '../../lib/OrgContext'
+import { authApi } from '../../api/client'
 
 interface NavItem {
   to: string
@@ -116,9 +117,10 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
     setConfirmLogout(true)
   }
 
-  const confirmDoSignOut = () => {
+  const confirmDoSignOut = async () => {
     setConfirmLogout(false)
     setSigningOut(true)
+    await authApi.logout()
     setTimeout(() => {
       setSigningOut(false)
       toast.success('Signed out successfully')

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 
 interface AlertSettingsProps {
@@ -8,6 +9,7 @@ interface AlertSettingsProps {
 }
 
 export function AlertSettings({ speedLimit, setSpeedLimit, executeSecuredAction, onSave }: AlertSettingsProps) {
+  const [saving, setSaving] = useState(false)
   return (
     <div className="space-y-4 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
       <div>
@@ -29,12 +31,17 @@ export function AlertSettings({ speedLimit, setSpeedLimit, executeSecuredAction,
         <button
           onClick={() => {
             executeSecuredAction(() => {
-              onSave().then(() => toast.success('Fleet speed limit updated!')).catch(() => {})
+              setSaving(true)
+              onSave()
+                .then(() => toast.success('Fleet speed limit updated!'))
+                .catch(() => {})
+                .finally(() => setSaving(false))
             })
           }}
-          className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+          disabled={saving}
+          className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60"
         >
-          Save Speed Limit
+          {saving ? 'Saving…' : 'Save Speed Limit'}
         </button>
       </div>
     </div>

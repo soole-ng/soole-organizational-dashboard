@@ -175,8 +175,11 @@ export function SettingsPage() {
                       <CompleteProfileSection
                         orgUuid={orgUuid || ''}
                         verificationStatus={org.verificationStatus as 'incomplete' | 'complete' | undefined}
-                        onSuccess={() => {
-                          updateOrg({ verificationStatus: 'complete' })
+                        onSuccess={(res) => {
+                          updateOrg({
+                            verificationStatus: res.verification_status as 'incomplete' | 'complete',
+                            approvalStatus: res.approval_status === 'approved' ? 'approved' : 'pending',
+                          })
                           setActiveSection(null)
                         }}
                       />

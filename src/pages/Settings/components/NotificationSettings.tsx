@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 
@@ -9,6 +10,7 @@ interface NotificationSettingsProps {
 }
 
 export function NotificationSettings({ alertChannels, setAlertChannels, executeSecuredAction, onSave }: NotificationSettingsProps) {
+  const [saving, setSaving] = useState(false)
   return (
     <div className="space-y-4 max-w-2xl bg-white p-5 rounded-2xl border border-primary-100">
       <div className="space-y-2 rounded-xl border border-neutral-100 p-2">
@@ -49,12 +51,17 @@ export function NotificationSettings({ alertChannels, setAlertChannels, executeS
         <button
           onClick={() => {
             executeSecuredAction(() => {
-              onSave().then(() => toast.success('Notification settings saved!')).catch(() => {})
+              setSaving(true)
+              onSave()
+                .then(() => toast.success('Notification settings saved!'))
+                .catch(() => {})
+                .finally(() => setSaving(false))
             })
           }}
-          className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+          disabled={saving}
+          className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60"
         >
-          Save Notification Settings
+          {saving ? 'Saving…' : 'Save Notification Settings'}
         </button>
       </div>
     </div>

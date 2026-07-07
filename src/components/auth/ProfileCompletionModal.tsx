@@ -1,17 +1,19 @@
 import { useState, useRef } from 'react'
-import { UploadCloud, CheckCircle, Car, Users, X } from 'lucide-react'
+import { UploadCloud, CheckCircle, FileText, X } from 'lucide-react'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
+import { orgApi, uploadApi } from '../../api/client'
 
 interface ProfileCompletionModalProps {
   onClose: () => void
 }
 
 export function ProfileCompletionModal({ onClose }: ProfileCompletionModalProps) {
-  const { updateOrg } = useOrg()
-  const [numCars, setNumCars] = useState('')
-  const [numDrivers, setNumDrivers] = useState('')
+  const { orgUuid, updateOrg } = useOrg()
+  const [nin, setNin] = useState('')
+  const [dob, setDob] = useState('')
+  const [rcNumber, setRcNumber] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -33,26 +35,36 @@ export function ProfileCompletionModal({ onClose }: ProfileCompletionModalProps)
     }
   }
 
-  const handleSubmit = () => {
-    if (!numCars || !numDrivers || !file) {
+  const handleSubmit = async () => {
+    if (!nin || !dob || !rcNumber || !file || !orgUuid) {
       toast.error('Please complete all fields and upload your CAC document')
+      return
+    }
+    if (nin.length !== 11 || !/^\d+$/.test(nin)) {
+      toast.error('NIN must be exactly 11 digits')
       return
     }
 
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const cacDocumentUrl = await uploadApi.uploadFile(file, 'cac_document')
+      const res = await orgApi.completeProfile(orgUuid, {
+        nin,
+        date_of_birth: dob,
+        rc_number: rcNumber,
+        cac_document_url: cacDocumentUrl,
+      })
       updateOrg({
-        approvalStatus: 'pending',
-        registrationDetails: {
-          numCars,
-          numDrivers,
-          cacDocumentUrl: URL.createObjectURL(file)
-        }
+        verificationStatus: res.verification_status as 'incomplete' | 'complete',
+        approvalStatus: res.approval_status === 'approved' ? 'approved' : 'pending',
       })
       toast.success('Profile details submitted for review!')
       onClose()
-    }, 1500)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to submit profile details')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -61,7 +73,7 @@ export function ProfileCompletionModal({ onClose }: ProfileCompletionModalProps)
         <div className="p-6 border-b border-neutral-100 flex items-center justify-between sticky top-0 bg-white z-10">
           <div>
             <h2 className="text-xl font-extrabold text-primary-500 font-display">Complete Your Profile</h2>
-            <p className="text-sm text-neutral-400 mt-1">Upload your documents and fleet details</p>
+            <p className="text-sm text-neutral-400 mt-1">Verify your identity and company registration</p>
           </div>
           <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-primary-75 text-primary-500 rounded-full hover:bg-primary-100 transition-colors">
             <X className="w-5 h-5" />
@@ -71,31 +83,44 @@ export function ProfileCompletionModal({ onClose }: ProfileCompletionModalProps)
         <div className="p-6 overflow-y-auto space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="block text-xs font-black uppercase tracking-wider text-black flex items-center gap-1.5">
-                <Car className="w-4 h-4 text-secondary-500" />
-                Number of Cars
+              <label className="block text-xs font-black uppercase tracking-wider text-black">
+                NIN
               </label>
               <input
-                type="number"
-                value={numCars}
-                onChange={e => setNumCars(e.target.value)}
+                type="text"
+                inputMode="numeric"
+                maxLength={11}
+                value={nin}
+                onChange={e => setNin(e.target.value.replace(/\D/g, ''))}
                 className="w-full h-[50px] bg-white border border-neutral-100 rounded-2xl px-4 text-base font-black focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
-                placeholder="E.g., 5"
+                placeholder="11-digit NIN"
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-xs font-black uppercase tracking-wider text-black flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-secondary-500" />
-                Number of Drivers
+              <label className="block text-xs font-black uppercase tracking-wider text-black">
+                Date of Birth
               </label>
               <input
-                type="number"
-                value={numDrivers}
-                onChange={e => setNumDrivers(e.target.value)}
+                type="date"
+                value={dob}
+                onChange={e => setDob(e.target.value)}
                 className="w-full h-[50px] bg-white border border-neutral-100 rounded-2xl px-4 text-base font-black focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
-                placeholder="E.g., 8"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-secondary-500" />
+              CAC Registration Number
+            </label>
+            <input
+              type="text"
+              value={rcNumber}
+              onChange={e => setRcNumber(e.target.value)}
+              className="w-full h-[50px] bg-white border border-neutral-100 rounded-2xl px-4 text-base font-black focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+              placeholder="E.g., RC1234567"
+            />
           </div>
 
           <div className="space-y-2">
@@ -144,7 +169,7 @@ export function ProfileCompletionModal({ onClose }: ProfileCompletionModalProps)
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!numCars || !numDrivers || !file || loading}
+            disabled={!nin || !dob || !rcNumber || !file || loading}
             className={clsx(
               "flex-1 bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-sm hover:bg-primary-400 transition-all shadow-sm flex items-center justify-center",
               loading && "opacity-70"

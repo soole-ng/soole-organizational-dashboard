@@ -89,13 +89,16 @@ export function TourGuide() {
   const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Check if user has completed the tour before
+    // Auto-open for first-time users - independent of the manual-trigger
+    // listener below, which used to be registered only in the `else`
+    // branch of this same check (an early `return` in the `if` skipped
+    // past it entirely), leaving "Start Website Tour" completely dead
+    // for exactly the first-time users it targets, until they'd already
+    // seen the auto-popped tour once.
     const hasCompleted = localStorage.getItem('soole_tour_completed')
+    let timer: ReturnType<typeof setTimeout> | undefined
     if (!hasCompleted) {
-      const timer = setTimeout(() => {
-        setIsOpen(true)
-      }, 1000)
-      return () => clearTimeout(timer)
+      timer = setTimeout(() => setIsOpen(true), 1000)
     }
 
     // Support manual trigger from custom event
@@ -108,7 +111,10 @@ export function TourGuide() {
       setIsOpen(true)
     }
     window.addEventListener('start-soole-tour', handleStartTour)
-    return () => window.removeEventListener('start-soole-tour', handleStartTour)
+    return () => {
+      if (timer) clearTimeout(timer)
+      window.removeEventListener('start-soole-tour', handleStartTour)
+    }
   }, [location.pathname, navigate])
 
   // Calculate target element position
@@ -194,12 +200,18 @@ export function TourGuide() {
     }
 
     checkElement()
-    window.addEventListener('resize', () => checkElement())
-    window.addEventListener('scroll', () => checkElement())
+    // Named handler reused for both add and remove - passing a fresh
+    // arrow function to each call (as before) makes removeEventListener
+    // silently no-op, since it can never match what was actually
+    // registered, leaking a stale-closure listener pair on every
+    // re-run of this effect (each tour step and page navigation).
+    const handleReposition = () => checkElement()
+    window.addEventListener('resize', handleReposition)
+    window.addEventListener('scroll', handleReposition)
 
     return () => {
-      window.removeEventListener('resize', () => checkElement())
-      window.removeEventListener('scroll', () => checkElement())
+      window.removeEventListener('resize', handleReposition)
+      window.removeEventListener('scroll', handleReposition)
     }
   }, [isOpen, currentStep, location.pathname])
 

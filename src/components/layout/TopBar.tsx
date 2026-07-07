@@ -8,6 +8,7 @@ import { useNavigate, useLocation, useOutletContext } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { useState, useEffect } from 'react'
 import { useOrg } from '../../lib/OrgContext'
+import { authApi } from '../../api/client'
 import toast from 'react-hot-toast'
 
 interface TopBarProps {
@@ -175,9 +176,10 @@ export function TopBar({
 
         {/* Sign Out Button */}
         <button
-          onClick={() => {
+          onClick={async () => {
             const confirmLogout = window.confirm('Are you sure you want to sign out?')
             if (confirmLogout) {
+              await authApi.logout()
               toast.success('Signed out successfully')
               navigate('/login')
             }

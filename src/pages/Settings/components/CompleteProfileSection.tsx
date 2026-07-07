@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { Upload, Loader2, FileCheck, AlertCircle, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
-import { uploadApi } from '../../../api/client'
+import { orgApi, uploadApi } from '../../../api/client'
 
 interface CompleteProfileSectionProps {
   orgUuid: string
   verificationStatus?: 'incomplete' | 'complete'
-  onSuccess?: () => void
+  onSuccess?: (result: { verification_status: string; approval_status: string }) => void
 }
 
 export function CompleteProfileSection({ orgUuid, verificationStatus = 'incomplete', onSuccess }: CompleteProfileSectionProps) {
@@ -51,27 +51,14 @@ export function CompleteProfileSection({ orgUuid, verificationStatus = 'incomple
 
     setLoading(true)
     try {
-      const response = await fetch(`https://soole-backend-8cku.onrender.com/api/organizations/${orgUuid}/complete-profile/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-        body: JSON.stringify({
-          nin,
-          date_of_birth: dob,
-          rc_number: rcNumber,
-          cac_document_url: cacUrl,
-        }),
+      const res = await orgApi.completeProfile(orgUuid, {
+        nin,
+        date_of_birth: dob,
+        rc_number: rcNumber,
+        cac_document_url: cacUrl,
       })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Failed to complete profile')
-      }
-
       toast.success('Profile completed successfully!')
-      onSuccess?.()
+      onSuccess?.(res)
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to complete profile')
     } finally {

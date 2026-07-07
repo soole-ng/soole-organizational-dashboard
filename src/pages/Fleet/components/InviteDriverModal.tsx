@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../../lib/OrgContext'
 import { fleetApi } from '../../../api/client'
+import { invalidateApiDataCache } from '../../../lib/useApiData'
 
 interface InviteDriverModalProps {
   onClose: () => void
@@ -22,6 +23,7 @@ export function InviteDriverModal({ onClose }: InviteDriverModalProps) {
         name: form.name,
         phone: `${countryPrefix}${form.phone}`,
       })
+      invalidateApiDataCache()
       toast.success(`Invite sent to ${form.name}`)
       onClose()
     } catch (err: any) {

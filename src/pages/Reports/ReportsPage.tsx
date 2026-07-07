@@ -4,22 +4,38 @@ import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { useOrg } from '../../lib/OrgContext'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useApiData } from '../../lib/useApiData'
+import { reportsApi } from '../../api/client'
 import { formatMoneyCompact } from '../../lib/formatters'
+import { downloadReportCsv, downloadReportPdf } from '../../lib/reportExport'
 import toast from 'react-hot-toast'
 
-const reportTypes = [
-  { icon: Bus, label: 'Trip Report', desc: 'All trips with revenue, occupancy and status', color: 'bg-white text-secondary-300' },
-  { icon: Users, label: 'Driver Report', desc: 'Per-driver performance and earnings', color: 'bg-white text-teal-400' },
-  { icon: Car, label: 'Vehicle Report', desc: 'Mileage, fuel usage and downtime', color: 'bg-white text-accent-400' },
-  { icon: TrendingUp, label: 'Revenue Report', desc: 'Earnings by route, week and month', color: 'bg-white text-secondary-300' },
-  { icon: Navigation, label: 'Route Report', desc: 'Top routes by occupancy and revenue', color: 'bg-white text-primary-400' },
+type ReportKey = 'trip' | 'driver' | 'vehicle' | 'revenue' | 'route'
+
+const reportTypes: { key: ReportKey; icon: any; label: string; desc: string; color: string }[] = [
+  { key: 'trip', icon: Bus, label: 'Trip Report', desc: 'All trips with revenue, occupancy and status', color: 'bg-white text-secondary-300' },
+  { key: 'driver', icon: Users, label: 'Driver Report', desc: 'Per-driver performance and earnings', color: 'bg-white text-teal-400' },
+  { key: 'vehicle', icon: Car, label: 'Vehicle Report', desc: 'Mileage, fuel usage and downtime', color: 'bg-white text-accent-400' },
+  { key: 'revenue', icon: TrendingUp, label: 'Revenue Report', desc: 'Earnings by route, week and month', color: 'bg-white text-secondary-300' },
+  { key: 'route', icon: Navigation, label: 'Route Report', desc: 'Top routes by occupancy and revenue', color: 'bg-white text-primary-400' },
 ]
 
+const formatDateParam = (d: Date) => d.toISOString().slice(0, 10)
+
 export function ReportsPage() {
-  const { org } = useOrg()
+  const { org, orgUuid } = useOrg()
   const { data, loading } = useApiData()
+  const [exportingKey, setExportingKey] = useState<string | null>(null)
   const isProfileIncomplete = org.approvalStatus === 'incomplete'
   const [showProfileModal, setShowProfileModal] = useState(false)
+
+  // Hoisted above the `loading` early-return below (previously declared
+  // after it, with eslint-disable comments suppressing the resulting
+  // rules-of-hooks violation) - calling hooks conditionally breaks on the
+  // loading -> loaded transition, which is exactly when this state starts
+  // to matter.
+  const [selectedRange, setSelectedRange] = useState('This Week')
+  const [showCustomPicker, setShowCustomPicker] = useState(false)
+  const [customDates, setCustomDates] = useState({ start: '', end: '' })
 
   const handleAction = () => {
     if (isProfileIncomplete) {
@@ -43,17 +59,88 @@ export function ReportsPage() {
   const weeklyRevData = data.weeklyRevenue
 
   const totalNet = weeklyRevData.reduce((a, d) => a + d.net, 0)
-  const totalGross = weeklyRevData.reduce((a, d) => a + d.gross, 0)
-
-  // Active date range state
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [selectedRange, setSelectedRange] = useState('This Week')
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [showCustomPicker, setShowCustomPicker] = useState(false)
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [customDates, setCustomDates] = useState({ start: '', end: '' })
 
   const dateRanges = ['Today', 'This Week', 'This Month', 'Custom']
+
+  // Derives the actual [start, end] window the selected tab represents,
+  // then filters trips by departureAt - this is what makes the tabs above
+  // do something, instead of just toggling which one looks highlighted.
+  const now = new Date()
+  let filterStart: Date
+  let filterEnd: Date
+  if (selectedRange === 'Today') {
+    filterStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    filterEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+  } else if (selectedRange === 'This Month') {
+    filterStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    filterEnd = now
+  } else if (selectedRange === 'Custom' && customDates.start && customDates.end) {
+    filterStart = new Date(customDates.start)
+    filterEnd = new Date(new Date(customDates.end).getTime() + 86400000 - 1)
+  } else {
+    // 'This Week', and the fallback for an unapplied Custom range
+    filterStart = new Date(now.getTime() - 7 * 86400000)
+    filterEnd = now
+  }
+
+  const filteredTrips = data.trips.filter(t => {
+    const time = new Date(t.departureAt).getTime()
+    return time >= filterStart.getTime() && time <= filterEnd.getTime()
+  })
+  const totalGross = filteredTrips.reduce((a, t) => a + t.grossRevenue, 0)
+  const avgOccupancyPct = Math.round(
+    filteredTrips.reduce((a, t) => a + (t.capacity > 0 ? t.bookedSeats / t.capacity : 0), 0) / Math.max(filteredTrips.length, 1) * 100
+  )
+
+  const handleExport = async (reportKey: ReportKey, format: 'pdf' | 'csv') => {
+    if (!orgUuid) return
+    setExportingKey(`${reportKey}-${format}`)
+    const dateParams = { start_date: formatDateParam(filterStart), end_date: formatDateParam(filterEnd) }
+    try {
+      let headers: string[]
+      let rows: (string | number)[][]
+      let title: string
+
+      if (reportKey === 'trip') {
+        const res: any = await reportsApi.getTripsReport(orgUuid, dateParams)
+        title = 'Trip Report'
+        headers = ['Date', 'Route', 'Driver', 'Vehicle', 'Status', 'Distance (km)', 'Passengers', 'Capacity', 'Occupancy %', 'Revenue', 'Commission', 'Net']
+        rows = res.trips.map((t: any) => [t.date, t.route, t.driver, t.vehicle, t.status, t.distance, t.passengers, t.capacity, t.occupancy, t.revenue, t.commission, t.net])
+      } else if (reportKey === 'driver') {
+        const res: any = await reportsApi.getDriverReport(orgUuid, dateParams)
+        title = 'Driver Report'
+        headers = ['Driver', 'Trips Completed', 'Total Earnings', 'Avg Rating', 'Total Passengers', 'Total Distance (km)', 'Total Hours', 'Speed Violations', 'Safety Score']
+        rows = res.drivers.map((d: any) => [d.name, d.trips_completed, d.total_earnings, d.average_rating, d.total_passengers, d.total_distance, d.total_hours, d.speed_violations, d.safety_score])
+      } else if (reportKey === 'vehicle') {
+        const res: any = await reportsApi.getVehicleReport(orgUuid, dateParams)
+        title = 'Vehicle Report'
+        headers = ['Plate', 'Model', 'Trips Completed', 'Total Distance (km)', 'Total Fuel (L)', 'Avg Fuel Consumption', 'Maintenance Cost', 'Downtime (hrs)', 'Utilization %']
+        rows = res.vehicles.map((v: any) => [v.plate, v.model, v.trips_completed, v.total_distance, v.total_fuel_liters, v.average_fuel_consumption, v.maintenance_cost, v.downtime, v.utilization])
+      } else if (reportKey === 'revenue') {
+        const res: any = await reportsApi.getRevenueReport(orgUuid, dateParams)
+        title = 'Revenue Report'
+        headers = ['Date', 'Gross', 'Commission', 'Net', 'Trips']
+        rows = res.data.map((r: any) => [r.date, r.gross, r.commission, r.net, r.trips])
+      } else {
+        // Route report has no date-range filtering on the backend
+        const res: any = await reportsApi.getRouteReport(orgUuid)
+        title = 'Route Report'
+        headers = ['Route', 'Trips Completed', 'Total Revenue', 'Avg Occupancy %', 'Avg Passengers', 'Profit Margin %']
+        rows = res.routes.map((r: any) => [r.name, r.trips_completed, r.total_revenue, r.average_occupancy, r.average_passengers, r.profit_margin])
+      }
+
+      const filenameBase = `${reportKey}-report-${formatDateParam(filterStart)}-to-${formatDateParam(filterEnd)}`
+      if (format === 'csv') {
+        downloadReportCsv(`${filenameBase}.csv`, headers, rows)
+      } else {
+        downloadReportPdf(`${filenameBase}.pdf`, title, headers, rows)
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to export report')
+    } finally {
+      setExportingKey(null)
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -155,9 +242,9 @@ export function ReportsPage() {
         {/* Summary stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Total Trips', value: data.trips.length.toString() },
+            { label: 'Total Trips', value: filteredTrips.length.toString() },
             { label: 'Total Gross', value: formatMoneyCompact(totalGross) },
-            { label: 'Avg Occupancy', value: `${Math.round(data.trips.reduce((a, t) => a + (t.bookedSeats / t.capacity), 0) / Math.max(data.trips.length, 1) * 100)}%` },
+            { label: 'Avg Occupancy', value: `${avgOccupancyPct}%` },
           ].map(s => (
             <div key={s.label} className="card p-3 text-center">
               <p className="text-lg font-black text-primary-500 stat-number">{s.value}</p>
@@ -179,24 +266,22 @@ export function ReportsPage() {
               <button
                 onClick={() => {
                   handleAction()
-                  if (!isProfileIncomplete) {
-                    toast('PDF export is coming soon', { icon: '🚧' })
-                  }
+                  if (!isProfileIncomplete) handleExport('revenue', 'pdf')
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-primary-500 border border-neutral-100 transition-colors"
+                disabled={exportingKey === 'revenue-pdf'}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-primary-500 border border-neutral-100 transition-colors disabled:opacity-60"
               >
-                <Download className="w-3.5 h-3.5" /> PDF
+                <Download className="w-3.5 h-3.5" /> {exportingKey === 'revenue-pdf' ? 'Exporting…' : 'PDF'}
               </button>
               <button
                 onClick={() => {
                   handleAction()
-                  if (!isProfileIncomplete) {
-                    toast('Excel export is coming soon', { icon: '🚧' })
-                  }
+                  if (!isProfileIncomplete) handleExport('revenue', 'csv')
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-[#1D754C] border border-neutral-100 transition-colors"
+                disabled={exportingKey === 'revenue-csv'}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-[#1D754C] border border-neutral-100 transition-colors disabled:opacity-60"
               >
-                <Download className="w-3.5 h-3.5" /> Excel
+                <Download className="w-3.5 h-3.5" /> {exportingKey === 'revenue-csv' ? 'Exporting…' : 'Excel'}
               </button>
             </div>
           </div>
@@ -216,16 +301,16 @@ export function ReportsPage() {
             </BarChart>
           </ResponsiveContainer>
           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-neutral-50 text-center text-xs">
-            <div><p className="text-neutral-200">Total Trips</p><p className="font-bold text-primary-500 mt-0.5">{data.trips.length}</p></div>
+            <div><p className="text-neutral-200">Total Trips</p><p className="font-bold text-primary-500 mt-0.5">{filteredTrips.length}</p></div>
             <div className="border-x border-neutral-50"><p className="text-neutral-200">Total Gross</p><p className="font-bold text-primary-500 mt-0.5">{formatMoneyCompact(totalGross)}</p></div>
-            <div><p className="text-neutral-200">Avg Occupancy</p><p className="font-bold text-secondary-300 mt-0.5">{Math.round(data.trips.reduce((a, t) => a + (t.bookedSeats / t.capacity), 0) / Math.max(data.trips.length, 1) * 100)}%</p></div>
+            <div><p className="text-neutral-200">Avg Occupancy</p><p className="font-bold text-secondary-300 mt-0.5">{avgOccupancyPct}%</p></div>
           </div>
         </div>
 
         <div>
           <p className="text-xs font-semibold text-neutral-200 uppercase tracking-wider mb-3">Report Types</p>
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {reportTypes.map(({ icon: Icon, label, desc, color }) => (
+            {reportTypes.map(({ key, icon: Icon, label, desc, color }) => (
               <div key={label} className="card p-4 hover:shadow-card-hover transition-all flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
                   <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${color} border border-neutral-100`}>
@@ -236,16 +321,15 @@ export function ReportsPage() {
                     <p className="text-xs text-neutral-200 mt-0.5 leading-relaxed truncate">{desc}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
                     onClick={() => {
                       handleAction()
-                      if (!isProfileIncomplete) {
-                        toast(`${label} PDF export is coming soon`, { icon: '🚧' })
-                      }
+                      if (!isProfileIncomplete) handleExport(key, 'pdf')
                     }}
-                    className="w-8 h-8 rounded-xl bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center border border-neutral-100 text-primary-400 hover:text-primary-500 transition-colors"
+                    disabled={exportingKey === `${key}-pdf`}
+                    className="w-8 h-8 rounded-xl bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center border border-neutral-100 text-primary-400 hover:text-primary-500 transition-colors disabled:opacity-60"
                     title="Export PDF"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -253,11 +337,10 @@ export function ReportsPage() {
                   <button
                     onClick={() => {
                       handleAction()
-                      if (!isProfileIncomplete) {
-                        toast(`${label} Excel export is coming soon`, { icon: '🚧' })
-                      }
+                      if (!isProfileIncomplete) handleExport(key, 'csv')
                     }}
-                    className="w-8 h-8 rounded-xl bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center border border-neutral-100 text-[#1D754C] hover:text-[#16593a] transition-colors"
+                    disabled={exportingKey === `${key}-csv`}
+                    className="w-8 h-8 rounded-xl bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center border border-neutral-100 text-[#1D754C] hover:text-[#16593a] transition-colors disabled:opacity-60"
                     title="Export Excel"
                   >
                     <span className="text-[10px] font-bold">XLS</span>

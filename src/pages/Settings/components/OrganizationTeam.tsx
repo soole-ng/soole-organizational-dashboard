@@ -4,6 +4,7 @@ import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../../lib/OrgContext'
 import { settingsApi } from '../../../api/client'
+import { invalidateApiDataCache } from '../../../lib/useApiData'
 
 interface OrganizationTeamProps {
   members: any[]
@@ -17,7 +18,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
   const [memberToRemove, setMemberToRemove] = useState<any | null>(null)
   const [inviteForm, setInviteForm] = useState({ name: '', phone: '', role: 'manager' })
   const [showInvitePreview, setShowInvitePreview] = useState(false)
-  const [invitePreview, setInvitePreview] = useState<{ otp: string; joinLink: string; smsMessage: string } | null>(null)
+  const [invitePreview, setInvitePreview] = useState<{ memberId: string; otp: string; joinLink: string; smsMessage: string } | null>(null)
   const [sendingInvite, setSendingInvite] = useState(false)
   const [copiedToClipboard, setCopiedToClipboard] = useState(false)
 
@@ -34,7 +35,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
         phone: inviteForm.phone,
         role: inviteForm.role,
       })
-      setInvitePreview({ otp: res.otp, joinLink: res.joinLink, smsMessage: res.smsMessage })
+      setInvitePreview({ memberId: res.memberId, otp: res.otp, joinLink: res.joinLink, smsMessage: res.smsMessage })
       setShowInvitePreview(true)
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to create invite')
@@ -44,9 +45,10 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
   }
 
   const handleConfirmInvite = () => {
+    if (!invitePreview) return
     executeSecuredAction(() => {
       const newMember = {
-        id: `pending-${inviteForm.phone}`,
+        id: invitePreview.memberId,
         name: inviteForm.name,
         phone: inviteForm.phone,
         role: inviteForm.role,
@@ -54,6 +56,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
         status: 'pending'
       }
       setMembers(p => [...p, newMember])
+      invalidateApiDataCache()
       setShowInviteForm(false)
       setShowInvitePreview(false)
       setInviteForm({ name: '', phone: '', role: 'manager' })
@@ -64,11 +67,20 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
 
   const handleConfirmRemove = () => {
     if (!memberToRemove || !orgUuid) return
-    const { id, name } = memberToRemove
+    const { id, name, status } = memberToRemove
     setMemberToRemove(null)
     executeSecuredAction(async () => {
       try {
-        await settingsApi.removeMember(orgUuid, id)
+        // A still-pending invite has no User row yet - id is the
+        // OrgInvitation's uuid, not a user uuid, so it must be revoked
+        // via the invitations endpoint, not removeMember (which 404s
+        // looking up a User by that id).
+        if (status === 'pending') {
+          await settingsApi.revokeInvitation(orgUuid, id)
+        } else {
+          await settingsApi.removeMember(orgUuid, id)
+        }
+        invalidateApiDataCache()
         setMembers(prev => prev.filter(m => m.id !== id))
         toast.success(`${name} has been removed from the team`)
       } catch (err: any) {

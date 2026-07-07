@@ -3,21 +3,19 @@ import { createPortal } from 'react-dom'
 import { ChevronDown, Trash2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useOrg } from '../../../lib/OrgContext'
 import { settingsApi, paymentsApi } from '../../../api/client'
+import { useApiData, invalidateApiDataCache, type BankAccountRow } from '../../../lib/useApiData'
 import toast from 'react-hot-toast'
-
-interface BankAccountRow {
-  uuid: string
-  bank_name: string
-  account_number: string
-  account_name: string
-  is_primary: boolean
-}
 
 export function PayoutSettings() {
   const { guardAction, orgUuid } = useOrg()
-  const [bankAccounts, setBankAccounts] = useState<BankAccountRow[]>([])
+  // Sourced from the shared useApiData cache (not a page-local fetch) so
+  // that mutations here (add/delete/set-primary) - via invalidateApiDataCache()
+  // below - are reflected on the Money page's bank-account dropdown too,
+  // instead of each component holding its own stale copy.
+  const { data, loading: apiDataLoading } = useApiData()
+  const [bankAccounts, setBankAccounts] = useState<BankAccountRow[]>(data.bankAccounts)
   const [banks, setBanks] = useState<Array<{ name: string; code: string }>>([])
-  const [loading, setLoading] = useState(true)
+  const [loadingBanks, setLoadingBanks] = useState(true)
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [tempDetails, setTempDetails] = useState({ bankName: '', bankCode: '', accountNumber: '', accountName: '' })
@@ -26,21 +24,24 @@ export function PayoutSettings() {
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [settingPrimaryId, setSettingPrimaryId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    if (!orgUuid) return
+    setBankAccounts(data.bankAccounts)
+  }, [data.bankAccounts])
+
+  useEffect(() => {
     let cancelled = false
-    Promise.all([
-      settingsApi.getBankAccounts(orgUuid).catch(() => []),
-      paymentsApi.getBanks().catch(() => ({ data: [] })),
-    ]).then(([accountsRes, banksRes]: [any, any]) => {
+    paymentsApi.getBanks().catch(() => ({ data: [] })).then((banksRes: any) => {
       if (cancelled) return
-      setBankAccounts(accountsRes || [])
       setBanks(banksRes.data || [])
-      setLoading(false)
+      setLoadingBanks(false)
     })
     return () => { cancelled = true }
-  }, [orgUuid])
+  }, [])
+
+  const loading = apiDataLoading || loadingBanks
 
   const triggerVerification = async (bankCode: string, accNum: string) => {
     setIsValidating(true)
@@ -72,13 +73,17 @@ export function PayoutSettings() {
   }
 
   const handleSetPrimary = async (uuid: string) => {
-    if (!orgUuid) return
+    if (!orgUuid || settingPrimaryId) return
+    setSettingPrimaryId(uuid)
     try {
       await settingsApi.setPrimaryBankAccount(orgUuid, uuid)
+      invalidateApiDataCache()
       setBankAccounts(prev => prev.map(acc => ({ ...acc, is_primary: acc.uuid === uuid })))
       toast.success('Primary withdrawal account updated!')
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to update primary account')
+    } finally {
+      setSettingPrimaryId(null)
     }
   }
 
@@ -105,6 +110,7 @@ export function PayoutSettings() {
         account_name: tempDetails.accountName,
         bank_code: tempDetails.bankCode,
       })
+      invalidateApiDataCache()
       setBankAccounts(prev => [...prev, {
         uuid: res.uuid,
         bank_name: res.bank_name,
@@ -122,14 +128,18 @@ export function PayoutSettings() {
   }
 
   const handleDelete = async () => {
-    if (!pendingDeleteId || !orgUuid) return
+    if (!pendingDeleteId || !orgUuid || deleting) return
+    setDeleting(true)
     try {
       await settingsApi.deleteBankAccount(orgUuid, pendingDeleteId)
+      invalidateApiDataCache()
       setBankAccounts(prev => prev.filter(a => a.uuid !== pendingDeleteId))
       toast.success('Bank account removed')
       handleCloseDelete()
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to remove bank account. Make it non-primary first if it is your primary account.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -187,9 +197,10 @@ export function PayoutSettings() {
                 ) : (
                   <button
                     onClick={() => guardAction(undefined, () => handleSetPrimary(acc.uuid))}
-                    className="text-[10px] text-neutral-200 hover:text-primary-500 font-bold border border-neutral-100 rounded-lg px-2 py-0.5 hover:bg-neutral-50"
+                    disabled={!!settingPrimaryId}
+                    className="text-[10px] text-neutral-200 hover:text-primary-500 font-bold border border-neutral-100 rounded-lg px-2 py-0.5 hover:bg-neutral-50 disabled:opacity-60"
                   >
-                    Set Primary
+                    {settingPrimaryId === acc.uuid ? 'Updating…' : 'Set Primary'}
                   </button>
                 )}
                 {bankAccounts.length > 1 && (
@@ -198,7 +209,8 @@ export function PayoutSettings() {
                       setPendingDeleteId(acc.uuid)
                       setShowDeleteConfirm(true)
                     })}
-                    className="text-neutral-100 hover:text-danger-300 transition-colors p-1"
+                    disabled={!!settingPrimaryId}
+                    className="text-neutral-100 hover:text-danger-300 transition-colors p-1 disabled:opacity-60"
                     title="Delete Account"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -346,9 +358,10 @@ export function PayoutSettings() {
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-danger-300 hover:bg-danger-400 text-xs font-semibold rounded-xl text-white transition-colors"
+                disabled={deleting}
+                className="px-4 py-2 bg-danger-300 hover:bg-danger-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60"
               >
-                Delete Account
+                {deleting ? 'Deleting…' : 'Delete Account'}
               </button>
             </div>
           </div>

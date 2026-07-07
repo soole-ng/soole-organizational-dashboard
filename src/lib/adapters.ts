@@ -48,6 +48,32 @@ export function mergeDriverStats(driver: Driver, stats: any | undefined): Driver
   }
 }
 
+/**
+ * fleet.api.DriverListItemSchema — {id, name, phone, status, vehicle_id,
+ * vehicle_plate, trips_completed, joined_at, avg_rating, ...}. Unlike
+ * adaptDriverIdentity/mergeDriverStats (org_trip_api's thinner list, which
+ * also only ever returns active drivers), this is a single call that
+ * already includes trip/rating stats AND surfaces still-pending invited
+ * drivers (id is an OrgInvitation uuid for those rows, matching
+ * fleetApi.resendInvite's expectation).
+ */
+export function adaptFleetDriver(raw: any): Driver {
+  return {
+    id: raw.id,
+    name: raw.name,
+    phone: raw.phone,
+    photo: raw.photo ?? undefined,
+    status: toStatusVariant(raw.status),
+    vehicleId: raw.vehicle_id ?? undefined,
+    vehiclePlate: raw.vehicle_plate ?? undefined,
+    tripsCompleted: raw.trips_completed ?? 0,
+    joinedAt: raw.joined_at ?? '',
+    avgRating: raw.avg_rating ?? 0,
+    reviews: [],
+    isPendingInvite: raw.is_pending_invite ?? false,
+  }
+}
+
 /** organization_vehicles_api.VehicleResponseSchema */
 export function adaptVehicle(raw: any): Vehicle {
   const documents: VehicleDocument[] = (raw.documents || []).map((d: any) => ({
@@ -87,7 +113,7 @@ export function adaptTrip(raw: any): Trip {
     routeName: `${raw.origin_address} → ${raw.destination_address}`,
     origin: raw.origin_address,
     destination: raw.destination_address,
-    vehicleId: '',
+    vehicleId: raw.vehicle_uuid ?? '',
     vehiclePlate: raw.vehicle_plate ?? 'Unassigned',
     driverId: raw.driver_uuid ?? '',
     driverName: raw.driver_name ?? 'Unassigned',

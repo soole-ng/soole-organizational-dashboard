@@ -16,6 +16,14 @@ import { AlertCircle, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { notificationsApi } from '../../api/client'
 
+// Client-only synthetic notifications (e.g. TripDetailPage's live speed-
+// violation alerts, id `speed-${plate}-${Date.now()}`) get pushed into
+// this same notifications list but were never persisted on the backend -
+// sending their id to dismiss/markRead would 404. Real notification ids
+// are always backend UUIDs, so a UUID-format check reliably tells them apart.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const isBackendNotificationId = (id: string) => UUID_RE.test(id)
+
 function adaptNotification(raw: any): Notification {
   return {
     id: raw.uuid,
@@ -64,29 +72,32 @@ export function AppShell() {
   const unreadCount = notifications.filter(n => !n.read).length
 
   const handleDismiss = useCallback((id: string) => {
-    // No backend delete/dismiss endpoint exists yet — remove from view locally only.
     setNotifications(prev => prev.filter(n => n.id !== id))
-  }, [])
+    if (orgUuid && isBackendNotificationId(id)) notificationsApi.dismiss(orgUuid, id).catch(() => {})
+  }, [orgUuid])
 
   const handleMarkAllRead = useCallback(() => {
     if (!orgUuid) return
-    setNotifications(prev => {
-      prev.filter(n => !n.read).forEach(n => {
-        notificationsApi.markRead(orgUuid, n.id).catch(() => {})
-      })
-      return prev.map(n => ({ ...n, read: true }))
+    // API calls fire here, outside the setState updater - a functional
+    // updater can run more than once per commit (React 18 StrictMode
+    // double-invoke, concurrent-render replay), which would have fired
+    // duplicate markRead requests for the same notifications.
+    notifications.filter(n => !n.read && isBackendNotificationId(n.id)).forEach(n => {
+      notificationsApi.markRead(orgUuid, n.id).catch(() => {})
     })
-  }, [orgUuid])
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+  }, [orgUuid, notifications])
 
   const handleMarkRead = useCallback((id: string) => {
     if (!orgUuid) return
-    notificationsApi.markRead(orgUuid, id).catch(() => {})
+    if (isBackendNotificationId(id)) notificationsApi.markRead(orgUuid, id).catch(() => {})
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
   }, [orgUuid])
 
   const handleClearAll = useCallback(() => {
     setNotifications([])
-  }, [])
+    if (orgUuid) notificationsApi.clearAll(orgUuid).catch(() => {})
+  }, [orgUuid])
 
   const handleOpenDrawer = useCallback(() => {
     setDrawerOpen(true)

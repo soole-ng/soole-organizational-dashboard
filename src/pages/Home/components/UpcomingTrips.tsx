@@ -2,11 +2,9 @@ import { ChevronRight, Clock, Users, MapPin, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { StatusPill } from '../../../components/ui/StatusPill'
 import { useOrg } from '../../../lib/OrgContext'
-import { useQuery } from '@tanstack/react-query'
-import { tripsApi } from '../../../api/trips'
+import { useApiData } from '../../../lib/useApiData'
 import { formatTime, formatOccupancy } from '../../../lib/formatters'
 import { clsx } from 'clsx'
-import type { Trip } from '../../../types'
 
 function TripSkeleton() {
   return (
@@ -22,10 +20,11 @@ function TripSkeleton() {
 }
 
 export function UpcomingTrips() {
-  const { data: trips = [], isLoading: loading } = useQuery<Trip[]>({
-    queryKey: ['trips'],
-    queryFn: () => tripsApi.getTrips()
-  })
+  // Shared useApiData cache, not its own react-query fetch - see
+  // TripsListPage for why (trip cancel/board/refund invalidate this cache;
+  // a separate react-query cache under the same key never saw those).
+  const { data, loading } = useApiData()
+  const trips = data.trips
   const { guardAction } = useOrg()
 
   if (loading) {

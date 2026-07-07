@@ -373,10 +373,10 @@ export function LoginPage() {
           <div className="w-16 h-16 flex items-center justify-start mb-6">
             <img src="/soole-icon.png" alt="Soole logo" className="h-full object-contain" />
           </div>
-          <h1 className="text-3xl font-extrabold mb-2 font-display">
+          <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 font-display">
             {step === 'login' ? 'Welcome back' : step === 'signup' ? 'Create Account' : step === 'security_setup' ? 'Secure your account' : 'Verify your phone'}
           </h1>
-          <p className="text-primary-200 text-sm">
+          <p className="text-primary-200 text-base sm:text-lg">
             {step === 'login' ? 'Sign in to your organization account' : step === 'signup' ? 'Register your company on Soole' : step === 'security_setup' ? 'Set up a security question for account recovery and withdrawals' : 'Enter the verification code sent via SMS'}
           </p>
         </div>
@@ -386,7 +386,7 @@ export function LoginPage() {
           <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-sm sm:max-w-md lg:max-w-lg" : "max-w-sm sm:max-w-md")}>
             {/* Desktop heading */}
             <div className="hidden lg:block mb-8">
-              <h1 className="text-4xl font-extrabold text-primary-500 mb-2 font-display">
+              <h1 className="text-5xl lg:text-6xl font-extrabold text-primary-500 mb-2 font-display">
                 {step === 'login' ? 'Sign in' : step === 'signup' ? 'Register Company' : step === 'security_setup' ? 'Secure your account' : 'Verify your phone'}
               </h1>
               <p className="text-neutral-300 text-base">
@@ -517,35 +517,35 @@ export function LoginPage() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
                         First Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={suOwnerFirstName}
                         onChange={e => { setSuOwnerFirstName(e.target.value); setErrors(errors.filter(err => err !== 'suOwnerFirstName')) }}
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOwnerFirstName'))}
+                        className={clsx("w-full h-10 sm:h-11 bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOwnerFirstName'))}
                         placeholder="Adekemi"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="block text-xs font-black uppercase tracking-wider text-black">
+                      <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
                         Last Name (Surname) <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={suOwnerLastName}
                         onChange={e => { setSuOwnerLastName(e.target.value); setErrors(errors.filter(err => err !== 'suOwnerLastName')) }}
-                        className={clsx("w-full h-[40px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOwnerLastName'))}
+                        className={clsx("w-full h-10 sm:h-11 bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suOwnerLastName'))}
                         placeholder="Chukuma"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black">
+                    <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
                       Phone Number <span className="text-red-500">*</span>
                     </label>
                     <div className="flex gap-2 items-center">
@@ -565,7 +565,7 @@ export function LoginPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-xs font-black uppercase tracking-wider text-black">
+                    <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
                       Company Name <span className="text-red-500">*</span>
                     </label>
                     <input

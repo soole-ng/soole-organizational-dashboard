@@ -23,6 +23,8 @@ export interface Driver {
   joinedAt: string
   avgRating?: number
   reviews?: DriverReview[]
+  /** True for a still-pending invited driver row (id is an OrgInvitation uuid, not a real user uuid) - can't be assigned to a vehicle/trip. */
+  isPendingInvite?: boolean
 }
 
 export interface Vehicle {

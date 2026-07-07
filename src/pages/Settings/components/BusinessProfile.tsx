@@ -12,6 +12,7 @@ interface BusinessProfileProps {
 export function BusinessProfile({ executeSecuredAction, onSave }: BusinessProfileProps) {
   const { org, updateOrg } = useOrg()
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   return (
     <div className="space-y-4 max-w-2xl">
@@ -111,12 +112,17 @@ export function BusinessProfile({ executeSecuredAction, onSave }: BusinessProfil
         <button
           onClick={() => {
             executeSecuredAction(() => {
-              onSave().then(() => toast.success('Business Profile updated successfully!')).catch(() => {})
+              setSaving(true)
+              onSave()
+                .then(() => toast.success('Business Profile updated successfully!'))
+                .catch(() => {})
+                .finally(() => setSaving(false))
             })
           }}
-          className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors"
+          disabled={saving}
+          className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60"
         >
-          Save Profile Changes
+          {saving ? 'Saving…' : 'Save Profile Changes'}
         </button>
       </div>
     </div>

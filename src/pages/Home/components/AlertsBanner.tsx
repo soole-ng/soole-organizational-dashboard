@@ -2,6 +2,8 @@ import { AlertTriangle, XCircle, Info, X, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { clsx } from 'clsx'
 import type { Alert } from '../../../types'
+import { useOrg } from '../../../lib/OrgContext'
+import { notificationsApi } from '../../../api/client'
 
 function AlertItem({ alert, onDismiss }: { alert: Alert; onDismiss: () => void }) {
   const isWarning = alert.type === 'warning'
@@ -59,6 +61,7 @@ interface AlertsBannerProps {
 }
 
 export function AlertsBanner({ notifications = [], setNotifications }: AlertsBannerProps) {
+  const { orgUuid } = useOrg()
   if (!notifications) return null
 
   // Only show warning or danger type notifications (as active alerts)
@@ -69,6 +72,7 @@ export function AlertsBanner({ notifications = [], setNotifications }: AlertsBan
     if (setNotifications) {
       setNotifications(notifications.filter(n => n.id !== id))
     }
+    if (orgUuid) notificationsApi.dismiss(orgUuid, id).catch(() => {})
   }
 
   return (

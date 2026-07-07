@@ -5,12 +5,24 @@
  */
 import { useState, useEffect, useCallback } from 'react'
 import type { Driver, Vehicle, Trip, Transaction, Payout, Alert, OrganizationMember, Route } from '../types'
-import { organizationApi, vehiclesApi, driversApi, reportsApi, moneyApi, trackingApi, notificationsApi, settingsApi } from '../api/client'
+import { organizationApi, vehiclesApi, fleetApi, moneyApi, trackingApi, notificationsApi, settingsApi } from '../api/client'
 import {
-  adaptDriverIdentity, mergeDriverStats, adaptVehicle, adaptTrip,
+  adaptFleetDriver, adaptVehicle, adaptTrip,
   adaptTransaction, adaptPayout, adaptVehicleLocation, adaptOrganizationMember,
   adaptAlert, adaptWeeklyRevenueDay, adaptPassenger,
 } from './adapters'
+
+export interface BankAccountRow {
+  uuid: string
+  bank_name: string
+  bank_code?: string
+  account_number: string
+  account_name: string
+  account_type?: string
+  is_primary: boolean
+  verification_status?: string
+  verification_date?: string
+}
 
 export interface VehicleLocation {
   id: string
@@ -36,6 +48,7 @@ export interface ApiData {
   weeklyRevenue: { day: string; gross: number; net: number }[]
   vehicleLocations: VehicleLocation[]
   aiAssistantSuggestions: string[]
+  bankAccounts: BankAccountRow[]
 }
 
 const EMPTY_DATA: ApiData = {
@@ -50,6 +63,7 @@ const EMPTY_DATA: ApiData = {
   weeklyRevenue: [],
   vehicleLocations: [],
   aiAssistantSuggestions: [],
+  bankAccounts: [],
 }
 
 function getOrgUuid(): string | null {
@@ -67,11 +81,11 @@ async function fetchAll(orgUuid: string): Promise<ApiData> {
   const LIST_FETCH_LIMIT = 500
 
   const [
-    driversRaw, driverStats, vehiclesRes, tripsRes, transactionsRes,
+    driversRes, vehiclesRes, tripsRes, transactionsRes,
     payoutsRes, alertsRes, membersRes, weeklyRevenueRes, locationsRaw, routesRaw,
+    bankAccountsRaw,
   ] = await Promise.all([
-    driversApi.getDrivers(orgUuid).catch(() => []),
-    reportsApi.getDriverReport(orgUuid).catch(() => ({ drivers: [] })),
+    fleetApi.getDrivers(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ drivers: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } })),
     vehiclesApi.getVehicles(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ vehicles: [], total: 0 })),
     organizationApi.getTrips(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ trips: [], total: 0, page: 1, limit: 20 })),
     moneyApi.getTransactions(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ transactions: [], total_count: 0, page: 1, limit: 20 })),
@@ -81,10 +95,10 @@ async function fetchAll(orgUuid: string): Promise<ApiData> {
     moneyApi.getWeeklyRevenue(orgUuid).catch(() => ({ daily_breakdown: [] })),
     trackingApi.getVehiclesLocations(orgUuid).catch(() => []),
     organizationApi.getRoutes(orgUuid).catch(() => []),
-  ]) as [any[], any, any, any, any, any, any, any, any, any[], any[]]
+    settingsApi.getBankAccounts(orgUuid).catch(() => []),
+  ]) as [any, any, any, any, any, any, any, any, any[], any[], BankAccountRow[]]
 
-  const statsById = new Map((driverStats.drivers || []).map((d: any) => [d.id, d]))
-  const drivers = (driversRaw || []).map((d: any) => mergeDriverStats(adaptDriverIdentity(d), statsById.get(d.uuid)))
+  const drivers = (driversRes.drivers || []).map(adaptFleetDriver)
 
   return {
     routes: (routesRaw || []).map((r: any) => ({
@@ -105,6 +119,7 @@ async function fetchAll(orgUuid: string): Promise<ApiData> {
     weeklyRevenue: (weeklyRevenueRes.daily_breakdown || []).map(adaptWeeklyRevenueDay),
     vehicleLocations: (locationsRaw || []).map(adaptVehicleLocation),
     aiAssistantSuggestions: [],
+    bankAccounts: bankAccountsRaw || [],
   }
 }
 

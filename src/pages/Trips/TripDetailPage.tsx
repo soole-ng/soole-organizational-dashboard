@@ -4,7 +4,7 @@ import { Edit2, XCircle, Bus, User, Navigation, Clock, Gauge, AlertTriangle, Dro
 import { TopBar } from '../../components/layout/TopBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { ManifestList } from './components/ManifestList'
-import { useApiData, useTripDetail } from '../../lib/useApiData'
+import { useApiData, useTripDetail, invalidateApiDataCache } from '../../lib/useApiData'
 import { adaptTrip } from '../../lib/adapters'
 import { organizationApi } from '../../api/client'
 import { formatDate, formatTime } from '../../lib/formatters'
@@ -14,6 +14,7 @@ import { useOrg } from '../../lib/OrgContext'
 import { LiveTracker } from './components/LiveTracker'
 import { CommentsModal } from './components/CommentsModal'
 import { EditTripModal } from './components/EditTripModal'
+import { ReassignTripModal } from './components/ReassignTripModal'
 
 /** Fleet-wide hard speed limit in km/h */
 const SPEED_LIMIT_KMH = 100
@@ -31,6 +32,7 @@ export function TripDetailPage() {
 
   const [showAllComments, setShowAllComments] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showReassignModal, setShowReassignModal] = useState(false)
 
   const trip = rawTrip ? adaptTrip(rawTrip) : null
 
@@ -86,10 +88,12 @@ export function TripDetailPage() {
   const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
 
   const handleEdit = () => guardAction(undefined, () => setShowEditModal(true))
+  const handleReassign = () => guardAction(undefined, () => setShowReassignModal(true))
   const handleCancel = () => guardAction(undefined, async () => {
     if (!orgUuid || !id) return
     try {
       await organizationApi.cancelTrip(orgUuid, id)
+      invalidateApiDataCache()
       toast.success('Trip cancelled')
       navigate('/trips')
     } catch (err: any) {
@@ -100,6 +104,7 @@ export function TripDetailPage() {
   const actions = [
     isLive && { icon: Navigation, label: 'View on Map', action: () => navigate('/live-map'), danger: false },
     isScheduled && { icon: Edit2, label: 'Edit', action: handleEdit, danger: false },
+    isScheduled && { icon: User, label: 'Reassign', action: handleReassign, danger: false },
     isScheduled && { icon: XCircle, label: 'Cancel', action: handleCancel, danger: true },
   ].filter(Boolean) as { icon: any; label: string; action: () => void; danger: boolean }[]
 
@@ -259,6 +264,26 @@ export function TripDetailPage() {
           onClose={() => setShowEditModal(false)}
           onSaved={() => {
             setShowEditModal(false)
+            window.location.reload()
+          }}
+        />
+      )}
+
+      {/* Reassign Trip Modal */}
+      {showReassignModal && orgUuid && id && (
+        <ReassignTripModal
+          orgUuid={orgUuid}
+          tripId={id}
+          currentDriverId={trip.driverId}
+          currentVehicleId={trip.vehicleId || undefined}
+          drivers={data.drivers.filter(d =>
+            (!d.isPendingInvite && d.status !== 'suspended') || d.id === trip.driverId
+          )}
+          vehicles={data.vehicles}
+          onClose={() => setShowReassignModal(false)}
+          onSaved={() => {
+            invalidateApiDataCache()
+            setShowReassignModal(false)
             window.location.reload()
           }}
         />

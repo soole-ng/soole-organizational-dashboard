@@ -73,11 +73,16 @@ export function TripCreatePage() {
       toast.error('Select a departure date and time')
       return
     }
+    if (!form.fare || form.fare <= 0) {
+      toast.error('Enter a fare greater than zero')
+      return
+    }
 
     setPublishing(true)
     try {
       await organizationApi.createTrip(orgUuid, {
         driver_uuid: form.driverId,
+        vehicle_uuid: form.vehicleId || undefined,
         origin_address: form.pickupLocation.trim(),
         destination_address: form.dropoffLocation.trim(),
         departure_date: new Date(form.departureAt).toISOString(),

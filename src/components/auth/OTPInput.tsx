@@ -14,6 +14,7 @@ interface OTPInputProps {
   secondsUntilNextResend?: number
   canResend?: boolean
   description?: string
+  showImmediateCountdown?: boolean
 }
 
 export function OTPInput({
@@ -27,8 +28,9 @@ export function OTPInput({
   secondsUntilNextResend = 0,
   canResend = true,
   description = "We've sent a 5-digit code via SMS to your phone. Please enter it below.",
+  showImmediateCountdown = true,
 }: OTPInputProps) {
-  const [countdown, setCountdown] = useState(secondsUntilNextResend)
+  const [countdown, setCountdown] = useState(secondsUntilNextResend || (showImmediateCountdown ? 300 : 0))
 
   useEffect(() => {
     setCountdown(secondsUntilNextResend)

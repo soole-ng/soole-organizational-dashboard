@@ -7,7 +7,11 @@ import type {
   Passenger, VehicleDocument, StatusVariant,
 } from '../types'
 
-const COMMISSION_RATE = 0.08
+// Fallback only, for the rare call site that can't reach OrgContext/the
+// org's real commission_rate (see useApiData.ts/OrgContext.tsx) - matches
+// settings.SOOLE_FEE_PERCENTAGE's backend default. Every real UI path
+// passes the org's actual rate explicitly instead of relying on this.
+const DEFAULT_COMMISSION_RATE = 0.1
 
 function toStatusVariant(status: string | null | undefined): StatusVariant {
   const s = (status || '').toLowerCase()
@@ -101,11 +105,11 @@ export function adaptVehicle(raw: any): Vehicle {
 }
 
 /** organization_trips_api.TripListResponseSchema / TripDetailResponseSchema */
-export function adaptTrip(raw: any): Trip {
+export function adaptTrip(raw: any, commissionRate: number = DEFAULT_COMMISSION_RATE): Trip {
   const pricePerSeat = parseFloat(raw.price_per_seat ?? '0')
   const bookedSeats = raw.booked_seats ?? 0
   const gross = pricePerSeat * bookedSeats
-  const net = gross * (1 - COMMISSION_RATE)
+  const net = gross * (1 - commissionRate)
 
   return {
     id: raw.uuid,
@@ -148,9 +152,9 @@ export function adaptPassenger(raw: any): Passenger {
 }
 
 /** organization_money_api.TransactionItemSchema — {id, type, amount, status, description, date, related_trip_id} */
-export function adaptTransaction(raw: any): Transaction {
+export function adaptTransaction(raw: any, commissionRate: number = DEFAULT_COMMISSION_RATE): Transaction {
   const gross = Number(raw.amount ?? 0)
-  const commission = gross * COMMISSION_RATE
+  const commission = gross * commissionRate
   return {
     id: raw.id,
     date: raw.date,
@@ -218,11 +222,11 @@ export function adaptAlert(raw: any): Alert {
 }
 
 /** organization_money_api.WeeklyRevenueItemSchema — {date, day_name, trips, revenue, bookings, passengers} */
-export function adaptWeeklyRevenueDay(raw: any) {
+export function adaptWeeklyRevenueDay(raw: any, commissionRate: number = DEFAULT_COMMISSION_RATE) {
   const gross = Number(raw.revenue ?? 0)
   return {
     day: (raw.day_name || '').slice(0, 3),
     gross,
-    net: gross * (1 - COMMISSION_RATE),
+    net: gross * (1 - commissionRate),
   }
 }

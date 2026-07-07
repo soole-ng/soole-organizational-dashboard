@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useCallback } from 'react'
 import type { Driver, Vehicle, Trip, Transaction, Payout, Alert, OrganizationMember, Route } from '../types'
-import { organizationApi, vehiclesApi, fleetApi, moneyApi, trackingApi, notificationsApi, settingsApi } from '../api/client'
+import { organizationApi, vehiclesApi, fleetApi, moneyApi, trackingApi, notificationsApi, settingsApi, orgApi } from '../api/client'
 import {
   adaptFleetDriver, adaptVehicle, adaptTrip,
   adaptTransaction, adaptPayout, adaptVehicleLocation, adaptOrganizationMember,
@@ -83,7 +83,7 @@ async function fetchAll(orgUuid: string): Promise<ApiData> {
   const [
     driversRes, vehiclesRes, tripsRes, transactionsRes,
     payoutsRes, alertsRes, membersRes, weeklyRevenueRes, locationsRaw, routesRaw,
-    bankAccountsRaw,
+    bankAccountsRaw, orgRes,
   ] = await Promise.all([
     fleetApi.getDrivers(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ drivers: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } })),
     vehiclesApi.getVehicles(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ vehicles: [], total: 0 })),
@@ -96,9 +96,14 @@ async function fetchAll(orgUuid: string): Promise<ApiData> {
     trackingApi.getVehiclesLocations(orgUuid).catch(() => []),
     organizationApi.getRoutes(orgUuid).catch(() => []),
     settingsApi.getBankAccounts(orgUuid).catch(() => []),
-  ]) as [any, any, any, any, any, any, any, any, any[], any[], BankAccountRow[]]
+    orgApi.getOrganization(orgUuid).catch(() => null),
+  ]) as [any, any, any, any, any, any, any, any, any[], any[], BankAccountRow[], any]
 
   const drivers = (driversRes.drivers || []).map(adaptFleetDriver)
+  // Always sourced from the backend (Organization.commission_rate) - never
+  // hardcoded here. Falls back to adapters.ts's own backend-matching
+  // default only if this specific request failed.
+  const commissionRate: number | undefined = orgRes?.commission_rate
 
   return {
     routes: (routesRaw || []).map((r: any) => ({
@@ -111,12 +116,12 @@ async function fetchAll(orgUuid: string): Promise<ApiData> {
     })),
     drivers,
     vehicles: (vehiclesRes.vehicles || []).map(adaptVehicle),
-    trips: (tripsRes.trips || []).map(adaptTrip),
-    transactions: (transactionsRes.transactions || []).map(adaptTransaction),
+    trips: (tripsRes.trips || []).map((t: any) => adaptTrip(t, commissionRate)),
+    transactions: (transactionsRes.transactions || []).map((t: any) => adaptTransaction(t, commissionRate)),
     payouts: (payoutsRes.payouts || []).map(adaptPayout),
     alerts: (alertsRes.notifications || []).map(adaptAlert),
     organizationMembers: (membersRes || []).map(adaptOrganizationMember),
-    weeklyRevenue: (weeklyRevenueRes.daily_breakdown || []).map(adaptWeeklyRevenueDay),
+    weeklyRevenue: (weeklyRevenueRes.daily_breakdown || []).map((d: any) => adaptWeeklyRevenueDay(d, commissionRate)),
     vehicleLocations: (locationsRaw || []).map(adaptVehicleLocation),
     aiAssistantSuggestions: [],
     bankAccounts: bankAccountsRaw || [],

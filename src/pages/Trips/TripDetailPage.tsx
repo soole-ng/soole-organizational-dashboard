@@ -22,10 +22,9 @@ const SPEED_LIMIT_KMH = 100
 export function TripDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { orgUuid } = useOrg()
+  const { orgUuid, org, guardAction } = useOrg()
   const { data } = useApiData()
   const { trip: rawTrip, passengers, comments, loading } = useTripDetail(id)
-  const { guardAction } = useOrg()
   const ctx = useOutletContext<any>()
   const notifications = ctx?.notifications ?? []
   const setNotifications = ctx?.setNotifications
@@ -34,7 +33,7 @@ export function TripDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showReassignModal, setShowReassignModal] = useState(false)
 
-  const trip = rawTrip ? adaptTrip(rawTrip) : null
+  const trip = rawTrip ? adaptTrip(rawTrip, org.commissionPct / 100) : null
 
   const handleSpeedViolation = useCallback((speed: number, plate: string, driver: string) => {
     toast.error(`⚠ Speed limit exceeded! ${plate} is travelling at ~${speed} km/h`, {

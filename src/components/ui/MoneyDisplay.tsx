@@ -48,6 +48,11 @@ interface CommissionRowProps {
 }
 
 export function CommissionRow({ gross, commission, net, className }: CommissionRowProps) {
+  // Derived from the actual gross/commission passed in (both already
+  // sourced from the backend) rather than a hardcoded "8%" label, so this
+  // never drifts from the org's real commission_rate.
+  const commissionPct = gross > 0 ? Math.round((commission / gross) * 100) : 0
+
   return (
     <div className={clsx('grid grid-cols-3 gap-2 text-xs', className)}>
       <div className="text-center">
@@ -55,7 +60,7 @@ export function CommissionRow({ gross, commission, net, className }: CommissionR
         <p className="font-semibold text-primary-500 stat-number">{formatMoney(gross)}</p>
       </div>
       <div className="text-center border-x border-neutral-50">
-        <p className="text-neutral-200 mb-0.5">Commission (8%)</p>
+        <p className="text-neutral-200 mb-0.5">Commission ({commissionPct}%)</p>
         <p className="font-semibold text-danger stat-number">−{formatMoney(commission)}</p>
       </div>
       <div className="text-center">

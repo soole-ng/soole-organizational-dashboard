@@ -67,7 +67,7 @@ function getOrgUuid(): string {
  * Organization core (organization/api.py)
  */
 export const orgApi = {
-  getMine: async () => apiRequest<Array<{ uuid: string; name: string; slug: string; org_type?: string; contact_email?: string; contact_phone?: string; logo_url?: string; status: string; rc_number?: string; approval_status: string; verification_status: string }>>('/organizations/mine/'),
+  getMine: async () => apiRequest<Array<{ uuid: string; name: string; slug: string; org_type?: string; contact_email?: string; contact_phone?: string; logo_url?: string; status: string; rc_number?: string; approval_status: string; verification_status: string; commission_rate: number }>>('/organizations/mine/'),
   getOrganization: async (orgUuid: string) => apiRequest(`/organizations/${orgUuid}/`),
   /** Owner completes NIN/DOB/RC/CAC verification (organization.api.complete_organization_profile). */
   completeProfile: async (orgUuid: string, payload: { nin: string; date_of_birth: string; rc_number: string; cac_document_url: string }) =>
@@ -365,6 +365,16 @@ export const settingsApi = {
    */
   revokeInvitation: async (orgUuid: string, invitationUuid: string) =>
     apiRequest(`/organizations/${orgUuid}/invitations/${invitationUuid}/`, { method: 'DELETE' }),
+  /**
+   * Lists still-pending invites (organization.api.list_pending_invitations)
+   * so the team page can show them across page loads - previously pending
+   * invites only ever existed in this page's local React state, vanishing
+   * on refresh with no way to revoke them from the UI.
+   */
+  getPendingInvitations: async (orgUuid: string) =>
+    apiRequest<Array<{ uuid: string; name: string | null; phone: string | null; email: string | null; role: string; status: string; expires_at: string }>>(
+      `/organizations/${orgUuid}/invitations/`
+    ),
   /** Returns a raw array - the real backend (organization/api.py) isn't wrapped in {accounts: [...]} */
   getBankAccounts: async (orgUuid: string) =>
     apiRequest<Array<{ uuid: string; bank_name: string; bank_code?: string; account_number: string; account_name: string; account_type: string; is_primary: boolean; verification_status: string; verification_date?: string }>>(

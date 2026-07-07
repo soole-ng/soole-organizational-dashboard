@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Building2, Users, Wallet, Bell, RefreshCw, HelpCircle, ChevronRight, AlertTriangle, FileText, ShieldCheck } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
@@ -21,6 +21,7 @@ export function SettingsPage() {
   const { data } = useApiData()
 
   const [members, setMembers] = useState<any[]>([])
+  const [pendingInvitations, setPendingInvitations] = useState<any[]>([])
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const [speedLimit, setSpeedLimit] = useState(100)
   const [alertChannels, setAlertChannels] = useState({ push: true, sms: true, email: false })
@@ -108,11 +109,38 @@ export function SettingsPage() {
     setMembers(data.organizationMembers || [])
   }, [data.organizationMembers])
 
+  // Pending invites (sent via invite-with-otp but not yet accepted) live on
+  // the backend as real OrgInvitation rows - previously this list only
+  // ever existed in OrganizationTeam's local React state, so it silently
+  // vanished on every refresh with no way to revoke a still-live invite.
+  const fetchPendingInvitations = useCallback(() => {
+    if (!orgUuid) return
+    settingsApi.getPendingInvitations(orgUuid)
+      .then(invitations => {
+        setPendingInvitations((invitations || []).map(inv => ({
+          id: inv.uuid,
+          name: inv.name || inv.phone || inv.email || 'Pending invite',
+          phone: inv.phone,
+          email: inv.email,
+          role: inv.role,
+          status: 'pending',
+          joinedAt: '',
+        })))
+      })
+      .catch(() => setPendingInvitations([]))
+  }, [orgUuid])
+
+  useEffect(() => {
+    fetchPendingInvitations()
+  }, [fetchPendingInvitations])
+
   const sections = [
     ...(org.verificationStatus === 'incomplete' ? [
       { icon: AlertTriangle, label: 'Complete Business Verification', desc: 'Add NIN, DOB, RC number, and CAC certificate', priority: true }
     ] : []),
     { icon: Building2, label: 'Business Profile', desc: 'Name, logo, contact and public page' },
+    // Active members only - pendingInvitations are shown in the team list
+    // itself but shouldn't inflate this "N members" count.
     { icon: Users, label: 'Organization Team', desc: `${members.length} members`, badge: members.length },
     { icon: Wallet, label: 'Payout Settings', desc: 'Bank account and payout schedule' },
     { icon: ShieldCheck, label: 'Security Question', desc: 'Required to withdraw funds' },
@@ -191,8 +219,9 @@ export function SettingsPage() {
 
                     {label === 'Organization Team' && (
                       <OrganizationTeam
-                        members={members}
+                        members={[...members, ...pendingInvitations]}
                         setMembers={setMembers}
+                        onInvitationsChanged={fetchPendingInvitations}
                         executeSecuredAction={executeSecuredAction}
                       />
                     )}

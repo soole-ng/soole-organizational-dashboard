@@ -49,11 +49,14 @@ export function formatOccupancyPct(booked: number, capacity: number): number {
   return Math.round((booked / capacity) * 100)
 }
 
-export function commissionAmount(gross: number, rate = 0.08): number {
+// `rate` should always be the org's real commission_rate (see
+// OrgContext/useOrg) - the default here is only a fallback matching
+// settings.SOOLE_FEE_PERCENTAGE's backend default, never a value to rely on.
+export function commissionAmount(gross: number, rate = 0.1): number {
   return Math.round(gross * rate)
 }
 
-export function netAmount(gross: number, rate = 0.08): number {
+export function netAmount(gross: number, rate = 0.1): number {
   return gross - commissionAmount(gross, rate)
 }
 

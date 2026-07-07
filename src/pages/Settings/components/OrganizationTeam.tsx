@@ -9,10 +9,12 @@ import { invalidateApiDataCache } from '../../../lib/useApiData'
 interface OrganizationTeamProps {
   members: any[]
   setMembers: React.Dispatch<React.SetStateAction<any[]>>
+  /** Re-fetches pending invitations from the backend - call after any invite/revoke mutation. */
+  onInvitationsChanged: () => void
   executeSecuredAction: (action: () => void) => void
 }
 
-export function OrganizationTeam({ members, setMembers, executeSecuredAction }: OrganizationTeamProps) {
+export function OrganizationTeam({ members, setMembers, onInvitationsChanged, executeSecuredAction }: OrganizationTeamProps) {
   const { org, guardAction, orgUuid } = useOrg()
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [memberToRemove, setMemberToRemove] = useState<any | null>(null)
@@ -47,22 +49,39 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
   const handleConfirmInvite = () => {
     if (!invitePreview) return
     executeSecuredAction(() => {
-      const newMember = {
-        id: invitePreview.memberId,
-        name: inviteForm.name,
-        phone: inviteForm.phone,
-        role: inviteForm.role,
-        joinedAt: new Date().toISOString().split('T')[0],
-        status: 'pending'
-      }
-      setMembers(p => [...p, newMember])
+      // The invitation + SMS were already created/sent by handleSendInvite
+      // (invite-with-otp) - this just closes the preview and re-fetches
+      // the real pending-invitations list so it shows up, instead of
+      // fabricating a local-only row that would vanish on refresh.
       invalidateApiDataCache()
+      onInvitationsChanged()
       setShowInviteForm(false)
       setShowInvitePreview(false)
       setInviteForm({ name: '', phone: '', role: 'manager' })
       setInvitePreview(null)
       toast.success(`SMS invite sent to ${inviteForm.name}!`)
     })
+  }
+
+  const handleCancelInvitePreview = () => {
+    setShowInvitePreview(false)
+    setInviteForm({ name: '', phone: '', role: 'manager' })
+    if (!invitePreview || !orgUuid) {
+      setInvitePreview(null)
+      return
+    }
+    // The invitation + OTP SMS were already sent for real by
+    // handleSendInvite before this preview ever showed - clicking Cancel
+    // here previously did nothing, leaving a live, unrevoked invitation
+    // (and a working join link) dangling with no way to cancel it.
+    const memberId = invitePreview.memberId
+    setInvitePreview(null)
+    settingsApi.revokeInvitation(orgUuid, memberId)
+      .then(() => onInvitationsChanged())
+      .catch(() => {
+        // Best-effort - if this fails the invite still shows up in the
+        // pending list, where it can be revoked via the normal Remove flow.
+      })
   }
 
   const handleConfirmRemove = () => {
@@ -77,11 +96,12 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
         // looking up a User by that id).
         if (status === 'pending') {
           await settingsApi.revokeInvitation(orgUuid, id)
+          onInvitationsChanged()
         } else {
           await settingsApi.removeMember(orgUuid, id)
+          setMembers(prev => prev.filter(m => m.id !== id))
         }
         invalidateApiDataCache()
-        setMembers(prev => prev.filter(m => m.id !== id))
         toast.success(`${name} has been removed from the team`)
       } catch (err: any) {
         toast.error(err?.message ?? 'Failed to remove member')
@@ -212,10 +232,7 @@ export function OrganizationTeam({ members, setMembers, executeSecuredAction }: 
 
           <div className="flex gap-2 justify-end pt-1">
             <button
-              onClick={() => {
-                setShowInvitePreview(false)
-                setInviteForm({ name: '', phone: '', role: 'manager' })
-              }}
+              onClick={handleCancelInvitePreview}
               className="px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 text-xs font-semibold rounded-xl text-black transition-colors"
             >
               Cancel

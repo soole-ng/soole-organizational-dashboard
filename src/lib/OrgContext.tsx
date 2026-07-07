@@ -58,7 +58,10 @@ const DEFAULT_ORG: OrgProfile = {
   name: '',
   logoUrl: null,
   role: 'viewer',
-  commissionPct: 8,
+  // Fallback only, used before GET /organizations/mine/ resolves (or if it
+  // fails) - matches settings.SOOLE_FEE_PERCENTAGE's real backend default.
+  // The real, authoritative value always comes from primary.commission_rate.
+  commissionPct: 10,
   bankAccounts: [],
   isBalanceHidden: false,
   approvalStatus: 'approved',
@@ -109,6 +112,14 @@ export function OrgProvider({ children }: { children: ReactNode }) {
             ? 'incomplete'
             : primary.approval_status === 'approved' ? 'approved' : 'pending',
           verificationStatus: primary.verification_status as 'incomplete' | 'complete',
+          // commission_rate is a 0-1 fraction (e.g. 0.1) from the backend's
+          // OrgResponseSchema - commissionPct stores it as a whole percent
+          // (10). Previously this field was never populated from the
+          // real API response at all, so it stayed stuck at DEFAULT_ORG's
+          // hardcoded fallback (8) everywhere it was read.
+          commissionPct: typeof primary.commission_rate === 'number'
+            ? primary.commission_rate * 100
+            : prev.commissionPct,
         }))
 
         try {

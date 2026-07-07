@@ -626,7 +626,8 @@ export function JoinOrganizationPage() {
         </div>
       </div>
       </div> {/* Close desktop view container */}
-      </div> {/* Close mobile form wrapper */}
+      </div> {/* Close mobile content wrapper */}
+      </div> {/* Close mobile view wrapper */}
     </div>
   )
 }

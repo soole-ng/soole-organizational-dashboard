@@ -383,8 +383,8 @@ export function LoginPage() {
         </div>
 
         {/* Form card container */}
-        <div className="flex-1 flex items-start justify-center p-3 sm:p-4 lg:p-12 pt-4 sm:pt-6">
-          <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-full sm:max-w-sm lg:max-w-md" : "max-w-full sm:max-w-sm")}>
+        <div className="flex-1 flex items-start lg:items-center justify-center p-3 sm:p-6 lg:p-12 pt-4 sm:pt-6">
+          <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-full lg:max-w-lg" : "max-w-full lg:max-w-md")}>
             {/* Desktop heading */}
             <div className="hidden lg:block mb-8">
               <h1 className="text-5xl lg:text-6xl font-extrabold text-primary-500 mb-2 font-display">
@@ -401,9 +401,9 @@ export function LoginPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-card shadow-card p-8 sm:p-10 lg:p-14 relative z-10">
+            <div className="bg-white rounded-card shadow-card p-8 sm:p-8 lg:p-10 relative z-10">
               {step === 'login' ? (
-                <div className="space-y-6 sm:space-y-8">
+                <div className="space-y-6 sm:space-y-7">
                   {/* Phone field */}
                   <div className="space-y-2">
                     <label className="block text-sm sm:text-base font-black uppercase tracking-wider text-black flex items-center gap-1.5">

@@ -384,7 +384,7 @@ export function LoginPage() {
 
         {/* Form card container */}
         <div className="flex-1 flex items-start justify-center p-3 sm:p-4 lg:p-12 pt-4 sm:pt-6">
-          <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-full sm:max-w-md lg:max-w-lg" : "max-w-full sm:max-w-md")}>
+          <div className={clsx("w-full transition-all duration-300", step === 'signup' ? "max-w-full sm:max-w-sm lg:max-w-md" : "max-w-full sm:max-w-sm")}>
             {/* Desktop heading */}
             <div className="hidden lg:block mb-8">
               <h1 className="text-5xl lg:text-6xl font-extrabold text-primary-500 mb-2 font-display">
@@ -401,9 +401,9 @@ export function LoginPage() {
               </p>
             </div>
 
-            <div className="bg-white rounded-card shadow-card p-6 sm:p-8 lg:p-10 relative z-10">
+            <div className="bg-white rounded-card shadow-card p-8 sm:p-10 lg:p-14 relative z-10">
               {step === 'login' ? (
-                <div className="space-y-5 sm:space-y-7">
+                <div className="space-y-6 sm:space-y-8">
                   {/* Phone field */}
                   <div className="space-y-2">
                     <label className="block text-sm sm:text-base font-black uppercase tracking-wider text-black flex items-center gap-1.5">
@@ -492,7 +492,7 @@ export function LoginPage() {
                   <button
                     onClick={handleLogin}
                     disabled={loading}
-                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm', loading && 'opacity-70')}
+                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-5 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-2 mb-3', loading && 'opacity-70')}
                   >
                     {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Signing in…</> : 'Sign in'}
                   </button>

@@ -91,12 +91,12 @@ export function OTPInput({
     <div className="space-y-5 sm:space-y-7">
       <div className="flex items-center gap-3 p-3 sm:p-4 bg-primary-75 rounded-2xl border border-primary-100">
         <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-black flex-shrink-0" />
-        <p className="text-xs sm:text-sm text-black leading-relaxed font-black">{description}</p>
+        <p className="text-sm sm:text-base text-black leading-relaxed font-black">{description}</p>
       </div>
 
       {/* OTP Input */}
       <div className="space-y-2">
-        <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
+        <label className="block text-sm sm:text-base font-black uppercase tracking-wider text-black">
           5-digit code
         </label>
         <input
@@ -131,7 +131,7 @@ export function OTPInput({
 
       {/* Attempts Left */}
       {resendsLeft !== undefined && resendsLeft > 0 && (
-        <p className="text-xs text-neutral-400 text-center font-black">
+        <p className="text-sm sm:text-base text-neutral-400 text-center font-black">
           {resendsLeft} resend{resendsLeft === 1 ? '' : 's'} remaining
         </p>
       )}

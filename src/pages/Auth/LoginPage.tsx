@@ -405,7 +405,7 @@ export function LoginPage() {
                 <div className="space-y-5 sm:space-y-7">
                   {/* Phone field */}
                   <div className="space-y-2">
-                    <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+                    <label className="block text-sm sm:text-base font-black uppercase tracking-wider text-black flex items-center gap-1.5">
                       <Phone className="w-3.5 h-3.5 text-black" />
                       Phone Number <span className="text-red-500">*</span>
                     </label>

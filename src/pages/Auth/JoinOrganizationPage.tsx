@@ -335,7 +335,7 @@ export function JoinOrganizationPage() {
           {/* Invite Validation Step */}
           {step === 'invite_validation' && (
             <div className="space-y-4">
-              <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
+              <label className="block text-sm sm:text-base font-black uppercase tracking-wider text-black">
                 Phone Number <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-2 items-center">

@@ -68,7 +68,7 @@ export function SignupChoicePage() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-primary-100">
-          <p className="text-center text-sm text-neutral-300">
+          <p className="text-center text-base sm:text-lg text-neutral-300">
             Already have an account?{' '}
             <button
               onClick={() => navigate('/login')}

@@ -292,16 +292,19 @@ export function MoneyPage() {
 
         {activeTab === 'Payouts' && (
           <div className="space-y-3">
+            <p className="text-xs text-neutral-200 px-1">
+              Withdrawals you've made from your Soole wallet to your bank account.
+            </p>
             {(() => {
               const filteredPayouts = allPayouts.filter(p => {
                 if (!startDate || !endDate) return true
-                const payoutTime = new Date(p.date).getTime()
+                const payoutTime = new Date(p.dateInitiated).getTime()
                 const start = new Date(startDate).getTime()
                 const end = new Date(endDate).getTime() + 86400000
                 return payoutTime >= start && payoutTime <= end
               })
               return filteredPayouts.length === 0 ? (
-                <div className="card text-center py-8 text-neutral-200 text-sm">No payouts found.</div>
+                <div className="card text-center py-8 text-neutral-200 text-sm">No withdrawals found.</div>
               ) : (
                 filteredPayouts.map(payout => (
                   <div key={payout.id} className="card">
@@ -310,9 +313,13 @@ export function MoneyPage() {
                       <StatusPill status={payout.status} />
                     </div>
                     <div className="space-y-1 text-xs text-neutral-200">
-                      <p>Settled: {formatDate(payout.date)}</p>
-                      <p>Bank: {payout.bankRef}</p>
-                      <p>Covers {payout.bookingCount} bookings</p>
+                      <p>
+                        {payout.dateCompleted
+                          ? `Received: ${formatDate(payout.dateCompleted)}`
+                          : `Initiated: ${formatDate(payout.dateInitiated)}`}
+                      </p>
+                      <p>Ref: {payout.reference}</p>
+                      {payout.description && <p>{payout.description}</p>}
                     </div>
                   </div>
                 ))

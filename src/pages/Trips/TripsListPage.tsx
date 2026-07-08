@@ -14,7 +14,12 @@ const tabs = ['Today', 'This Week', 'All']
 const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'All', value: 'all' },
   { label: 'Scheduled', value: 'scheduled' },
-  { label: 'Active', value: 'boarding' },
+  // A trip's real backend status is 'in_progress' while under way - there
+  // is no 'boarding' value anywhere in Ride.status (dashboard/api.py maps
+  // 'scheduled'/'boarding' as UI-only aliases elsewhere, but this list's
+  // adaptTrip never does), so this tab - and the state below defaulting to
+  // it - matched nothing, including on first page load.
+  { label: 'Active', value: 'in_progress' },
   { label: 'Completed', value: 'completed' },
   { label: 'Cancelled', value: 'cancelled' },
 ]
@@ -30,7 +35,7 @@ export function TripsListPage() {
   const { guardAction } = useOrg()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('Today')
-  const [statusFilter, setStatusFilter] = useState<StatusVariant | 'all'>('boarding')
+  const [statusFilter, setStatusFilter] = useState<StatusVariant | 'all'>('in_progress')
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 12

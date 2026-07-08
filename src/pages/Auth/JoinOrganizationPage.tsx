@@ -299,32 +299,28 @@ export function JoinOrganizationPage() {
     <div className="min-h-screen bg-primary-75 flex flex-col">
       {/* Mobile header with logo */}
       <div className="bg-primary-500 px-6 pt-8 pb-6 text-white lg:hidden flex-shrink-0 flex flex-col items-center">
-        <div className="w-20 h-20 flex items-center justify-center mb-2">
-          <Shield className="w-10 h-10 text-white" />
-        </div>
-        <h2 className="text-xl font-extrabold text-white mb-4 font-display">Soole</h2>
-        <h1 className="text-4xl font-extrabold text-center mb-1 font-display">Join Organization</h1>
-        <p className="text-primary-200 text-sm text-center">Complete your setup to get started with Soole.</p>
+        <img src="/soole-icon.png" alt="Soole logo" className="w-16 h-auto object-contain z-10" />
+        <h2 className="text-3xl font-extrabold text-white mb-4 -mt-1 font-display tracking-tight z-10">Soole</h2>
+        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 font-display text-center">Join Organization</h1>
+        <p className="text-primary-200 text-base sm:text-lg text-center">Complete your setup to get started with Soole.</p>
       </div>
 
-      {/* Mobile view - form stretches full width */}
-      <div className="lg:hidden flex-1 flex flex-col items-center justify-start p-3 sm:p-4 pt-4">
-      <div className="w-full">
-
-      {/* Desktop view */}
-      <div className="hidden lg:flex items-center justify-center p-6 flex-1">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-secondary-500 rounded-2xl shadow-sm">
-            <Shield className="w-8 h-8 text-white" />
+      {/* Form card container */}
+      <div className="flex-1 flex items-start lg:items-center justify-center p-1 sm:p-6 lg:p-12 pt-12 sm:pt-6">
+        <div className="w-[85%] mx-auto sm:w-full max-w-md transition-all duration-300 mt-6 sm:mt-0">
+          
+          {/* Desktop heading */}
+          <div className="hidden lg:block text-center mb-6 sm:mb-8">
+            <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-secondary-500 rounded-2xl shadow-sm">
+              <img src="/soole-icon.png" alt="Soole logo" className="w-10 h-10 object-contain" />
+            </div>
+            <h1 className="text-3xl lg:text-4xl font-extrabold text-primary-500 mb-2 font-display">Join Organization</h1>
+            <p className="text-neutral-300 text-sm">
+              Complete your setup to get started with Soole.
+            </p>
           </div>
-          <h1 className="text-3xl font-extrabold text-primary-500 mb-2 font-display">Join Organization</h1>
-          <p className="text-neutral-300 text-sm">
-            Complete your setup to get started with Soole.
-          </p>
-        </div>
 
-        <div className="bg-white rounded-3xl shadow-xl p-6 sm:p-8 space-y-6">
+          <div className="bg-white rounded-3xl sm:rounded-card shadow-card p-6 sm:p-8 lg:p-10 relative z-10 w-full mb-8 sm:mb-0 mt-4 sm:mt-0 space-y-6">
           {/* Step Indicator */}
           <div className="flex justify-between items-center mb-6 sm:mb-8 gap-1">
             {['Invite', 'OTP', 'Info', 'Password', 'Security'].map((label, idx) => (
@@ -625,9 +621,7 @@ export function JoinOrganizationPage() {
           )}
         </div>
       </div>
-      </div> {/* Close desktop view container */}
-      </div> {/* Close mobile content wrapper */}
-      </div> {/* Close mobile view wrapper */}
     </div>
+  </div>
   )
 }

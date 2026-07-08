@@ -18,8 +18,9 @@ function toStatusVariant(status: string | null | undefined): StatusVariant {
   const known: StatusVariant[] = [
     'verified', 'pending', 'rejected', 'suspended', 'active', 'inactive',
     'scheduled', 'boarding', 'in_progress', 'completed', 'cancelled', 'draft',
-    'sent', 'received', 'failed', 'retired',
+    'sent', 'received', 'failed', 'retired', 'processing', 'reversed', 'abandoned',
   ]
+  if (s === 'initiated') return 'pending'
   if ((known as string[]).includes(s)) return s as StatusVariant
   if (s === 'upcoming' || s === 'available') return 'scheduled'
   if (s === 'active') return 'active'
@@ -94,6 +95,25 @@ export function adaptDriverReview(raw: any): DriverReview {
   }
 }
 
+/**
+ * AddVehiclePage's UI-only 'type' selector (Hiace/Sienna/Coaster/Other) has
+ * no dedicated backend field - it's collapsed into the coarse vehicle_type
+ * enum at creation time (bus/bus/van/sedan) and never sent back as-is, so
+ * raw.vehicle_type can never equal 'Sienna'/'Hiace'/'Coaster'. The model
+ * text (raw.model, e.g. "Hiace"/"Coaster"/"Sienna" for the common Toyota
+ * case) usually still carries the real answer; vehicle_type is only a
+ * fallback for when it doesn't.
+ */
+function inferVehicleDisplayType(raw: any): Vehicle['type'] {
+  const modelText = `${raw.model ?? ''}`.toLowerCase()
+  if (modelText.includes('hiace')) return 'Hiace'
+  if (modelText.includes('coaster')) return 'Coaster'
+  if (modelText.includes('sienna')) return 'Sienna'
+  if (raw.vehicle_type === 'van') return 'Sienna'
+  if (raw.vehicle_type === 'bus' || raw.vehicle_type === 'minibus') return 'Hiace'
+  return 'Other'
+}
+
 /** organization_vehicles_api.VehicleResponseSchema */
 export function adaptVehicle(raw: any): Vehicle {
   const documents: VehicleDocument[] = (raw.documents || []).map((d: any) => ({
@@ -109,16 +129,24 @@ export function adaptVehicle(raw: any): Vehicle {
     model: `${raw.brand ?? ''} ${raw.model ?? ''}`.trim(),
     year: raw.year,
     capacity: raw.capacity,
-    type: (['Sienna', 'Hiace', 'Coaster'].includes(raw.vehicle_type) ? raw.vehicle_type : 'Other') as Vehicle['type'],
+    type: inferVehicleDisplayType(raw),
     fuelType: 'petrol',
     // verification_status and status (operational) are independent backend
     // fields - a suspended/retired vehicle keeps whatever verification_status
     // it already had, so showing "verified" unconditionally once documents
     // were approved would hide a real suspension/retirement from staff.
     // Operational status wins whenever it's not the default "active".
+    // verification_status has 5 real values (pending_documents/
+    // pending_verification/verified/rejected/suspended) - a newly-created
+    // vehicle defaults to pending_documents, so falling through to
+    // toStatusVariant('active') here (as this used to) meant the "Pending"
+    // filter/badge could never actually appear for a not-yet-verified
+    // vehicle.
     status: raw.status && raw.status !== 'active'
       ? toStatusVariant(raw.status)
-      : (raw.verification_status === 'verified' ? 'verified' : toStatusVariant(raw.status)),
+      : raw.verification_status === 'verified' ? 'verified'
+      : raw.verification_status === 'rejected' ? 'rejected'
+      : 'pending',
     operationalStatus: (['active', 'suspended', 'retired'].includes(raw.status) ? raw.status : 'active') as Vehicle['operationalStatus'],
     assignedDriverId: raw.assigned_driver_id ?? undefined,
     assignedDriverName: raw.assigned_driver_name ?? undefined,
@@ -196,12 +224,12 @@ export function adaptTransaction(raw: any, commissionRate: number = DEFAULT_COMM
 export function adaptPayout(raw: any): Payout {
   return {
     id: raw.id,
-    date: raw.date_processed ?? raw.period_end,
+    reference: raw.reference,
     amount: Number(raw.amount ?? 0),
-    status: toStatusVariant(raw.status === 'processed' ? 'received' : raw.status),
-    bankRef: `${raw.driver_name ?? 'Driver'} · ${raw.driver_phone ?? ''}`.trim(),
-    bookingCount: raw.trips_count ?? 0,
-    expectedArrival: raw.date_processed ?? raw.period_end,
+    status: raw.status === 'completed' ? 'received' : toStatusVariant(raw.status),
+    dateInitiated: raw.date_initiated,
+    dateCompleted: raw.date_completed ?? undefined,
+    description: raw.description ?? undefined,
   }
 }
 

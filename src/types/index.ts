@@ -1,7 +1,7 @@
 export type StatusVariant =
   | 'verified' | 'pending' | 'rejected' | 'suspended' | 'active' | 'inactive'
   | 'scheduled' | 'boarding' | 'in_progress' | 'completed' | 'cancelled' | 'draft'
-  | 'sent' | 'received' | 'failed' | 'retired'
+  | 'sent' | 'received' | 'failed' | 'retired' | 'processing' | 'reversed' | 'abandoned'
 
 export interface DriverReview {
   id: string
@@ -113,14 +113,19 @@ export interface Transaction {
   tripId?: string
 }
 
+/**
+ * A real withdrawal the org made from its Soole wallet to its own bank
+ * account - NOT what the org paid individual drivers (that's the org's own
+ * arrangement, not tracked by Soole).
+ */
 export interface Payout {
   id: string
-  date: string
+  reference: string
   amount: number
   status: StatusVariant
-  bankRef: string
-  bookingCount: number
-  expectedArrival: string
+  dateInitiated: string
+  dateCompleted?: string
+  description?: string
 }
 
 export interface Alert {

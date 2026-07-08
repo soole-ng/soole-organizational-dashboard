@@ -220,7 +220,7 @@ export function DriversPage() {
                       <span className="text-sm text-black font-bold">No reviews yet</span>
                     )}
                     <div className="flex items-center gap-2">
-                      {driver.status === 'pending' && (
+                      {driver.isPendingInvite && (
                         <button
                           onClick={e => { e.stopPropagation(); resendInvite(driver.id, driver.name) }}
                           disabled={resendingId === driver.id}

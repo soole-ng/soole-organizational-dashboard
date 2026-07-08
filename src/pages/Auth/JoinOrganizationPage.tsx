@@ -115,8 +115,8 @@ export function JoinOrganizationPage() {
   // double-country-code number for every API call in this flow -
   // country.code is only needed when the phone came from manual entry.
   const fullPhone = prefillPhone
-    ? `+${phone.replace(/^\+/, '')}`
-    : `${country.code}${phone.replace(/^0/, '')}`
+    ? `+${phone.replace(/\D/g, '')}`
+    : `${country.code}${phone.replace(/\D/g, '').replace(/^0/, '').slice(0, 10)}`
 
   // Form fields
   const [otp, setOtp] = useState(prefillOtp)
@@ -387,9 +387,9 @@ export function JoinOrganizationPage() {
                 {/* Phone Input */}
                 <input
                   type="tel"
-                  maxLength={10}
+                  maxLength={11}
                   value={phone}
-                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').replace(/^0/, ''))}
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, '').replace(/^0/, '').slice(0, 10))}
                   className="w-full h-[44px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none focus:border-secondary-300"
                   placeholder="8031234567"
                 />

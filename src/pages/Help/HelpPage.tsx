@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { HelpCircle, Search, MessageSquare, Mail, Phone, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
+import { supportApi } from '../../api/client'
 
 interface FAQItem {
   question: string
@@ -36,10 +37,34 @@ const FAQS: FAQItem[] = [
   },
 ]
 
+// Matches the backend's own AppConfig defaults (common/models.py) - shown
+// until the real /common/app-config response arrives, and as a fallback
+// if that request fails, so this page never shows a broken contact link.
+const DEFAULT_APP_CONFIG = {
+  support_email: 'support@soole.ng',
+  support_hotline: '+2348000000000',
+  whatsapp_number: '2348000000000',
+  faq_website_url: 'https://www.soole.ng/faq',
+}
+
 export function HelpPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFaq, setActiveFaq] = useState<FAQItem | null>(null)
   const [activeCategory, setActiveCategory] = useState<string>('All')
+  // Previously hardcoded (including a malformed "+2341000000" hotline
+  // number - 7 digits after +234, not a real Nigerian number) - now reads
+  // from the real /common/app-config endpoint, editable by staff via
+  // Django Admin without a dashboard release.
+  const [appConfig, setAppConfig] = useState(DEFAULT_APP_CONFIG)
+
+  useEffect(() => {
+    supportApi.getAppConfig()
+      .then(setAppConfig)
+      .catch(() => {
+        // Keep the defaults above - a broken contact page is worse than a
+        // slightly stale one.
+      })
+  }, [])
 
   const categories = ['All', 'Trips & Dispatch', 'Fleet & Drivers', 'Payments & Wallet', 'Technical Support']
 
@@ -85,9 +110,9 @@ export function HelpPage() {
 
         {/* Contact support channels */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a 
-            href="https://wa.me/2348000000000" 
-            target="_blank" 
+          <a
+            href={`https://wa.me/${appConfig.whatsapp_number}`}
+            target="_blank"
             rel="noopener noreferrer"
             className="card hover:border-accent-300 transition-all hover:shadow-md flex items-start gap-4 p-5"
           >
@@ -103,8 +128,8 @@ export function HelpPage() {
             </div>
           </a>
 
-          <a 
-            href="mailto:support@soole.ng"
+          <a
+            href={`mailto:${appConfig.support_email}`}
             className="card hover:border-primary-200 transition-all hover:shadow-md flex items-start gap-4 p-5"
           >
             <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-primary-400 flex-shrink-0">
@@ -113,12 +138,12 @@ export function HelpPage() {
             <div>
               <h3 className="text-sm font-bold text-primary-500 mb-1">Email Support</h3>
               <p className="text-xs text-neutral-200">Send us documents or billing questions.</p>
-              <span className="text-[10px] font-bold text-primary-400 mt-2 block">support@soole.ng</span>
+              <span className="text-[10px] font-bold text-primary-400 mt-2 block">{appConfig.support_email}</span>
             </div>
           </a>
 
-          <a 
-            href="tel:+2341000000"
+          <a
+            href={`tel:${appConfig.support_hotline}`}
             className="card hover:border-teal-200 transition-all hover:shadow-md flex items-start gap-4 p-5"
           >
             <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-teal-400 flex-shrink-0">

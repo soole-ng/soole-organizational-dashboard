@@ -13,7 +13,12 @@ interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   headers?: Record<string, string>
   body?: any
-  token?: string
+  // null is a deliberate, distinct value from undefined here: the
+  // destructuring default below (localStorage.getItem('auth_token')) only
+  // applies when this key is omitted/undefined, not when it's explicitly
+  // null - callers pass token: null to force "no Authorization header"
+  // even if a stale token exists in localStorage (signup/public endpoints).
+  token?: string | null
 }
 
 /**
@@ -403,6 +408,22 @@ export const paymentsApi = {
   verifyAccountNumber: async (accountNumber: string, bankCode: string) =>
     apiRequest<{ data: { account_name: string; account_number: string } }>(
       `/payment/verify-account-number?account_number=${accountNumber}&bank_code=${bankCode}`
+    ),
+}
+
+/**
+ * Support/Help API — common/api.py, mounted at /support/ and /common/
+ * (shared with the mobile app's Help Center). Both endpoints are genuinely
+ * public - no auth required to find out where to reach support.
+ */
+export const supportApi = {
+  getAppConfig: async () =>
+    apiRequest<{ support_email: string; support_hotline: string; whatsapp_number: string; faq_website_url: string }>(
+      '/common/app-config'
+    ),
+  getFaqs: async (category?: string) =>
+    apiRequest<{ data: Array<{ uuid: string; question: string; answer: string; category: string; order: number }> }>(
+      `/support/faqs${category ? `?category=${encodeURIComponent(category)}` : ''}`
     ),
 }
 

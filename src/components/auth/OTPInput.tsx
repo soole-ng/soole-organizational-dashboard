@@ -28,12 +28,14 @@ export function OTPInput({
   secondsUntilNextResend = 0,
   canResend = true,
   description = "We've sent a 5-digit code via SMS to your phone. Please enter it below.",
-  showImmediateCountdown = true,
+  showImmediateCountdown = !!onResend,
 }: OTPInputProps) {
   const [countdown, setCountdown] = useState(secondsUntilNextResend || (showImmediateCountdown ? 300 : 0))
 
   useEffect(() => {
-    setCountdown(secondsUntilNextResend)
+    if (secondsUntilNextResend > 0) {
+      setCountdown(secondsUntilNextResend)
+    }
   }, [secondsUntilNextResend])
 
   useEffect(() => {
@@ -85,9 +87,10 @@ export function OTPInput({
     return `${minutes}m ${secs}s`
   }
 
-  const isRateLimited = countdown > 0
+  const isResendBlocked = countdown > 0
+  const isVerificationLocked = countdown > 300
   const canShowResend = onResend && !loading
-  const resendDisabled = isRateLimited || resendsLeft <= 0 || resendLoading
+  const resendDisabled = isResendBlocked || resendsLeft <= 0 || resendLoading
 
   return (
     <div className="space-y-5 sm:space-y-7">
@@ -123,7 +126,7 @@ export function OTPInput({
       </div>
 
       {/* Rate Limit Message */}
-      {isRateLimited && (
+      {isVerificationLocked && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-2xl">
           <p className="text-xs text-red-700 font-black">
             ⚠️ Too many attempts. Try again in {formatTime(countdown)}
@@ -141,10 +144,10 @@ export function OTPInput({
       {/* Verify Button */}
       <button
         onClick={onSubmit}
-        disabled={value.length !== 5 || loading || isRateLimited}
+        disabled={value.length !== 5 || loading || isVerificationLocked}
         className={clsx(
           'w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-3 sm:py-4 text-sm sm:text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 min-h-12 sm:min-h-14',
-          (loading || isRateLimited) && 'opacity-70'
+          (loading || isVerificationLocked) && 'opacity-70'
         )}
       >
         {loading ? (
@@ -152,7 +155,7 @@ export function OTPInput({
             <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
             Verifying…
           </>
-        ) : isRateLimited ? (
+        ) : isVerificationLocked ? (
           `Verify (blocked ${formatTime(countdown)})`
         ) : (
           'Verify & Continue'
@@ -174,7 +177,7 @@ export function OTPInput({
               <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin inline-block mr-2" />
               Resending…
             </>
-          ) : isRateLimited ? (
+          ) : isResendBlocked ? (
             countdown > 300 ? (
               `❌ Locked. Try again in ${formatTime(countdown)}`
             ) : (

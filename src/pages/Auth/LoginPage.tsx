@@ -105,6 +105,8 @@ export function LoginPage() {
   const [savingSecurityQuestion, setSavingSecurityQuestion] = useState(false)
 
   const [showPw, setShowPw]     = useState(false)
+  const [showSuPw, setShowSuPw] = useState(false)
+  const [showSuConfirmPw, setShowSuConfirmPw] = useState(false)
   const [showCC, setShowCC]     = useState(false)
   const [loading, setLoading]   = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
@@ -583,7 +585,10 @@ export function LoginPage() {
                   <button
                     onClick={handleSignupInitiate}
                     disabled={loading || !suOrgName || !suOwnerFirstName || !suOwnerLastName || !suPhone}
-                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4', loading && 'opacity-70')}
+                    className={clsx(
+                      'w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500',
+                      loading && 'opacity-70'
+                    )}
                   >
                     {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Sending Code…</> : 'Continue'}
                   </button>
@@ -622,13 +627,22 @@ export function LoginPage() {
                     <label className="block text-xs font-black uppercase tracking-wider text-black">
                       Password <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="password"
-                      value={suPassword}
-                      onChange={e => { setSuPassword(e.target.value); setErrors(errors.filter(err => err !== 'suPassword')) }}
-                      className={clsx("w-full h-[44px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suPassword'))}
-                      placeholder="Create a strong password"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showSuPw ? 'text' : 'password'}
+                        value={suPassword}
+                        onChange={e => { setSuPassword(e.target.value); setErrors(errors.filter(err => err !== 'suPassword')) }}
+                        className={clsx("w-full h-[44px] bg-white border rounded-xl px-4 pr-12 text-sm font-black focus:outline-none transition-all", getBorderClass('suPassword'))}
+                        placeholder="Create a strong password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSuPw(!showSuPw)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-neutral-700 transition-colors"
+                      >
+                        {showSuPw ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                      </button>
+                    </div>
                     {suPassword && (
                       <div className="space-y-1.5 mt-3">
                         <div className="flex items-center gap-2">
@@ -679,13 +693,22 @@ export function LoginPage() {
                     <label className="block text-xs font-black uppercase tracking-wider text-black">
                       Confirm Password <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="password"
-                      value={suConfirmPassword}
-                      onChange={e => { setSuConfirmPassword(e.target.value); setErrors(errors.filter(err => err !== 'suConfirmPassword')) }}
-                      className={clsx("w-full h-[44px] bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all", getBorderClass('suConfirmPassword'))}
-                      placeholder="Confirm password"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showSuConfirmPw ? 'text' : 'password'}
+                        value={suConfirmPassword}
+                        onChange={e => { setSuConfirmPassword(e.target.value); setErrors(errors.filter(err => err !== 'suConfirmPassword')) }}
+                        className={clsx("w-full h-[44px] bg-white border rounded-xl px-4 pr-12 text-sm font-black focus:outline-none transition-all", getBorderClass('suConfirmPassword'))}
+                        placeholder="Confirm password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSuConfirmPw(!showSuConfirmPw)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-neutral-700 transition-colors"
+                      >
+                        {showSuConfirmPw ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                      </button>
+                    </div>
                     {suConfirmPassword && suPassword !== suConfirmPassword && (
                       <p className="text-xs text-red-500 font-black">Passwords do not match</p>
                     )}
@@ -694,7 +717,10 @@ export function LoginPage() {
                   <button
                     onClick={handleSignupPassword}
                     disabled={loading || !suPassword || !suConfirmPassword || suPassword !== suConfirmPassword || suPassword.length < 8 || !/[A-Z]/.test(suPassword) || !/[a-z]/.test(suPassword) || !/\d/.test(suPassword) || !/[!@#$%^&*]/.test(suPassword)}
-                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2', loading && 'opacity-70')}
+                    className={clsx(
+                      'w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500',
+                      loading && 'opacity-70'
+                    )}
                   >
                     {loading ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Creating Account…</> : 'Create Account'}
                   </button>
@@ -773,7 +799,10 @@ export function LoginPage() {
                   <button
                     onClick={handleSaveSecurityQuestion}
                     disabled={savingSecurityQuestion || !suSecAnswer.trim() || (suSecQuestionChoice === CUSTOM_SECURITY_QUESTION_OPTION && !suSecCustomQuestion.trim())}
-                    className={clsx('w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2', savingSecurityQuestion && 'opacity-70')}
+                    className={clsx(
+                      'w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500',
+                      savingSecurityQuestion && 'opacity-70'
+                    )}
                   >
                     {savingSecurityQuestion ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving…</> : 'Save & Continue'}
                   </button>

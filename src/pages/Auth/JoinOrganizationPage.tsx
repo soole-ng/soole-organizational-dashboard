@@ -299,9 +299,12 @@ export function JoinOrganizationPage() {
             ? (primary.verification_status as 'incomplete' | 'complete')
             : (primary.rc_number ? 'complete' : 'incomplete')
 
-          const approvalStatus = primary.approval_status
-            ? (primary.approval_status === 'approved' ? 'approved' : 'pending')
-            : (verificationStatus === 'incomplete' ? 'incomplete' : 'pending')
+          const approvalStatus: 'incomplete' | 'pending' | 'approved' =
+            verificationStatus === 'incomplete'
+              ? 'incomplete'
+              : primary.approval_status === 'approved'
+              ? 'approved'
+              : 'pending'
           
           let name = primary.name
           let logoUrl = primary.logo_url ?? null

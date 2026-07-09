@@ -64,8 +64,10 @@ const DEFAULT_ORG: OrgProfile = {
   commissionPct: 10,
   bankAccounts: [],
   isBalanceHidden: false,
-  approvalStatus: 'approved',
-  verificationStatus: 'incomplete'
+  // Keep both statuses as undefined on first load so banners don't flash
+  // before the real API data has arrived — they're only set by the effect below.
+  approvalStatus: undefined,
+  verificationStatus: undefined
 }
 
 const OrgContext = createContext<OrgContextValue>({
@@ -79,9 +81,13 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const [org, setOrg] = useState<OrgProfile>(() => {
     try {
       const saved = localStorage.getItem('soole_org_profile')
-      if (saved) return { ...DEFAULT_ORG, ...JSON.parse(saved) }
-      if (localStorage.getItem('auth_token')) {
-        return { ...DEFAULT_ORG, approvalStatus: 'incomplete' }
+      // Restore cached profile but clear statuses — they'll be re-verified
+      // from the API on mount. Keeping stale statuses in cache was causing
+      // the 'pending' / 'incomplete' banners to flash on every open even
+      // after the org had been approved, until the effect below completed.
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        return { ...DEFAULT_ORG, ...parsed, approvalStatus: undefined, verificationStatus: undefined }
       }
       return DEFAULT_ORG
     } catch {
@@ -117,9 +123,17 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           ? (primary.verification_status as 'incomplete' | 'complete')
           : (primary.rc_number ? 'complete' : 'incomplete')
 
-        const approvalStatus = primary.approval_status
-          ? (primary.approval_status === 'approved' ? 'approved' : 'pending')
-          : (verificationStatus === 'incomplete' ? 'incomplete' : 'pending')
+        // verificationStatus is checked FIRST. The backend sets
+        // approval_status='pending' by default for every new org at signup -
+        // before they've submitted NIN/RC/CAC. If we read that value first,
+        // a brand-new org that hasn't submitted anything at all would show
+        // the 'pending approval' banner instead of 'complete your profile'.
+        const approvalStatus: 'incomplete' | 'pending' | 'approved' =
+          verificationStatus === 'incomplete'
+            ? 'incomplete'
+            : primary.approval_status === 'approved'
+            ? 'approved'
+            : 'pending'
 
         let name = primary.name
         let logoUrl = primary.logo_url ?? null

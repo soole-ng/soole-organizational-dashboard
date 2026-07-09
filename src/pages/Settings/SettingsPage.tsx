@@ -23,6 +23,18 @@ export function SettingsPage() {
   const [members, setMembers] = useState<any[]>([])
   const [pendingInvitations, setPendingInvitations] = useState<any[]>([])
   const [activeSection, setActiveSection] = useState<string | null>(null)
+
+  // Reset the open accordion whenever the verification status flips to
+  // 'complete' — the 'Complete Business Verification' section disappears
+  // from the list at that point, but if it was open, activeSection was
+  // still set to it, causing the panel to remain visually expanded on the
+  // next render until something else closed it.
+  useEffect(() => {
+    if (org.verificationStatus === 'complete') {
+      setActiveSection(prev => prev === 'Complete Business Verification' ? null : prev)
+    }
+  }, [org.verificationStatus])
+
   const [speedLimit, setSpeedLimit] = useState(100)
   const [alertChannels, setAlertChannels] = useState({ push: true, sms: true, email: false })
 

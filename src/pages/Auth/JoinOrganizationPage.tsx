@@ -4,7 +4,7 @@ import { Shield, ChevronRight, Lock, Phone, Eye, EyeOff, CheckCircle, ChevronDow
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
-import { authApi } from '../../api/client'
+import { authApi, orgApi, settingsApi } from '../../api/client'
 import { PRESET_SECURITY_QUESTIONS, CUSTOM_SECURITY_QUESTION_OPTION } from '../../lib/securityQuestions'
 import { OTPInput } from '../../components/auth/OTPInput'
 
@@ -287,6 +287,50 @@ export function JoinOrganizationPage() {
       })
       localStorage.setItem('auth_token', res.data.token)
       localStorage.setItem('refresh_token', res.data.refreshToken)
+
+      // Pre-fetch organization details to populate cache immediately
+      try {
+        const orgs = await orgApi.getMine()
+        if (orgs && orgs.length > 0) {
+          const primary = orgs[0]
+          localStorage.setItem('org_uuid', primary.uuid)
+          
+          const approvalStatus = primary.verification_status === 'incomplete'
+            ? 'incomplete'
+            : primary.approval_status === 'approved' ? 'approved' : 'pending'
+          const verificationStatus = primary.verification_status as 'incomplete' | 'complete'
+          
+          let name = primary.name
+          let logoUrl = primary.logo_url ?? null
+          let email = undefined
+          let phone = undefined
+          
+          try {
+            const settings = await settingsApi.getSettings(primary.uuid) as any
+            name = settings.name ?? primary.name
+            logoUrl = settings.logo_url ?? primary.logo_url ?? null
+            email = settings.contact_email ?? undefined
+            phone = settings.contact_phone ?? undefined
+          } catch {}
+
+          const cachedProfile = {
+            name,
+            logoUrl,
+            role: 'viewer', // default role
+            commissionPct: typeof primary.commission_rate === 'number' ? primary.commission_rate * 100 : 10,
+            approvalStatus,
+            verificationStatus,
+            email,
+            phone,
+            bankAccounts: [],
+            isBalanceHidden: false,
+          }
+          localStorage.setItem('soole_org_profile', JSON.stringify(cachedProfile))
+        }
+      } catch (e) {
+        console.error('Failed to pre-fetch organization during join:', e)
+      }
+
       setStep('success')
       setTimeout(() => navigate('/'), 1500)
     } catch (err: any) {

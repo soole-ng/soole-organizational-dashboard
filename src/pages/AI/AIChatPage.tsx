@@ -1,4 +1,4 @@
-import { Sparkles, TrendingUp, Car, Navigation, CreditCard, ClipboardCheck, Bot } from 'lucide-react'
+import { Sparkles, TrendingUp, Car, Navigation, CreditCard, ClipboardCheck, Bot, Send } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 
 const upcomingCapabilities = [
@@ -15,9 +15,9 @@ export function AIChatPage() {
     <div className="flex flex-col h-full bg-white">
       <TopBar title="AI Assistant" backHref="/" />
 
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 bg-primary-500 rounded-3xl flex items-center justify-center shadow-float mb-4">
-          <Sparkles className="w-8 h-8 text-accent" />
+          <Sparkles className="w-8 h-8 text-accent-300" />
         </div>
         <h2 className="text-xl font-black text-primary-500 mb-1">AI Assistant — Coming Soon</h2>
         <p className="text-xs text-neutral-200 max-w-xs mb-6 leading-relaxed">
@@ -40,6 +40,24 @@ export function AIChatPage() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Chat Input Container */}
+      <div className="p-4 border-t border-neutral-100 bg-white">
+        <div className="max-w-3xl mx-auto flex gap-2">
+          <input
+            type="text"
+            disabled
+            placeholder="Type a message... (AI Assistant is disabled during preview)"
+            className="flex-1 h-[50px] bg-neutral-50 border border-neutral-100 rounded-2xl px-4 text-sm font-semibold text-neutral-400 cursor-not-allowed focus:outline-none"
+          />
+          <button
+            disabled
+            className="w-[50px] h-[50px] bg-neutral-100 text-neutral-300 rounded-2xl flex items-center justify-center cursor-not-allowed"
+          >
+            <Send className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>

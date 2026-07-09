@@ -64,10 +64,16 @@ const navGroups: NavGroup[] = [
 ]
 
 function NavItemLink({ item }: { item: NavItem }) {
+  const { guardAction } = useOrg()
   return (
     <NavLink
       to={item.to}
       end={item.to === '/'}
+      onClick={(e) => {
+        if (item.to !== '/') {
+          guardAction(e)
+        }
+      }}
       className={({ isActive }) =>
         clsx(
           'flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150 w-full group',

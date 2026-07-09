@@ -79,7 +79,11 @@ export function OrgProvider({ children }: { children: ReactNode }) {
   const [org, setOrg] = useState<OrgProfile>(() => {
     try {
       const saved = localStorage.getItem('soole_org_profile')
-      return saved ? { ...DEFAULT_ORG, ...JSON.parse(saved) } : DEFAULT_ORG
+      if (saved) return { ...DEFAULT_ORG, ...JSON.parse(saved) }
+      if (localStorage.getItem('auth_token')) {
+        return { ...DEFAULT_ORG, approvalStatus: 'incomplete' }
+      }
+      return DEFAULT_ORG
     } catch {
       return DEFAULT_ORG
     }
@@ -87,15 +91,17 @@ export function OrgProvider({ children }: { children: ReactNode }) {
 
   const [orgUuid, setOrgUuid] = useState<string | null>(() => localStorage.getItem('org_uuid'))
 
+  const updateOrg = useCallback((patch: Partial<OrgProfile>) => {
+    setOrg(prev => {
+      const next = { ...prev, ...patch }
+      try { localStorage.setItem('soole_org_profile', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }, [])
+
   // Bootstrap the real org profile (role, approval/verification status,
   // settings) from the backend on every mount - not gated on orgUuid
-  // already being known. role/approvalStatus/verificationStatus are never
-  // persisted to localStorage['soole_org_profile'] (only updateOrg() persists,
-  // and this effect intentionally bypasses it so stale cached values can't
-  // shadow the backend's current truth) - so skipping this fetch just
-  // because orgUuid was already cached from a prior session left `org.role`
-  // (and approval/verification status) permanently stuck at DEFAULT_ORG's
-  // fallback values after the very first page load.
+  // already being known.
   useEffect(() => {
     if (!localStorage.getItem('auth_token')) return
     let cancelled = false
@@ -106,65 +112,67 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         const primary = orgs[0]
         localStorage.setItem('org_uuid', primary.uuid)
         setOrgUuid(primary.uuid)
-        setOrg(prev => ({
-          ...prev,
-          approvalStatus: primary.verification_status === 'incomplete'
-            ? 'incomplete'
-            : primary.approval_status === 'approved' ? 'approved' : 'pending',
-          verificationStatus: primary.verification_status as 'incomplete' | 'complete',
-          // commission_rate is a 0-1 fraction (e.g. 0.1) from the backend's
-          // OrgResponseSchema - commissionPct stores it as a whole percent
-          // (10). Previously this field was never populated from the
-          // real API response at all, so it stayed stuck at DEFAULT_ORG's
-          // hardcoded fallback (8) everywhere it was read.
-          commissionPct: typeof primary.commission_rate === 'number'
-            ? primary.commission_rate * 100
-            : prev.commissionPct,
-        }))
+
+        const approvalStatus = primary.verification_status === 'incomplete'
+          ? 'incomplete'
+          : primary.approval_status === 'approved' ? 'approved' : 'pending'
+        const verificationStatus = primary.verification_status as 'incomplete' | 'complete'
+
+        let name = primary.name
+        let logoUrl = primary.logo_url ?? null
+        let email = undefined
+        let phone = undefined
 
         try {
           const settings = await settingsApi.getSettings(primary.uuid) as any
-          if (cancelled) return
-          setOrg(prev => ({
-            ...prev,
-            name: settings.name ?? primary.name,
-            logoUrl: settings.logo_url ?? primary.logo_url ?? null,
-            email: settings.contact_email ?? undefined,
-            phone: settings.contact_phone ?? undefined,
-          }))
+          if (!cancelled) {
+            name = settings.name ?? primary.name
+            logoUrl = settings.logo_url ?? primary.logo_url ?? null
+            email = settings.contact_email ?? undefined
+            phone = settings.contact_phone ?? undefined
+          }
         } catch {
           // Settings fetch failing shouldn't block org_uuid bootstrap
         }
 
+        let role = DEFAULT_ORG.role
         try {
           const [currentUser, members] = await Promise.all([
             authApi.getCurrentUser(),
             settingsApi.getMembers(primary.uuid) as Promise<any[]>,
           ])
-          if (cancelled) return
-          const myMembership = members.find(m => m.user_uuid === currentUser.uuid)
-          if (myMembership) {
-            setOrg(prev => ({ ...prev, role: myMembership.role as OrgRole }))
+          if (!cancelled) {
+            const myMembership = members.find(m => m.user_uuid === currentUser.uuid)
+            if (myMembership) {
+              role = myMembership.role as OrgRole
+            }
           }
         } catch {
           // Role fetch failing shouldn't block org_uuid bootstrap - default
           // role stays 'viewer' (the safest/most restrictive fallback)
         }
+
+        if (cancelled) return
+
+        updateOrg({
+          name,
+          logoUrl,
+          role,
+          commissionPct: typeof primary.commission_rate === 'number'
+            ? primary.commission_rate * 100
+            : DEFAULT_ORG.commissionPct,
+          approvalStatus,
+          verificationStatus,
+          email,
+          phone,
+        })
       })
       .catch(() => {
         // No orgs yet / not authenticated — leave org_uuid unset, guarded pages will handle it
       })
 
     return () => { cancelled = true }
-  }, [])
-
-  const updateOrg = useCallback((patch: Partial<OrgProfile>) => {
-    setOrg(prev => {
-      const next = { ...prev, ...patch }
-      try { localStorage.setItem('soole_org_profile', JSON.stringify(next)) } catch {}
-      return next
-    })
-  }, [])
+  }, [updateOrg])
 
   const guardAction = useCallback((e?: React.SyntheticEvent, callback?: () => void) => {
     // Reads `org` directly from closure instead of going through setOrg's

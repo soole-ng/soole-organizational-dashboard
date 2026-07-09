@@ -113,10 +113,13 @@ export function OrgProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('org_uuid', primary.uuid)
         setOrgUuid(primary.uuid)
 
-        const approvalStatus = primary.verification_status === 'incomplete'
-          ? 'incomplete'
-          : primary.approval_status === 'approved' ? 'approved' : 'pending'
-        const verificationStatus = primary.verification_status as 'incomplete' | 'complete'
+        const verificationStatus = primary.verification_status
+          ? (primary.verification_status as 'incomplete' | 'complete')
+          : (primary.rc_number ? 'complete' : 'incomplete')
+
+        const approvalStatus = primary.approval_status
+          ? (primary.approval_status === 'approved' ? 'approved' : 'pending')
+          : (verificationStatus === 'incomplete' ? 'incomplete' : 'pending')
 
         let name = primary.name
         let logoUrl = primary.logo_url ?? null

@@ -1,5 +1,6 @@
 import { Sparkles, TrendingUp, Car, Navigation, CreditCard, ClipboardCheck, Bot, Send } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
+import { useOrg } from '../../lib/OrgContext'
 
 const upcomingCapabilities = [
   { icon: TrendingUp,     label: 'Revenue insights' },
@@ -11,6 +12,8 @@ const upcomingCapabilities = [
 ]
 
 export function AIChatPage() {
+  const { guardAction } = useOrg()
+
   return (
     <div className="flex flex-col h-full bg-white">
       <TopBar title="AI Assistant" backHref="/" />
@@ -44,17 +47,20 @@ export function AIChatPage() {
       </div>
 
       {/* Chat Input Container */}
-      <div className="p-4 border-t border-neutral-100 bg-white">
+      <div 
+        onClick={(e) => guardAction(e)}
+        className="p-4 border-t border-neutral-100 bg-white cursor-pointer"
+      >
         <div className="max-w-3xl mx-auto flex gap-2">
           <input
             type="text"
             disabled
             placeholder="Type a message... (AI Assistant is disabled during preview)"
-            className="flex-1 h-[50px] bg-neutral-50 border border-neutral-100 rounded-2xl px-4 text-sm font-semibold text-neutral-400 cursor-not-allowed focus:outline-none"
+            className="flex-1 h-[50px] bg-neutral-50 border border-neutral-100 rounded-2xl px-4 text-sm font-semibold text-neutral-400 cursor-not-allowed focus:outline-none pointer-events-none"
           />
           <button
             disabled
-            className="w-[50px] h-[50px] bg-neutral-100 text-neutral-300 rounded-2xl flex items-center justify-center cursor-not-allowed"
+            className="w-[50px] h-[50px] bg-neutral-100 text-neutral-300 rounded-2xl flex items-center justify-center cursor-not-allowed pointer-events-none"
           >
             <Send className="w-5 h-5" />
           </button>

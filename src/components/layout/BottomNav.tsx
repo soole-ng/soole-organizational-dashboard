@@ -25,7 +25,7 @@ const tabs = [
 ]
 
 export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavProps) {
-  const { org, guardAction } = useOrg()
+  const { org } = useOrg()
   const userRole = org.role ? org.role.toLowerCase() : 'owner'
 
   const filteredTabs = tabs.filter(tab => {
@@ -48,11 +48,6 @@ export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavPro
             key={to}
             to={to}
             end={to === '/'}
-            onClick={(e) => {
-              if (to !== '/') {
-                guardAction(e)
-              }
-            }}
             className={({ isActive }) =>
               clsx(
                 'flex-1 flex flex-col items-center gap-1 py-1 text-[10px] font-semibold transition-colors min-w-0',

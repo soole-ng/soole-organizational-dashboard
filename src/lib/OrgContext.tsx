@@ -169,6 +169,16 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           // role stays 'viewer' (the safest/most restrictive fallback)
         }
 
+        // Sync the backend's authoritative submission timestamp into localStorage
+        // so the 48hr countdown in AppShell works on any device, not just the
+        // one where the form was originally submitted.
+        if (primary.verification_submitted_at) {
+          const ms = new Date(primary.verification_submitted_at).getTime()
+          if (!isNaN(ms)) {
+            localStorage.setItem('soole_verification_submitted_at', String(ms))
+          }
+        }
+
         if (cancelled) return
 
         updateOrg({

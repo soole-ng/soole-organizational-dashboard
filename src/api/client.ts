@@ -579,6 +579,21 @@ export const authApi = {
       { method: 'POST', body: { phone_number: phoneNumber }, token: null }
     ),
 
+  requestPasswordReset: async (phoneNumber: string) =>
+    apiRequest<LoginEnvelope<{}>>('/accounts/login/request-pin-reset', {
+      method: 'POST', body: { phone_number: phoneNumber }, token: null
+    }),
+
+  verifyResetOtp: async (phoneNumber: string, otpCode: string) =>
+    apiRequest<LoginEnvelope<LoginTokenData>>('/accounts/login/confirm-pin-reset-otp', {
+      method: 'POST', body: { phone_number: phoneNumber, otp_code: otpCode }, token: null
+    }),
+
+  resetPassword: async (phoneNumber: string, pin: string, confirmPin: string) =>
+    apiRequest<LoginEnvelope<LoginTokenData>>('/accounts/login/create-pin', {
+      method: 'POST', body: { phone_number: phoneNumber, pin, confirm_pin: confirmPin }, token: null
+    }),
+
   joinOrganization: async (payload: {
     phone: string; otp: string; password: string; confirmPassword: string;
     firstName: string; lastName: string; nin: string; dob: string;

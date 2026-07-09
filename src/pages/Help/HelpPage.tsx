@@ -248,24 +248,9 @@ export function HelpPage() {
         )}
 
         {/* Soole Brand & PWA Details */}
-        <div className="bg-white border border-neutral-50 rounded-2xl p-5 flex items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-            <div className="flex items-center gap-3">
-              <img src="/soole-icon.png" alt="Soole" className="w-10 h-10 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-              <div>
-                <h4 className="text-xs font-bold text-primary-500">Mobiliti Dashboard</h4>
-                <p className="text-[10px] text-neutral-200">Powered by Mobiliti · Version 2.4.0 (PWA)</p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('start-soole-tour'))
-              }}
-              className="px-3.5 py-1.5 bg-primary-50 hover:bg-primary-75 text-primary-500 rounded-xl text-[10px] font-bold transition-colors border border-primary-100"
-            >
-              Start Website Tour
-            </button>
-          </div>
+        <div className="flex flex-col items-center justify-center p-5 text-center w-full gap-1">
+          <h4 className="text-xs font-bold text-primary-500">Mobiliti Dashboard</h4>
+          <p className="text-[10px] text-neutral-200">Powered by Mobiliti · Version 2.4.0 (PWA)</p>
         </div>
       </div>
     </div>

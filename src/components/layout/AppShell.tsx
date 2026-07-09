@@ -24,6 +24,33 @@ import { notificationsApi } from '../../api/client'
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const isBackendNotificationId = (id: string) => UUID_RE.test(id)
 
+const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000
+
+/** Returns a live countdown string (updates every minute) for the 48hr review window. */
+function usePendingCountdown(): string {
+  const getLabel = () => {
+    const raw = localStorage.getItem('soole_verification_submitted_at')
+    if (!raw) return 'within 48 hours'
+    const submittedAt = parseInt(raw, 10)
+    if (isNaN(submittedAt)) return 'within 48 hours'
+    const remaining = submittedAt + FORTY_EIGHT_HOURS_MS - Date.now()
+    if (remaining <= 0) return 'shortly'
+    const totalMins = Math.floor(remaining / 60000)
+    const hours = Math.floor(totalMins / 60)
+    const mins = totalMins % 60
+    if (hours > 0 && mins > 0) return `in ${hours}h ${mins}m`
+    if (hours > 0) return `in ${hours}h`
+    return `in ${mins}m`
+  }
+  const [label, setLabel] = useState(getLabel)
+  useEffect(() => {
+    const id = setInterval(() => setLabel(getLabel()), 60_000)
+    return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return label
+}
+
 function adaptNotification(raw: any): Notification {
   return {
     id: raw.uuid,
@@ -43,6 +70,7 @@ export function AppShell() {
   const mainRef = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
   const { org, orgUuid } = useOrg()
+  const pendingCountdown = usePendingCountdown()
 
   useEffect(() => {
     if (!orgUuid) return
@@ -147,8 +175,10 @@ export function AppShell() {
             )}
             {org.approvalStatus === 'pending' && (
               <div className="bg-primary-500 text-white px-4 py-3 flex items-center gap-2 z-50">
-                <Clock className="w-5 h-5" />
-                <span className="text-sm font-bold">Your account is pending approval. You can explore the dashboard in read-only mode.</span>
+                <Clock className="w-5 h-5 shrink-0" />
+                <span className="text-sm font-bold">
+                  Your account is under review. We'll get back to you {pendingCountdown} — explore the dashboard in read-only mode.
+                </span>
               </div>
             )}
             <Outlet context={{ notifications, setNotifications }} />
@@ -167,8 +197,10 @@ export function AppShell() {
             )}
             {org.approvalStatus === 'pending' && (
               <div className="bg-primary-500 text-white px-4 py-3 flex items-center gap-2 mb-4 lg:mt-4 rounded-xl z-50">
-                <Clock className="w-5 h-5" />
-                <span className="text-sm font-bold">Your account is pending approval. You can explore the dashboard in read-only mode.</span>
+                <Clock className="w-5 h-5 shrink-0" />
+                <span className="text-sm font-bold">
+                  Your account is under review. We'll get back to you {pendingCountdown} — explore the dashboard in read-only mode.
+                </span>
               </div>
             )}
             <Outlet context={{ notifications, setNotifications }} />

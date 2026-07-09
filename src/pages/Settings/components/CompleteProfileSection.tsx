@@ -57,6 +57,9 @@ export function CompleteProfileSection({ orgUuid, verificationStatus = 'incomple
         rc_number: rcNumber,
         cac_document_url: cacUrl,
       })
+      // Record submission time so the 48-hour approval countdown can be
+      // displayed in the pending-approval banner — frontend-only, no backend call.
+      localStorage.setItem('soole_verification_submitted_at', String(Date.now()))
       toast.success('Profile completed successfully!')
       onSuccess?.(res)
     } catch (err: any) {

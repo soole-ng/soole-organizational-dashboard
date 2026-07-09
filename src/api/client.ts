@@ -107,8 +107,13 @@ export const organizationApi = {
   updateTripStatus: async (orgUuid: string, tripUuid: string, status: string) =>
     apiRequest(`/organizations/${orgUuid}/trips/${tripUuid}/status`, { method: 'PATCH', body: { status } }),
 
-  reassignTrip: async (orgUuid: string, tripUuid: string, payload: { driver_uuid: string; vehicle_uuid?: string }) =>
-    apiRequest(`/organizations/${orgUuid}/trips/${tripUuid}/reassign`, { method: 'PATCH', body: payload }),
+  /**
+   * Lives on org_trip_api.py's organization_trip_router (mounted at
+   * /organizations-trips/), not the /organizations/ trips detail router -
+   * that's where the reassign endpoint is actually implemented.
+   */
+  reassignTrip: async (orgUuid: string, tripUuid: string, payload: { new_driver_uuid: string; new_vehicle_uuid?: string }) =>
+    apiRequest(`/organizations-trips/${orgUuid}/trips/${tripUuid}/reassign/`, { method: 'POST', body: payload }),
 
   cancelTrip: async (orgUuid: string, tripUuid: string, reason?: string) =>
     apiRequest(`/organizations/${orgUuid}/trips/${tripUuid}`, { method: 'DELETE', body: reason ? { reason } : undefined }),

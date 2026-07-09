@@ -16,7 +16,7 @@ const tabs = ['Transactions', 'Payouts']
 export function MoneyPage() {
   const { org, updateOrg, guardAction, orgUuid } = useOrg()
   const isProfileIncomplete = org.approvalStatus === 'incomplete'
-  const { data, loading, refetch } = useApiData()
+  const { data, loading, error, refetch } = useApiData()
   const [showProfileModal, setShowProfileModal] = useState(false)
 
   const handleAction = () => {
@@ -159,6 +159,25 @@ export function MoneyPage() {
         <div className="bg-primary-500 px-4 pt-4 pb-6 w-full h-48 rounded-b-2xl" />
         <div className="flex-1 p-4 space-y-3 lg:pt-8 lg:px-8 w-full">
           {[1, 2, 3].map(i => <div key={i} className="h-16 bg-white rounded-2xl" />)}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col min-h-screen bg-white">
+        <TopBar title="Money" />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
+          <AlertCircle className="w-10 h-10 text-danger" />
+          <p className="text-sm font-bold text-primary-500">Couldn't load your money data</p>
+          <p className="text-xs text-neutral-300 max-w-xs">{error}</p>
+          <button
+            onClick={refetch}
+            className="btn-primary px-6 py-2.5 text-sm font-bold mt-2"
+          >
+            Retry
+          </button>
         </div>
       </div>
     )

@@ -30,8 +30,8 @@ export function ReassignTripModal({
     setSaving(true)
     try {
       await organizationApi.reassignTrip(orgUuid, tripId, {
-        driver_uuid: driverId,
-        vehicle_uuid: vehicleId || undefined,
+        new_driver_uuid: driverId,
+        new_vehicle_uuid: vehicleId || undefined,
       })
       toast.success('Trip reassigned')
       onSaved()

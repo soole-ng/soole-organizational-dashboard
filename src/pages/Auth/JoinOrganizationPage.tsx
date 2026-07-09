@@ -36,7 +36,8 @@ const personalInfoSchema = z.object({
 
 const passwordSchema = z.object({
   password: z.string()
-    .min(8, 'Password must be at least 8 characters')
+    .min(8, 'Password must be exactly 8 characters')
+    .max(8, 'Password must be exactly 8 characters')
     .regex(/[A-Z]/, 'Password must contain an uppercase letter')
     .regex(/[a-z]/, 'Password must contain a lowercase letter')
     .regex(/\d/, 'Password must contain a number')

@@ -11,12 +11,7 @@ import { OTPInput } from '../../components/auth/OTPInput'
 
 const loginSchema = z.object({
   phone: z.string().length(10, 'Phone must be exactly 10 digits'),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
-    .regex(/[a-z]/, 'Password must contain a lowercase letter')
-    .regex(/\d/, 'Password must contain a number')
-    .regex(/[!@#$%^&*]/, 'Password must contain a special character (!@#$%^&*)')
+  password: z.string().min(1, 'Password or is required')
 })
 
 /** Backend requires latitude/longitude on every login step; falls back to 0,0 if denied. */
@@ -43,7 +38,8 @@ const signupSchema = z.object({
 
 const passwordSchema = z.object({
   suPassword: z.string()
-    .min(8, 'Password must be at least 8 characters')
+    .min(8, 'Password must be exactly 8 characters')
+    .max(8, 'Password must be exactly 8 characters')
     .regex(/[A-Z]/, 'Password must contain an uppercase letter')
     .regex(/[a-z]/, 'Password must contain a lowercase letter')
     .regex(/\d/, 'Password must contain a number')
@@ -61,7 +57,7 @@ const COUNTRY_CODES = [
   { code: '+234', flag: 'https://flagcdn.com/w40/ng.png', name: 'Nigeria' },
   { code: '+233', flag: 'https://flagcdn.com/w40/gh.png', name: 'Ghana' },
   { code: '+254', flag: 'https://flagcdn.com/w40/ke.png', name: 'Kenya' },
-  { code: '+27',  flag: 'https://flagcdn.com/w40/za.png', name: 'South Africa' },
+  { code: '+27', flag: 'https://flagcdn.com/w40/za.png', name: 'South Africa' },
   { code: '+250', flag: 'https://flagcdn.com/w40/rw.png', name: 'Rwanda' },
   { code: '+256', flag: 'https://flagcdn.com/w40/ug.png', name: 'Uganda' },
   { code: '+237', flag: 'https://flagcdn.com/w40/cm.png', name: 'Cameroon' },
@@ -71,8 +67,8 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { updateOrg } = useOrg()
-  const [step, setStep]         = useState<Step>('login')
-  const [country, setCountry]   = useState(COUNTRY_CODES[0])
+  const [step, setStep] = useState<Step>('login')
+  const [country, setCountry] = useState(COUNTRY_CODES[0])
 
   // If navigated from SignupChoicePage with showSignup state, show signup form
   useEffect(() => {
@@ -82,9 +78,9 @@ export function LoginPage() {
   }, [location.state])
 
   // Login fields
-  const [phone, setPhone]       = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
-  const [otp, setOtp]           = useState('')
+  const [otp, setOtp] = useState('')
   const [secAnswer, setSecAnswer] = useState('')
   const [securityQuestion, setSecurityQuestion] = useState('')
 
@@ -104,13 +100,13 @@ export function LoginPage() {
   const [suSecAnswer, setSuSecAnswer] = useState('')
   const [savingSecurityQuestion, setSavingSecurityQuestion] = useState(false)
 
-  const [showPw, setShowPw]     = useState(false)
+  const [showPw, setShowPw] = useState(false)
   const [showSuPw, setShowSuPw] = useState(false)
   const [showSuConfirmPw, setShowSuConfirmPw] = useState(false)
-  const [showCC, setShowCC]     = useState(false)
-  const [loading, setLoading]   = useState(false)
+  const [showCC, setShowCC] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
-  const [errors, setErrors]     = useState<string[]>([])
+  const [errors, setErrors] = useState<string[]>([])
 
   // OTP resend tracking (2 resends, 5 min gap, then 4-hour lockout)
   const [loginOtpResendsLeft, setLoginOtpResendsLeft] = useState(2)
@@ -140,9 +136,18 @@ export function LoginPage() {
     setErrors([])
     setLoading(true)
     try {
-      await authApi.initiateLogin(fullPhone, password)
-      toast.success('Verification code sent to your phone')
-      setStep('otp')
+      const { latitude, longitude } = await getBrowserLocation()
+      // Call directLogin to verify password/PIN directly without OTP
+      const loginRes = await authApi.directLogin(fullPhone, password, latitude, longitude)
+
+      // Check if user has security question configured using the new access token
+      const sqRes = await authApi.getSecurityQuestionStatus(loginRes.data.access_token)
+      if (sqRes.data?.configured && sqRes.data?.question) {
+        setSecurityQuestion(sqRes.data.question)
+        setStep('security_question')
+      } else {
+        finishLogin(loginRes.data)
+      }
     } catch (err: any) {
       toast.error(err?.message ?? 'Login failed. Check your phone number and password.')
     } finally {
@@ -297,7 +302,7 @@ export function LoginPage() {
       })
       localStorage.setItem('auth_token', res.data.token)
       localStorage.setItem('refresh_token', res.data.refreshToken)
-      updateOrg({ approvalStatus: 'pending' })
+      updateOrg({ approvalStatus: 'incomplete', verificationStatus: 'incomplete' })
       toast.success('Organization created! Set up security questions.')
       setStep('security_setup')
     } catch (err: any) {
@@ -325,9 +330,9 @@ export function LoginPage() {
     }
   }
 
-  const getBorderClass = (field: string) => 
-    errors.includes(field) 
-      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' 
+  const getBorderClass = (field: string) =>
+    errors.includes(field)
+      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10'
       : 'border-neutral-100 focus:border-secondary-300 focus:ring-secondary-300/10'
 
   return (
@@ -394,10 +399,10 @@ export function LoginPage() {
                 {step === 'login'
                   ? 'Enter your phone number and password to continue'
                   : step === 'signup'
-                  ? 'Fill out your basic details to get started'
-                  : step === 'security_setup'
-                  ? 'Set up a security question - used for account recovery and required before withdrawals'
-                  : 'Enter the 5-digit verification code sent to your phone'}
+                    ? 'Fill out your basic details to get started'
+                    : step === 'security_setup'
+                      ? 'Set up a security question - used for account recovery and required before withdrawals'
+                      : 'Enter the 5-digit verification code sent to your phone'}
               </p>
             </div>
 
@@ -426,7 +431,7 @@ export function LoginPage() {
                         {showCC && (
                           <div className="absolute top-full left-0 mt-1 bg-white rounded-2xl shadow-float border border-neutral-50 overflow-hidden z-30 min-w-48">
                             {COUNTRY_CODES.map(c => (
-                               <button
+                              <button
                                 key={c.code}
                                 type="button"
                                 onClick={() => { setCountry(c); setShowCC(false) }}
@@ -508,9 +513,9 @@ export function LoginPage() {
                       </button>
                     </p>
                   </div>
-                  
+
                   {step === 'login' && (
-                    <p className="block sm:hidden text-center text-xs text-neutral-300 mt-6 font-medium pb-4">Protected by Soole · 2FA required</p>
+                    <p className="block sm:hidden text-center text-xs text-neutral-300 mt-6 font-medium pb-4">Protected by Soole Secure Auth</p>
                   )}
                 </div>
               ) : step === 'signup' ? (

@@ -88,8 +88,8 @@ export function SettingsPage() {
   }
 
   const handleConfirmPin = async () => {
-    if (pinValue.length < 4) {
-      toast.error('Enter your PIN')
+    if (pinValue.length !== 8) {
+      toast.error('Must be your 8-character login password')
       return
     }
     setVerifyingPin(true)
@@ -98,7 +98,7 @@ export function SettingsPage() {
       pendingAction?.()
       closePinConfirm()
     } catch (err: any) {
-      toast.error(err?.message ?? 'Incorrect PIN')
+      toast.error(err?.message ?? 'Incorrect password')
       setPinValue('')
     } finally {
       setVerifyingPin(false)
@@ -282,8 +282,8 @@ export function SettingsPage() {
           >
             <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-primary-500">Confirm with PIN</h3>
-                <p className="text-[10px] text-neutral-200">Enter your 6-digit login PIN to continue</p>
+                <h3 className="text-sm font-bold text-primary-500">Confirm with Password</h3>
+                <p className="text-[10px] text-neutral-200">Enter your 8-character login password to continue</p>
               </div>
               <button
                 onClick={closePinConfirm}
@@ -293,14 +293,13 @@ export function SettingsPage() {
 
             <input
               type="password"
-              inputMode="numeric"
-              maxLength={6}
+              maxLength={8}
               autoFocus
               value={pinValue}
-              onChange={e => setPinValue(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={e => setPinValue(e.target.value.slice(0, 8))}
               onKeyDown={e => e.key === 'Enter' && handleConfirmPin()}
               className="input-field bg-white text-center tracking-[0.5em] text-lg font-black"
-              placeholder="••••••"
+              placeholder="••••••••"
             />
 
             <div className="flex gap-2 justify-end pt-2">
@@ -312,7 +311,7 @@ export function SettingsPage() {
               </button>
               <button
                 onClick={handleConfirmPin}
-                disabled={verifyingPin || pinValue.length < 4}
+                disabled={verifyingPin || pinValue.length !== 8}
                 className="px-4 py-2 bg-primary-500 hover:bg-primary-400 disabled:opacity-60 text-xs font-semibold rounded-xl text-white transition-colors"
               >
                 {verifyingPin ? 'Verifying…' : 'Confirm'}

@@ -52,6 +52,50 @@ async function apiRequest<T>(
     body: body ? JSON.stringify(body) : undefined,
   })
 
+  if (response.status === 401 && endpoint !== '/accounts/login/refresh-tokens') {
+    const refreshTokenVal = localStorage.getItem('refresh_token')
+    if (refreshTokenVal) {
+      try {
+        const refreshResponse = await fetch(`${API_BASE_URL}/accounts/login/refresh-tokens`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshTokenVal })
+        })
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json()
+          if (refreshData.success && refreshData.data?.access_token) {
+            const newAccessToken = refreshData.data.access_token
+            const newRefreshToken = refreshData.data.refresh_token || refreshTokenVal
+            localStorage.setItem('auth_token', newAccessToken)
+            localStorage.setItem('refresh_token', newRefreshToken)
+
+            const retryHeaders = {
+              ...requestHeaders,
+              'Authorization': `Bearer ${newAccessToken}`
+            }
+            const retryResponse = await fetch(url, {
+              method,
+              headers: retryHeaders,
+              body: body ? JSON.stringify(body) : undefined,
+            })
+            if (retryResponse.ok) {
+              if (retryResponse.status === 204) return undefined as T
+              return retryResponse.json()
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to auto-refresh token:', e)
+      }
+      // Refresh failed/expired: clear auth and reload to redirect to login
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('refresh_token')
+      localStorage.removeItem('org_uuid')
+      window.location.reload()
+      throw new Error('Session expired. Please log in again.')
+    }
+  }
+
   if (!response.ok) {
     const error = await response.json().catch(() => ({}))
     throw new Error(error.message || error.detail || `API Error: ${response.status}`)
@@ -461,6 +505,10 @@ type SignupOrgData = {
 }
 
 export const authApi = {
+  directLogin: async (phoneNumber: string, pin: string, latitude: number, longitude: number) =>
+    apiRequest<LoginEnvelope<LoginTokenData>>('/accounts/login/', {
+      method: 'POST', body: { phone_number: phoneNumber, pin, latitude, longitude }
+    }),
   initiateLogin: async (phoneNumber: string, pin: string) =>
     apiRequest<LoginEnvelope<RequiresOtpData>>('/accounts/login/initiate', { method: 'POST', body: { phone_number: phoneNumber, pin } }),
   verifyLoginOtp: async (phoneNumber: string, otpCode: string, latitude: number, longitude: number) =>
@@ -552,8 +600,10 @@ export const authApi = {
    * Whether the signed-in user has a security question configured, and its
    * text (never the answer). Withdrawals require one to be set up first.
    */
-  getSecurityQuestionStatus: async () =>
-    apiRequest<{ data: { configured: boolean; question: string | null } }>('/accounts/login/security-question-status'),
+  getSecurityQuestionStatus: async (customToken?: string | null) =>
+    apiRequest<{ data: { configured: boolean; question: string | null } }>('/accounts/login/security-question-status', {
+      token: customToken !== undefined ? customToken : undefined
+    }),
   setSecurityQuestion: async (question: string, answer: string) =>
     apiRequest<{ data: { question: string } }>('/accounts/login/set-security-question', {
       method: 'POST', body: { question, answer },

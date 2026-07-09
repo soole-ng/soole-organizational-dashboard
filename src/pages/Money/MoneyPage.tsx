@@ -117,8 +117,8 @@ export function MoneyPage() {
       toast.error('Select a withdrawal account')
       return
     }
-    if (withdrawPin.length < 4) {
-      toast.error('Enter your PIN')
+    if (withdrawPin.length !== 8) {
+      toast.error('Must be your 8-character login password')
       return
     }
     if (!withdrawSecurityAnswer.trim()) {
@@ -464,15 +464,14 @@ export function MoneyPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Enter your login PIN to confirm</label>
+                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Enter your 8-character login password to confirm</label>
                 <input
                   type="password"
-                  inputMode="numeric"
-                  maxLength={6}
+                  maxLength={8}
                   value={withdrawPin}
-                  onChange={e => setWithdrawPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={e => setWithdrawPin(e.target.value.slice(0, 8))}
                   className="input-field bg-white text-center tracking-[0.5em] text-lg font-black"
-                  placeholder="••••••"
+                  placeholder="••••••••"
                   autoFocus
                 />
               </div>

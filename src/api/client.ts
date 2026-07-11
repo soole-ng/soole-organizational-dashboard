@@ -268,6 +268,8 @@ export const vehiclesApi = {
     apiRequest(`/organizations/${orgUuid}/vehicles/${vehicleId}`, { method: 'PATCH', body: vehicleData }),
   updateVehicleStatus: async (orgUuid: string, vehicleId: string, status: string) =>
     apiRequest(`/organizations/${orgUuid}/vehicles/${vehicleId}/status`, { method: 'PATCH', body: { status } }),
+  deleteVehicle: async (orgUuid: string, vehicleId: string) =>
+    apiRequest<void>(`/organizations/${orgUuid}/vehicles/${vehicleId}`, { method: 'DELETE' }),
   getVehicleHistory: async (orgUuid: string, vehicleId: string) =>
     apiRequest(`/organizations/${orgUuid}/vehicles/${vehicleId}/history`),
   getVehicleLocations: async (orgUuid: string) =>

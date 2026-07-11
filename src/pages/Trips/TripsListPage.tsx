@@ -38,7 +38,12 @@ export function TripsListPage() {
   const trips = data.trips
   const { guardAction } = useOrg()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('Today')
+  // "Today" was the default here, silently intersecting with the status
+  // chips below it (a separate filter axis) - a trip correctly matching
+  // "Published" but departing tomorrow (the normal case for a trip that
+  // was just published ahead of time) was invisible on first load with no
+  // indication why, since nothing highlighted "Today" as the culprit.
+  const [activeTab, setActiveTab] = useState('All')
   const [statusFilter, setStatusFilter] = useState<StatusVariant | 'all'>('in_progress')
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)

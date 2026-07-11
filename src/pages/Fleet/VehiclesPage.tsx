@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, History, Car } from 'lucide-react'
+import { Plus, History, Car, CheckCircle2, Trash2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
@@ -28,8 +28,9 @@ export function VehiclesPage() {
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
+  const [deletingVehicleId, setDeletingVehicleId] = useState<string | null>(null)
   // Matches the backend's own gate (organization_vehicles_api.py's
-  // update_vehicle_status requires OWNER or ADMIN/"finance" role).
+  // update_vehicle_status/delete_vehicle require OWNER or ADMIN/"finance" role).
   const canChangeVehicleStatus = org.role === 'owner' || org.role === 'finance'
 
   const handleStatusChange = async (vehicleId: string, status: 'active' | 'suspended' | 'retired') => {
@@ -44,6 +45,22 @@ export function VehiclesPage() {
       toast.error(err?.message ?? 'Failed to update vehicle status')
     } finally {
       setUpdatingStatusId(null)
+    }
+  }
+
+  const handleDeleteVehicle = async (vehicleId: string, plate: string) => {
+    if (!orgUuid) return
+    if (!window.confirm(`Delete vehicle ${plate}? This cannot be undone.`)) return
+    setDeletingVehicleId(vehicleId)
+    try {
+      await vehiclesApi.deleteVehicle(orgUuid, vehicleId)
+      toast.success('Vehicle deleted')
+      invalidateApiDataCache()
+      refetch()
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to delete vehicle')
+    } finally {
+      setDeletingVehicleId(null)
     }
   }
 
@@ -139,7 +156,12 @@ export function VehiclesPage() {
                         <VehicleIcon type={vehicle.type} className="w-5 h-5 text-[#042011]" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold !text-white">{vehicle.plate}</p>
+                        <p className="text-sm font-bold !text-white flex items-center gap-1.5">
+                          {vehicle.plate}
+                          {vehicle.status === 'verified' && (
+                            <CheckCircle2 className="w-4 h-4 text-[#00C853] flex-shrink-0" aria-label="Fully verified" />
+                          )}
+                        </p>
                         <p className="text-[10px] !text-white/80">{vehicle.model} · {vehicle.year} · {vehicle.capacity} seats</p>
                       </div>
                     </div>
@@ -192,18 +214,30 @@ export function VehiclesPage() {
                       </div>
                     )}
 
-                    {vehicle.status !== 'pending' ? (
-                      <button
-                        onClick={() => setHistoryVehicle(vehicle)}
-                        className="w-full text-xs text-primary-400 font-bold flex items-center justify-center gap-1.5 py-2 rounded-xl border border-neutral-100 hover:bg-primary-75 transition-colors"
-                      >
-                        <History className="w-3.5 h-3.5" /> View Trip History
-                      </button>
-                    ) : (
-                      <div className="w-full text-xs text-neutral-200 font-medium flex items-center justify-center gap-1.5 py-2 bg-neutral-50 rounded-xl border border-neutral-100 cursor-not-allowed select-none">
-                        <History className="w-3.5 h-3.5 text-neutral-200" /> History Unavailable
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {vehicle.status !== 'pending' ? (
+                        <button
+                          onClick={() => setHistoryVehicle(vehicle)}
+                          className="flex-1 text-xs text-primary-400 font-bold flex items-center justify-center gap-1.5 py-2 rounded-xl border border-neutral-100 hover:bg-primary-75 transition-colors"
+                        >
+                          <History className="w-3.5 h-3.5" /> View Trip History
+                        </button>
+                      ) : (
+                        <div className="flex-1 text-xs text-neutral-200 font-medium flex items-center justify-center gap-1.5 py-2 bg-neutral-50 rounded-xl border border-neutral-100 cursor-not-allowed select-none">
+                          <History className="w-3.5 h-3.5 text-neutral-200" /> History Unavailable
+                        </div>
+                      )}
+                      {canChangeVehicleStatus && (
+                        <button
+                          onClick={() => guardAction(undefined, () => handleDeleteVehicle(vehicle.id, vehicle.plate))}
+                          disabled={deletingVehicleId === vehicle.id}
+                          aria-label={`Delete vehicle ${vehicle.plate}`}
+                          className="flex-shrink-0 p-2 rounded-xl border border-neutral-100 text-red-500 hover:bg-red-50 disabled:opacity-60 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )

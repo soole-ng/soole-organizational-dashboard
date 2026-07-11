@@ -277,29 +277,6 @@ export const vehiclesApi = {
     apiRequest(`/organizations/${orgUuid}/vehicles/${vehicleId}/documents`, {
       method: 'POST', body: { doc_type: docType, file_url: fileUrl },
     }),
-  /**
-   * Returns a blob: URL for the combined PDF (category: 'images' | 'documents') -
-   * not JSON, so this bypasses apiRequest and fetches directly with the auth
-   * header, same as apiRequest does internally.
-   */
-  getCombinedDocumentsPdfUrl: async (orgUuid: string, vehicleId: string, category: 'images' | 'documents'): Promise<string> => {
-    const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://soole-backend-8cku.onrender.com/api'
-    const token = localStorage.getItem('auth_token')
-    const response = await fetch(
-      `${API_BASE_URL}/organizations/${orgUuid}/vehicles/${vehicleId}/documents/combined-pdf?category=${category}`,
-      { headers: token ? { Authorization: `Bearer ${token}` } : {} },
-    )
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      throw new Error(error.message || error.detail || `Failed to load ${category} PDF`)
-    }
-    const blob = await response.blob()
-    return URL.createObjectURL(blob)
-  },
-  reviewDocuments: async (orgUuid: string, vehicleId: string, category: 'images' | 'documents', approved: boolean, comment?: string) =>
-    apiRequest(`/organizations/${orgUuid}/vehicles/${vehicleId}/documents/review`, {
-      method: 'POST', body: { category, approved, comment: comment || null },
-    }),
 }
 
 /**

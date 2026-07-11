@@ -11,7 +11,6 @@ import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 import { VehicleIcon, docStatusIcon } from '../../components/ui/VehicleIcons'
 import { VehicleHistoryModal } from './components/VehicleHistoryModal'
-import { VehicleReviewModal } from './components/VehicleReviewModal'
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'All', value: 'all' },
   { label: 'Verified', value: 'verified' },
@@ -28,14 +27,10 @@ export function VehiclesPage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
-  const [reviewingVehicleId, setReviewingVehicleId] = useState<string | null>(null)
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
   // Matches the backend's own gate (organization_vehicles_api.py's
   // update_vehicle_status requires OWNER or ADMIN/"finance" role).
   const canChangeVehicleStatus = org.role === 'owner' || org.role === 'finance'
-  // Matches /documents/review's own gate (OWNER or ADMIN/"finance") - other
-  // roles can still open the combined PDF to look, just not decide.
-  const canReviewDocuments = org.role === 'owner' || org.role === 'finance'
 
   const handleStatusChange = async (vehicleId: string, status: 'active' | 'suspended' | 'retired') => {
     if (!orgUuid) return
@@ -179,14 +174,6 @@ export function VehiclesPage() {
                           </div>
                         ))}
                       </div>
-                      {totalDocs > 0 && (
-                        <button
-                          onClick={() => setReviewingVehicleId(vehicle.id)}
-                          className="w-full mt-1 py-1.5 rounded-lg border border-primary-100 text-[11px] font-bold text-primary-500 hover:bg-primary-75 transition-colors"
-                        >
-                          {canReviewDocuments ? 'Review Submission' : 'View Submission'}
-                        </button>
-                      )}
                     </div>
 
                     {canChangeVehicleStatus && (
@@ -242,20 +229,6 @@ export function VehiclesPage() {
           onClose={() => setHistoryVehicle(null)}
         />
       )}
-
-      {reviewingVehicleId && orgUuid && (() => {
-        const reviewVehicle = filtered.find(v => v.id === reviewingVehicleId)
-        if (!reviewVehicle) return null
-        return (
-          <VehicleReviewModal
-            vehicle={reviewVehicle}
-            orgUuid={orgUuid}
-            canReview={canReviewDocuments}
-            onClose={() => setReviewingVehicleId(null)}
-            onReviewed={() => { invalidateApiDataCache(); refetch() }}
-          />
-        )
-      })()}
 
     </div>
   )

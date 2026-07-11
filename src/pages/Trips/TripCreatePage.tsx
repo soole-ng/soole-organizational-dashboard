@@ -7,6 +7,7 @@ import { useOrg } from '../../lib/OrgContext'
 import { vehiclesApi, driversApi, organizationApi } from '../../api/client'
 import { adaptVehicle, adaptDriverIdentity } from '../../lib/adapters'
 import { invalidateApiDataCache } from '../../lib/useApiData'
+import { NIGERIAN_STATES } from '../../lib/constants'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
 
@@ -19,6 +20,8 @@ export function TripCreatePage() {
   const [form, setForm] = useState({
     pickupLocation: '',
     dropoffLocation: '',
+    originState: '',
+    destinationState: '',
     vehicleId: '',
     driverId: '',
     departureAt: '',
@@ -68,6 +71,14 @@ export function TripCreatePage() {
       toast.error('Enter pickup and dropoff locations')
       return
     }
+    if (!form.originState || !form.destinationState) {
+      // Without these, the trip is created but structurally invisible to
+      // mobile's passenger search (RideSelector.retrieve_rides_by_filter
+      // matches origin_state/destination_state, which are otherwise never set
+      // for dashboard-published trips).
+      toast.error('Select pickup and dropoff states')
+      return
+    }
     if (!form.driverId) {
       toast.error('Select a driver')
       return
@@ -96,6 +107,8 @@ export function TripCreatePage() {
         vehicle_uuid: form.vehicleId || undefined,
         origin_address: form.pickupLocation.trim(),
         destination_address: form.dropoffLocation.trim(),
+        origin_state: form.originState,
+        destination_state: form.destinationState,
         departure_date: new Date(form.departureAt).toISOString(),
         total_seats: selectedVehicle?.capacity || 14,
         price_per_seat: passengerFarePerSeat,
@@ -144,6 +157,40 @@ export function TripCreatePage() {
                 placeholder="e.g. Ibadan"
                 className="input-field py-2.5"
               />
+            </div>
+          </div>
+
+          {/* Pickup & Dropoff state - required so mobile's passenger search
+              (which filters on these) can actually find this trip */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Pickup State</label>
+              <div className="relative">
+                <select
+                  value={form.originState}
+                  onChange={e => set('originState', e.target.value)}
+                  className="input-field py-2.5 appearance-none pr-10"
+                >
+                  <option value="">Select state</option>
+                  {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Dropoff State</label>
+              <div className="relative">
+                <select
+                  value={form.destinationState}
+                  onChange={e => set('destinationState', e.target.value)}
+                  className="input-field py-2.5 appearance-none pr-10"
+                >
+                  <option value="">Select state</option>
+                  {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+              </div>
             </div>
           </div>
 

@@ -295,6 +295,9 @@ export const driversApi = {
     apiRequest(`/organizations-trips/${orgUuid}/drivers/${driverId}/suspend/`, { method: 'POST', body: { reason } }),
   reinstateDriver: async (orgUuid: string, driverId: string) =>
     apiRequest(`/organizations-trips/${orgUuid}/drivers/${driverId}/reinstate/`, { method: 'POST' }),
+  /** reason is required by the backend - not reversible via reinstateDriver. */
+  removeDriver: async (orgUuid: string, driverId: string, reason: string) =>
+    apiRequest(`/organizations-trips/${orgUuid}/drivers/${driverId}/remove/`, { method: 'POST', body: { reason } }),
   getDriverTrips: async (orgUuid: string, driverId: string) =>
     apiRequest<any[]>(`/organizations-trips/${orgUuid}/drivers/${driverId}/trips/`),
 }

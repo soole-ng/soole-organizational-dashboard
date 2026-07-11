@@ -49,17 +49,23 @@ export function DriversPage() {
     })
   }
 
-  const suspendDriver = (driverId: string, driverName: string) => {
+  const removeDriver = (driverId: string, driverName: string) => {
     guardAction(undefined, async () => {
       if (!orgUuid) return
+      const reason = window.prompt(`Why are you removing ${driverName} from the company? This cannot be undone.`)
+      if (reason === null) return
+      if (!reason.trim()) {
+        toast.error('A reason is required to remove a driver')
+        return
+      }
       setStatusChangingId(driverId)
       try {
-        await driversApi.suspendDriver(orgUuid, driverId)
-        toast.success(`${driverName} has been suspended`)
+        await driversApi.removeDriver(orgUuid, driverId, reason.trim())
+        toast.success(`${driverName} has been removed`)
         invalidateApiDataCache()
         refetch()
       } catch (err: any) {
-        toast.error(err?.message ?? 'Failed to suspend driver')
+        toast.error(err?.message ?? 'Failed to remove driver')
       } finally {
         setStatusChangingId(null)
       }
@@ -256,12 +262,12 @@ export function DriversPage() {
                         </button>
                       ) : (
                         <button
-                          onClick={e => { e.stopPropagation(); suspendDriver(driver.id, driver.name) }}
+                          onClick={e => { e.stopPropagation(); removeDriver(driver.id, driver.name) }}
                           disabled={statusChangingId === driver.id}
                           className="w-full text-xs text-red-500 font-bold flex items-center justify-center gap-1.5 py-2 rounded-xl border border-red-200 hover:bg-red-50 transition-colors disabled:opacity-60"
                         >
                           {statusChangingId === driver.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                          Suspend
+                          Remove Driver
                         </button>
                       )}
                     </div>

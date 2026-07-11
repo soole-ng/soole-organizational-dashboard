@@ -27,26 +27,10 @@ export function VehiclesPage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
-  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
   const [deletingVehicleId, setDeletingVehicleId] = useState<string | null>(null)
   // Matches the backend's own gate (organization_vehicles_api.py's
-  // update_vehicle_status/delete_vehicle require OWNER or ADMIN/"finance" role).
+  // delete_vehicle requires OWNER or ADMIN/"finance" role).
   const canChangeVehicleStatus = org.role === 'owner' || org.role === 'finance'
-
-  const handleStatusChange = async (vehicleId: string, status: 'active' | 'suspended' | 'retired') => {
-    if (!orgUuid) return
-    setUpdatingStatusId(vehicleId)
-    try {
-      await vehiclesApi.updateVehicleStatus(orgUuid, vehicleId, status)
-      toast.success(`Vehicle marked as ${status}`)
-      invalidateApiDataCache()
-      refetch()
-    } catch (err: any) {
-      toast.error(err?.message ?? 'Failed to update vehicle status')
-    } finally {
-      setUpdatingStatusId(null)
-    }
-  }
 
   const handleDeleteVehicle = async (vehicleId: string, plate: string) => {
     if (!orgUuid) return
@@ -197,22 +181,6 @@ export function VehiclesPage() {
                         ))}
                       </div>
                     </div>
-
-                    {canChangeVehicleStatus && (
-                      <div className="space-y-1.5 pt-2 border-t border-neutral-100">
-                        <span className="text-xs font-bold text-black">Operational Status</span>
-                        <select
-                          value={vehicle.operationalStatus}
-                          onChange={e => guardAction(undefined, () => handleStatusChange(vehicle.id, e.target.value as 'active' | 'suspended' | 'retired'))}
-                          disabled={updatingStatusId === vehicle.id}
-                          className="input-field bg-white text-xs py-1.5 disabled:opacity-60"
-                        >
-                          <option value="active">Active</option>
-                          <option value="suspended">Suspended</option>
-                          <option value="retired">Retired</option>
-                        </select>
-                      </div>
-                    )}
 
                     <div className="flex items-center gap-2">
                       {vehicle.status !== 'pending' ? (

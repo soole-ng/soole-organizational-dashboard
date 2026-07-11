@@ -42,8 +42,6 @@ export interface Vehicle {
    *  document-verification state on top of this and shouldn't be used to decide
    *  whether the vehicle is actually suspended/retired. */
   operationalStatus: 'active' | 'suspended' | 'retired'
-  assignedDriverId?: string
-  assignedDriverName?: string
   photo?: string
   fuelLevel: number
   totalKm: number
@@ -143,6 +141,6 @@ export interface OrganizationMember {
   name: string
   email?: string
   phone?: string
-  role: 'owner' | 'finance' | 'manager' | 'viewer'
+  role: 'owner' | 'finance' | 'manager' | 'viewer' | 'driver'
   joinedAt: string
 }

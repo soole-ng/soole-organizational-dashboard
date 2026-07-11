@@ -19,6 +19,7 @@ import { AIChatPage } from './pages/AI/AIChatPage'
 import { ReportsPage } from './pages/Reports/ReportsPage'
 import { SettingsPage } from './pages/Settings/SettingsPage'
 import { HelpPage } from './pages/Help/HelpPage'
+import { AdminPage } from './pages/Admin/AdminPage'
 import { RoleGuard } from './components/layout/RoleGuard'
 
 const queryClient = new QueryClient()
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/fleet/vehicles/new" element={<AddVehiclePage />} />
 
         <Route path="/money" element={<RoleGuard allowedRoles={['owner', 'finance']}><MoneyPage /></RoleGuard>} />
+        <Route path="/admin" element={<RoleGuard allowedRoles={['owner', 'manager']}><AdminPage /></RoleGuard>} />
         <Route path="/live-map" element={<LiveMapPage />} />
         <Route path="/ai" element={<AIChatPage />} />
         <Route path="/reports" element={<ReportsPage />} />

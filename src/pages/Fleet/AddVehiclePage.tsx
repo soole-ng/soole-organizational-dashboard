@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
 import { vehiclesApi, uploadApi } from '../../api/client'
 import { invalidateApiDataCache } from '../../lib/useApiData'
+import { compressImageIfNeeded } from '../../lib/imageCompression'
 
 /** Maps each upload step to the backend's VehicleDocType (organization/models.py). */
 const DOC_TYPE_BY_KEY: Record<string, string> = {
@@ -92,10 +93,16 @@ export function AddVehiclePage() {
   const brands = Object.keys(kVehicleMakeModels).sort()
   const models = brand && brand !== 'Other' ? kVehicleMakeModels[brand] || [] : []
 
-  const handleFileUpload = (key: string, file: File) => {
+  const handleFileUpload = async (key: string, rawFile: File) => {
+    const wasCompressible = rawFile.type.startsWith('image/') && rawFile.size > 300 * 1024
+    const file = await compressImageIfNeeded(rawFile)
     const url = URL.createObjectURL(file)
     setUploads(prev => ({ ...prev, [key]: { url, file } }))
-    toast.success('File attached successfully')
+    toast.success(
+      wasCompressible && file.size < rawFile.size
+        ? `File attached (compressed ${(rawFile.size / 1024).toFixed(0)}KB → ${(file.size / 1024).toFixed(0)}KB)`
+        : 'File attached successfully'
+    )
   }
 
   const renderStepIndicators = () => (

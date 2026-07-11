@@ -28,6 +28,7 @@ const pageTitles: Record<string, string> = {
   '/fleet/drivers':  'Drivers',
   '/fleet/vehicles': 'Vehicles',
   '/live-map':       'Live Map',
+  '/admin':          'Admin',
   '/money':          'Money',
   '/reports':        'Reports',
   '/settings':       'Settings',

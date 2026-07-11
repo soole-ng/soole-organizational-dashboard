@@ -148,8 +148,6 @@ export function adaptVehicle(raw: any): Vehicle {
       : raw.verification_status === 'rejected' ? 'rejected'
       : 'pending',
     operationalStatus: (['active', 'suspended', 'retired'].includes(raw.status) ? raw.status : 'active') as Vehicle['operationalStatus'],
-    assignedDriverId: raw.assigned_driver_id ?? undefined,
-    assignedDriverName: raw.assigned_driver_name ?? undefined,
     fuelLevel: 0,
     totalKm: 0,
     documents,
@@ -256,7 +254,7 @@ export function adaptOrganizationMember(raw: any): OrganizationMember {
     name: raw.user_fullname,
     email: raw.user_email ?? undefined,
     phone: raw.user_phone ?? undefined,
-    role: (['owner', 'finance', 'manager', 'viewer'].includes(raw.role) ? raw.role : 'viewer') as OrganizationMember['role'],
+    role: (['owner', 'finance', 'manager', 'viewer', 'driver'].includes(raw.role) ? raw.role : 'viewer') as OrganizationMember['role'],
     joinedAt: raw.joined_at,
   }
 }

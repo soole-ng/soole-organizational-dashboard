@@ -51,7 +51,11 @@ export function TripCard({ trip, compact }: TripCardProps) {
                 : '#9CA3AF'
             }}
           >
-            {trip.status === 'boarding' || trip.status === 'in_progress' ? 'Active' : trip.status}
+            {trip.status === 'boarding' || trip.status === 'in_progress'
+              ? 'Active'
+              : trip.status === 'scheduled'
+              ? 'Published'
+              : trip.status}
           </span>
         </div>
 

@@ -15,6 +15,7 @@ import { ProfileCompletionModal } from '../auth/ProfileCompletionModal'
 import { AlertCircle, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { notificationsApi } from '../../api/client'
+import { startNotificationsSocket, stopNotificationsSocket } from '../../lib/notificationsSocket'
 
 // Client-only synthetic notifications (e.g. TripDetailPage's live speed-
 // violation alerts, id `speed-${plate}-${Date.now()}`) get pushed into
@@ -85,8 +86,24 @@ export function AppShell() {
     }
 
     load()
+    // The websocket below covers instant updates; this interval stays as
+    // a fallback for the connection being down (or the notification's
+    // in-app channel being disabled for this recipient - the websocket
+    // only fires alongside a Notification row, same as the poll).
     const interval = setInterval(load, 30000)
-    return () => { cancelled = true; clearInterval(interval) }
+
+    // Live push: the moment a server-side event creates a Notification
+    // for this user, refetch the notification list immediately instead
+    // of waiting up to 30s, and refresh every other open screen's stale
+    // data (invitations, members, verification stats, trips, ...) via
+    // notifyDataChanged() inside the socket client.
+    startNotificationsSocket(load)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+      stopNotificationsSocket()
+    }
   }, [orgUuid])
 
   // Reset scroll position on page/route changes (essential for iOS PWA smoothness)

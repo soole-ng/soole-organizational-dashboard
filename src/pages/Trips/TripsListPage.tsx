@@ -13,7 +13,11 @@ import type { StatusVariant } from '../../types'
 const tabs = ['Today', 'This Week', 'All']
 const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'All', value: 'all' },
-  { label: 'Scheduled', value: 'scheduled' },
+  // "Published" = the stakeholder's name for a trip that's live/bookable
+  // but hasn't started - backend status 'upcoming' (org-dispatched) or
+  // 'available' (independent driver rides), both surfaced as the
+  // 'scheduled' StatusVariant by adapters.ts's toStatusVariant.
+  { label: 'Published', value: 'scheduled' },
   // A trip's real backend status is 'in_progress' while under way - there
   // is no 'boarding' value anywhere in Ride.status (dashboard/api.py maps
   // 'scheduled'/'boarding' as UI-only aliases elsewhere, but this list's

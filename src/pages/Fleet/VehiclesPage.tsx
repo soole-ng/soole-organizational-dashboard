@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, History, Car, User as UserIcon, X } from 'lucide-react'
+import { Plus, History, Car } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
@@ -11,6 +11,7 @@ import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 import { VehicleIcon, docStatusIcon } from '../../components/ui/VehicleIcons'
 import { VehicleHistoryModal } from './components/VehicleHistoryModal'
+import { VehicleReviewModal } from './components/VehicleReviewModal'
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'All', value: 'all' },
   { label: 'Verified', value: 'verified' },
@@ -27,11 +28,14 @@ export function VehiclesPage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
-  const [assigningVehicleId, setAssigningVehicleId] = useState<string | null>(null)
+  const [reviewingVehicleId, setReviewingVehicleId] = useState<string | null>(null)
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null)
   // Matches the backend's own gate (organization_vehicles_api.py's
   // update_vehicle_status requires OWNER or ADMIN/"finance" role).
   const canChangeVehicleStatus = org.role === 'owner' || org.role === 'finance'
+  // Matches /documents/review's own gate (OWNER or ADMIN/"finance") - other
+  // roles can still open the combined PDF to look, just not decide.
+  const canReviewDocuments = org.role === 'owner' || org.role === 'finance'
 
   const handleStatusChange = async (vehicleId: string, status: 'active' | 'suspended' | 'retired') => {
     if (!orgUuid) return
@@ -48,25 +52,6 @@ export function VehiclesPage() {
     }
   }
 
-  const handleDriverAssignChange = async (vehicleId: string, driverId: string) => {
-    if (!orgUuid) return
-    setAssigningVehicleId(vehicleId)
-    try {
-      if (driverId) {
-        await vehiclesApi.updateVehicle(orgUuid, vehicleId, { assigned_driver_id: driverId })
-        toast.success('Driver assigned')
-      } else {
-        await vehiclesApi.updateVehicle(orgUuid, vehicleId, { unassign_driver: true })
-        toast.success('Driver unassigned')
-      }
-      invalidateApiDataCache()
-      refetch()
-    } catch (err: any) {
-      toast.error(err?.message ?? 'Failed to update driver assignment')
-    } finally {
-      setAssigningVehicleId(null)
-    }
-  }
 
   const filtered = data.vehicles.filter(v => filter === 'all' || v.status === filter)
   const totalSeats = data.vehicles.reduce((a, v) => a + v.capacity, 0)
@@ -194,41 +179,14 @@ export function VehiclesPage() {
                           </div>
                         ))}
                       </div>
-                    </div>
-
-                    {/* Assigned driver */}
-                    <div className="space-y-1.5 pt-2 border-t border-neutral-100">
-                      <div className="flex items-center justify-between text-xs font-bold text-black">
-                        <span className="text-black font-semibold flex items-center gap-1">
-                          <UserIcon className="w-3.5 h-3.5 text-neutral-300" /> Assigned Driver
-                        </span>
-                        {vehicle.assignedDriverId && (
-                          <button
-                            onClick={() => guardAction(undefined, () => handleDriverAssignChange(vehicle.id, ''))}
-                            disabled={assigningVehicleId === vehicle.id}
-                            className="text-[10px] text-neutral-200 hover:text-red-500 flex items-center gap-0.5 disabled:opacity-60"
-                            title="Unassign driver"
-                          >
-                            <X className="w-3 h-3" /> Remove
-                          </button>
-                        )}
-                      </div>
-                      <select
-                        value={vehicle.assignedDriverId ?? ''}
-                        onChange={e => guardAction(undefined, () => handleDriverAssignChange(vehicle.id, e.target.value))}
-                        disabled={assigningVehicleId === vehicle.id}
-                        className="input-field bg-white text-xs py-1.5 disabled:opacity-60"
-                      >
-                        <option value="">Unassigned</option>
-                        {/* Excludes pending-invite rows (id is an OrgInvitation
-                            uuid, not a real driver) and suspended drivers -
-                            the backend's assign-driver check only accepts an
-                            active org driver, so listing these would always
-                            404 on selection. */}
-                        {data.drivers.filter(d => !d.isPendingInvite && d.status !== 'suspended').map(d => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                      </select>
+                      {totalDocs > 0 && (
+                        <button
+                          onClick={() => setReviewingVehicleId(vehicle.id)}
+                          className="w-full mt-1 py-1.5 rounded-lg border border-primary-100 text-[11px] font-bold text-primary-500 hover:bg-primary-75 transition-colors"
+                        >
+                          {canReviewDocuments ? 'Review Submission' : 'View Submission'}
+                        </button>
+                      )}
                     </div>
 
                     {canChangeVehicleStatus && (
@@ -285,6 +243,19 @@ export function VehiclesPage() {
         />
       )}
 
+      {reviewingVehicleId && orgUuid && (() => {
+        const reviewVehicle = filtered.find(v => v.id === reviewingVehicleId)
+        if (!reviewVehicle) return null
+        return (
+          <VehicleReviewModal
+            vehicle={reviewVehicle}
+            orgUuid={orgUuid}
+            canReview={canReviewDocuments}
+            onClose={() => setReviewingVehicleId(null)}
+            onReviewed={() => { invalidateApiDataCache(); refetch() }}
+          />
+        )
+      })()}
 
     </div>
   )

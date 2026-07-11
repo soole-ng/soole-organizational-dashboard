@@ -151,6 +151,22 @@ export function invalidateApiDataCache() {
   _cacheOrgUuid = null
 }
 
+// Every mounted useApiData() instance registers a listener here. Clearing
+// the module-level cache above only affects the *next* call to loadApiData
+// - without this, a screen that's already mounted (e.g. the trips list
+// open in another tab, or the vehicles page sitting behind the current
+// route) would never re-fetch just because notificationsSocket.ts heard a
+// server-side event; it'd stay stale until its own local mutation or a
+// manual refresh. This is what makes a websocket push actually propagate
+// to every open screen instead of just the one that happens to remount.
+const _listeners = new Set<() => void>()
+
+/** Clears the cache and tells every mounted useApiData() to refetch now. */
+export function notifyDataChanged() {
+  invalidateApiDataCache()
+  _listeners.forEach(listener => listener())
+}
+
 export interface UseApiDataResult {
   data: ApiData
   loading: boolean
@@ -164,6 +180,12 @@ export function useApiData(): UseApiDataResult {
   const [loading, setLoading] = useState<boolean>(!(orgUuid && _cache && _cacheOrgUuid === orgUuid))
   const [error, setError] = useState<string | null>(null)
   const [refetchToken, setRefetchToken] = useState(0)
+
+  useEffect(() => {
+    const listener = () => setRefetchToken(t => t + 1)
+    _listeners.add(listener)
+    return () => { _listeners.delete(listener) }
+  }, [])
 
   useEffect(() => {
     if (!orgUuid) {

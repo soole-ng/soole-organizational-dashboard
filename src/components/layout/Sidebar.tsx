@@ -11,7 +11,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Home, Route, Map, Users, Car, Wallet, BarChart2,
   Settings, HelpCircle, Power, MessageSquare, Bell,
-  ChevronRight, Upload, Sparkles,
+  ChevronRight, Upload, Sparkles, ShieldCheck,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useState, useRef } from 'react'
@@ -50,6 +50,7 @@ const navGroups: NavGroup[] = [
   {
     label: 'Operations',
     items: [
+      { to: '/admin', label: 'Admin', icon: ShieldCheck },
       { to: '/money', label: 'Money', icon: Wallet },
       { to: '/reports', label: 'Reports', icon: BarChart2 },
     ],
@@ -105,7 +106,13 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
     const items = group.items.filter(item => {
       if (userRole === 'finance') {
         return ['/money', '/settings', '/help'].includes(item.to)
-      } else if (userRole === 'manager' || userRole === 'viewer') {
+      } else if (userRole === 'viewer') {
+        // Admin is a management console (edit/cancel trips) - RoleGuard
+        // already blocks viewer from the route itself, but a nav link
+        // that just bounces back with an error toast is bad UX, so hide
+        // it here too.
+        return item.to !== '/money' && item.to !== '/admin'
+      } else if (userRole === 'manager') {
         return item.to !== '/money'
       }
       return true

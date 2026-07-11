@@ -1,12 +1,15 @@
 import { Link } from 'react-router-dom'
-import { Users, Car, ChevronRight, AlertTriangle, TrendingUp, Activity } from 'lucide-react'
+import { Users, Car, ChevronRight, AlertTriangle, TrendingUp, Activity, ShieldCheck } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { useApiData } from '../../lib/useApiData'
+import { useOrg } from '../../lib/OrgContext'
 import { clsx } from 'clsx'
 import { DriverAvatar } from '../../components/ui/DriverAvatar'
 
 export function FleetPage() {
   const { data, loading } = useApiData()
+  const { org } = useOrg()
+  const canManageAdmin = org.role === 'owner' || org.role === 'manager'
 
   const pendingDrivers = data.drivers.filter(d => d.status === 'pending').length
   const pendingDocs = data.vehicles.reduce((acc, v) =>
@@ -134,6 +137,23 @@ export function FleetPage() {
             </div>
           </div>
         </Link>
+
+        {canManageAdmin && (
+          <Link to="/admin" className="card hover:shadow-card-hover transition-all duration-200 hover:-translate-y-0.5 block">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-6 h-6 text-primary-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-primary-500">Admin</p>
+                <p className="text-xs text-neutral-200 mt-0.5">
+                  View, edit and manage every trip, vehicle and driver
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-neutral-100" />
+            </div>
+          </Link>
+        )}
       </div>
     </div>
   )

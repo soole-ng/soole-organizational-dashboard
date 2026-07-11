@@ -113,6 +113,18 @@ function getOrgUuid(): string {
 }
 
 /**
+ * Rides - shared endpoints (rides/api/ride.py, mounted at /rides/).
+ * Only the bits the dashboard needs so far.
+ */
+export const ridesApi = {
+  /** Same bus-stop list mobile's own location search picks from - state is required. */
+  getPopularStops: async (state: string, pageSize = 100) =>
+    apiRequest<{ items: Array<{ id: string; name: string; address: string | null; longitude: number | null; latitude: number | null; state: string | null }> }>(
+      `/rides/retrieve-popular-stops?state=${encodeURIComponent(state)}&page=1&page_size=${pageSize}`,
+    ),
+}
+
+/**
  * Organization core (organization/api.py)
  */
 export const orgApi = {
@@ -659,6 +671,7 @@ export const apiClient = {
   organization: organizationApi,
   reports: reportsApi,
   money: moneyApi,
+  rides: ridesApi,
   vehicles: vehiclesApi,
   drivers: driversApi,
   tracking: trackingApi,

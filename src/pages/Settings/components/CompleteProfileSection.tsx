@@ -28,7 +28,7 @@ export function CompleteProfileSection({ orgUuid, verificationStatus = 'incomple
 
     setUploadingCac(true)
     try {
-      const publicUrl = await uploadApi.uploadFile(file, 'cac_document')
+      const publicUrl = await uploadApi.uploadFile(file, 'company_cert')
       setCacUrl(publicUrl)
       setCacFileName(file.name)
     } catch (err: any) {
@@ -47,6 +47,23 @@ export function CompleteProfileSection({ orgUuid, verificationStatus = 'incomple
     if (nin.length !== 11 || !/^\d{11}$/.test(nin)) {
       toast.error('NIN must be exactly 11 digits')
       return
+    }
+
+    if (rcNumber.length !== 9) {
+      toast.error('CAC Registration Number must be exactly 9 characters')
+      return
+    }
+
+    const today = new Date();
+    const dobDate = new Date(dob);
+    let age = today.getFullYear() - dobDate.getFullYear();
+    const m = today.getMonth() - dobDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      toast.error('You must be at least 18 years old');
+      return;
     }
 
     setLoading(true)
@@ -126,6 +143,7 @@ export function CompleteProfileSection({ orgUuid, verificationStatus = 'incomple
           <input
             type="date"
             value={dob}
+            max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
             onChange={e => setDob(e.target.value)}
             className="w-full h-[44px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
           />
@@ -139,6 +157,7 @@ export function CompleteProfileSection({ orgUuid, verificationStatus = 'incomple
           <input
             type="text"
             value={rcNumber}
+            maxLength={9}
             onChange={e => setRcNumber(e.target.value)}
             className="w-full h-[44px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
             placeholder="CAC registration number"

@@ -86,10 +86,11 @@ export function BusinessProfile({ executeSecuredAction, onSave }: BusinessProfil
           </label>
           <input
             type="tel"
+            maxLength={10}
             value={org.phone || ''}
-            onChange={(e) => updateOrg({ phone: e.target.value })}
+            onChange={(e) => updateOrg({ phone: e.target.value.replace(/\D/g, '') })}
             className="input-field bg-white"
-            placeholder="+234 803 123 4567"
+            placeholder="803 123 4567"
           />
         </div>
 
@@ -120,9 +121,9 @@ export function BusinessProfile({ executeSecuredAction, onSave }: BusinessProfil
             })
           }}
           disabled={saving}
-          className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60"
+          className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
         >
-          {saving ? 'Saving…' : 'Save Profile Changes'}
+          {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</> : 'Save Profile Changes'}
         </button>
       </div>
     </div>

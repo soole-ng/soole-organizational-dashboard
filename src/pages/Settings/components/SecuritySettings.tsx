@@ -180,9 +180,9 @@ export function SecuritySettings() {
             <button
               onClick={handleSave}
               disabled={saving || (questionChoice === CUSTOM_SECURITY_QUESTION_OPTION && !customQuestion.trim()) || !answer.trim()}
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60"
+              className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              {saving ? 'Saving…' : configured ? 'Update Security Question' : 'Save Security Question'}
+              {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</> : configured ? 'Update Security Question' : 'Save Security Question'}
             </button>
           </div>
         </div>
@@ -232,9 +232,9 @@ export function SecuritySettings() {
               <button
                 onClick={handleReverify}
                 disabled={reverifying || !reverifyAnswer.trim()}
-                className="px-4 py-2 bg-primary-500 hover:bg-primary-400 disabled:opacity-60 text-xs font-semibold rounded-xl text-white transition-colors"
+                className="px-4 py-2 bg-primary-500 hover:bg-primary-400 disabled:opacity-60 text-xs font-semibold rounded-xl text-white transition-colors flex items-center justify-center gap-2"
               >
-                {reverifying ? 'Verifying…' : 'Confirm'}
+                {reverifying ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Verifying…</> : 'Confirm'}
               </button>
             </div>
           </div>

@@ -481,7 +481,9 @@ export function AddVehiclePage() {
                   navigate('/fleet/vehicles')
                 }}
               >
-                {isSubmitting ? (submitProgress || 'Submitting...') : 'Submit Vehicle'}
+                {isSubmitting ? (
+                  <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> {submitProgress || 'Submitting...'}</>
+                ) : 'Submit Vehicle'}
               </button>
               <p className="text-[10px] text-neutral-300 text-center mt-2">
                 Your vehicle photos and documents will be uploaded and remain pending until verified by our team.

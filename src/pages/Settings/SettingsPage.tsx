@@ -324,9 +324,9 @@ export function SettingsPage() {
               <button
                 onClick={handleConfirmPin}
                 disabled={verifyingPin || pinValue.length !== 8}
-                className="px-4 py-2 bg-primary-500 hover:bg-primary-400 disabled:opacity-60 text-xs font-semibold rounded-xl text-white transition-colors"
+                className="px-4 py-2 bg-primary-500 hover:bg-primary-400 disabled:opacity-60 text-xs font-semibold rounded-xl text-white transition-colors flex items-center justify-center gap-2"
               >
-                {verifyingPin ? 'Verifying…' : 'Confirm'}
+                {verifyingPin ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Verifying…</> : 'Confirm'}
               </button>
             </div>
           </div>

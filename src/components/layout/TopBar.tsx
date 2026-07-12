@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react'
 import { useOrg } from '../../lib/OrgContext'
 import { authApi } from '../../api/client'
 import { notifyDataChanged } from '../../lib/useApiData'
+import { ConfirmDialog } from '../ui/ConfirmDialog'
 import toast from 'react-hot-toast'
 
 interface TopBarProps {
@@ -51,6 +52,8 @@ export function TopBar({
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [installed, setInstalled] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
 
   // Retrieve notifications from outlet context if props aren't explicitly passed
   let outletContext: any = null
@@ -107,7 +110,17 @@ export function TopBar({
     setTimeout(() => setRefreshing(false), 700)
   }
 
+  const confirmDoSignOut = async () => {
+    setSigningOut(true)
+    await authApi.logout()
+    setConfirmSignOut(false)
+    setSigningOut(false)
+    toast.success('Signed out successfully')
+    navigate('/login')
+  }
+
   return (
+    <>
     <header
       className={clsx(
         'sticky top-0 z-30 flex items-center h-14 px-4 gap-3 lg:hidden safe-top',
@@ -197,14 +210,7 @@ export function TopBar({
 
         {/* Sign Out Button */}
         <button
-          onClick={async () => {
-            const confirmLogout = window.confirm('Are you sure you want to sign out?')
-            if (confirmLogout) {
-              await authApi.logout()
-              toast.success('Signed out successfully')
-              navigate('/login')
-            }
-          }}
+          onClick={() => setConfirmSignOut(true)}
           className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-danger-300 animate-pulse-subtle"
           aria-label="Sign out"
         >
@@ -212,6 +218,18 @@ export function TopBar({
         </button>
       </div>
     </header>
+
+    <ConfirmDialog
+      open={confirmSignOut}
+      title="Sign out?"
+      description="You will be signed out of your Soole dashboard. Any unsaved changes will be lost."
+      confirmLabel={signingOut ? 'Signing out…' : 'Sign out'}
+      cancelLabel="Stay"
+      loading={signingOut}
+      onConfirm={confirmDoSignOut}
+      onCancel={() => setConfirmSignOut(false)}
+    />
+    </>
   )
 }
 

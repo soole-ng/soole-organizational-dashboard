@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import { useApiData, invalidateApiDataCache } from '../../lib/useApiData'
 import { useOrg } from '../../lib/OrgContext'
 import { vehiclesApi } from '../../api/client'
@@ -28,19 +29,24 @@ export function VehiclesPage() {
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
   const [deletingVehicleId, setDeletingVehicleId] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; plate: string } | null>(null)
   // Matches the backend's own gate (organization_vehicles_api.py's
   // delete_vehicle requires OWNER or ADMIN/"finance" role).
   const canChangeVehicleStatus = org.role === 'owner' || org.role === 'finance'
 
-  const handleDeleteVehicle = async (vehicleId: string, plate: string) => {
-    if (!orgUuid) return
-    if (!window.confirm(`Delete vehicle ${plate}? This cannot be undone.`)) return
-    setDeletingVehicleId(vehicleId)
+  const handleDeleteVehicle = (vehicleId: string, plate: string) => {
+    setPendingDelete({ id: vehicleId, plate })
+  }
+
+  const confirmDeleteVehicle = async () => {
+    if (!orgUuid || !pendingDelete) return
+    setDeletingVehicleId(pendingDelete.id)
     try {
-      await vehiclesApi.deleteVehicle(orgUuid, vehicleId)
+      await vehiclesApi.deleteVehicle(orgUuid, pendingDelete.id)
       toast.success('Vehicle deleted')
       invalidateApiDataCache()
       refetch()
+      setPendingDelete(null)
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to delete vehicle')
     } finally {
@@ -231,6 +237,17 @@ export function VehiclesPage() {
           onClose={() => setHistoryVehicle(null)}
         />
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Delete vehicle?"
+        description={pendingDelete ? `Delete vehicle ${pendingDelete.plate}? This cannot be undone.` : ''}
+        confirmLabel={deletingVehicleId ? 'Deleting…' : 'Delete'}
+        cancelLabel="Cancel"
+        loading={deletingVehicleId !== null}
+        onConfirm={confirmDeleteVehicle}
+        onCancel={() => setPendingDelete(null)}
+      />
 
     </div>
   )

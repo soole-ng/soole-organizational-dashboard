@@ -15,26 +15,18 @@ import { clsx } from 'clsx'
 type BusStop = { id: string; name: string; address: string | null; longitude: number | null; latitude: number | null; state: string | null }
 
 /**
- * bustops_table is externally populated and stores the FCT's stops under
- * the city name "Abuja", not the canonical NigerianState value "FCT" the
- * Pickup/Dropoff State <select> options use - setting originState/
- * destinationState straight from a stop's raw `state` field to "Abuja"
- * left the <select> matching no <option>, so it visually snapped back to
- * "Select state" even though the underlying form value wasn't actually
- * empty. Normalize before it ever reaches form state.
- */
-function normalizeStateForDropdown(state: string | null): string {
-  if (!state) return ''
-  return state.trim().toLowerCase() === 'abuja' ? 'FCT' : state
-}
-
-/**
  * Searches the same bus-stop list (rides/retrieve-popular-stops) mobile's
  * own driver/passenger location search picks from. Scoped to `state` once
- * one's picked (the picker above this field) so results are actually stops
- * in that state rather than a nationwide list - selecting a stop still
- * carries its own `state` field through as the source of truth for
- * origin_state/destination_state, in case of an FCT/Abuja-style mismatch.
+ * one's picked (the picker above this field), so results are already
+ * guaranteed to be stops in that state - selecting a stop deliberately
+ * does NOT touch originState/destinationState. bustops_table is externally
+ * populated and doesn't reliably store state names in the canonical form
+ * the Pickup/Dropoff State <select> options use (e.g. "Abuja" instead of
+ * "FCT", or a different casing/suffix for other states like Lagos) -
+ * overwriting the dropdown's already-valid selected value with that raw,
+ * possibly-differently-formatted string is exactly what caused the
+ * <select> to visually snap back to "Select state" (it matched no
+ * <option>) even though a value had genuinely been picked.
  */
 function BusStopSearchInput({
   value, onChange, onSelectStop, placeholder, state,
@@ -175,15 +167,16 @@ export function TripCreatePage() {
   const set = (key: string, val: string | number) =>
     setForm(p => ({ ...p, [key]: val }))
 
-  // Selecting a stop still carries its own state through as the source of
-  // truth (covers an FCT/Abuja-style mismatch), but since the search
-  // itself is already scoped to the chosen state, this normally just
-  // reaffirms it.
+  // Deliberately does not touch originState/destinationState - the search
+  // that produced `stop` was already scoped to the state picked above, so
+  // the dropdown's value is already correct. See the comment above
+  // BusStopSearchInput for why overwriting it from the stop's own raw
+  // `state` field is exactly what broke this before.
   const selectPickupStop = (stop: BusStop) =>
-    setForm(p => ({ ...p, pickupLocation: stop.name, originState: normalizeStateForDropdown(stop.state) || p.originState, originLat: stop.latitude, originLng: stop.longitude }))
+    setForm(p => ({ ...p, pickupLocation: stop.name, originLat: stop.latitude, originLng: stop.longitude }))
 
   const selectDropoffStop = (stop: BusStop) =>
-    setForm(p => ({ ...p, dropoffLocation: stop.name, destinationState: normalizeStateForDropdown(stop.state) || p.destinationState, destinationLat: stop.latitude, destinationLng: stop.longitude }))
+    setForm(p => ({ ...p, dropoffLocation: stop.name, destinationLat: stop.latitude, destinationLng: stop.longitude }))
 
   // Manually editing the text after picking a stop means it no longer
   // corresponds to that stop's coordinates - drop those, but keep the

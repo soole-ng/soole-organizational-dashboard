@@ -4,8 +4,8 @@ import { Calculator, ChevronDown, MapPin } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { formatMoney } from '../../lib/formatters'
 import { useOrg } from '../../lib/OrgContext'
-import { vehiclesApi, driversApi, organizationApi, ridesApi } from '../../api/client'
-import { adaptVehicle, adaptDriverIdentity } from '../../lib/adapters'
+import { vehiclesApi, fleetApi, organizationApi, ridesApi } from '../../api/client'
+import { adaptVehicle, adaptFleetDriver } from '../../lib/adapters'
 import { invalidateApiDataCache } from '../../lib/useApiData'
 import { NIGERIAN_STATES } from '../../lib/constants'
 import toast from 'react-hot-toast'
@@ -120,7 +120,7 @@ export function TripCreatePage() {
   const [showCalc, setShowCalc] = useState(true)
   const [publishing, setPublishing] = useState(false)
   const [vehiclesList, setVehiclesList] = useState<ReturnType<typeof adaptVehicle>[]>([])
-  const [driversList, setDriversList] = useState<ReturnType<typeof adaptDriverIdentity>[]>([])
+  const [driversList, setDriversList] = useState<ReturnType<typeof adaptFleetDriver>[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -129,11 +129,18 @@ export function TripCreatePage() {
 
     Promise.all([
       vehiclesApi.getVehicles(orgUuid).catch(() => ({ vehicles: [] })),
-      driversApi.getDrivers(orgUuid).catch(() => []),
-    ]).then(([vehiclesRes, driversRaw]: [any, any[]]) => {
+      // fleetApi.getDrivers (not driversApi's thinner org_trip_api list) -
+      // it's the one that actually carries KYC-derived verification status
+      // (see fleet/api/core.py's get_driver_status), which is what a driver
+      // must have to be assignable to a trip - same bar as the vehicle
+      // dropdown already enforces via its own 'verified' filter below.
+      fleetApi.getDrivers(orgUuid, { limit: 100 }).catch(() => ({ drivers: [], pagination: { page: 1, limit: 100, total: 0, pages: 0 } })),
+    ]).then(([vehiclesRes, driversRes]: [any, any]) => {
       if (cancelled) return
       const vehicles = (vehiclesRes.vehicles || []).map(adaptVehicle)
-      const drivers = (driversRaw || []).map(adaptDriverIdentity)
+      const drivers = (driversRes.drivers || [])
+        .map(adaptFleetDriver)
+        .filter((d: any) => d.status === 'verified' && !d.isPendingInvite)
       setVehiclesList(vehicles)
       setDriversList(drivers)
       setForm(f => ({

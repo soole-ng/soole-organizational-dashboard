@@ -105,15 +105,16 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
   const filteredGroups = navGroups.map(group => {
     const items = group.items.filter(item => {
       if (userRole === 'finance') {
-        return ['/money', '/settings', '/help'].includes(item.to)
+        return ['/money', '/reports', '/settings', '/help'].includes(item.to)
       } else if (userRole === 'viewer') {
-        // Admin is a management console (edit/cancel trips) - RoleGuard
-        // already blocks viewer from the route itself, but a nav link
-        // that just bounces back with an error toast is bad UX, so hide
-        // it here too.
-        return item.to !== '/money' && item.to !== '/admin'
+        // Admin is a management console (edit/cancel trips), and Money/
+        // Reports now require owner/finance on the backend - RoleGuard
+        // already blocks viewer from these routes, but a nav link that
+        // just bounces back with an error toast is bad UX, so hide it
+        // here too.
+        return !['/money', '/reports', '/admin'].includes(item.to)
       } else if (userRole === 'manager') {
-        return item.to !== '/money'
+        return !['/money', '/reports'].includes(item.to)
       }
       return true
     })

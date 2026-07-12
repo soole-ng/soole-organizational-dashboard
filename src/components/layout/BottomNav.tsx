@@ -31,7 +31,7 @@ export function BottomNav({ unreadCount = 0, onOpenNotifications }: BottomNavPro
   const filteredTabs = tabs.filter(tab => {
     if (userRole === 'finance') {
       return ['/money'].includes(tab.to)
-    } else if (userRole === 'dispatcher') {
+    } else if (userRole === 'manager' || userRole === 'viewer') {
       return tab.to !== '/money'
     }
     return true

@@ -146,6 +146,11 @@ export function SettingsPage() {
     fetchPendingInvitations()
   }, [fetchPendingInvitations])
 
+  // Bank account details are owner/finance-only on the backend now (see
+  // GET /{org}/bank-accounts/) - hiding this section for other roles keeps
+  // the UI from opening a tab that just 403s.
+  const canViewPayoutSettings = org.role === 'owner' || org.role === 'finance'
+
   const sections = [
     ...(org.verificationStatus === 'incomplete' ? [
       { icon: AlertTriangle, label: 'Complete Business Verification', desc: 'Add NIN, DOB, RC number, and CAC certificate', priority: true }
@@ -154,7 +159,9 @@ export function SettingsPage() {
     // Active members only - pendingInvitations are shown in the team list
     // itself but shouldn't inflate this "N members" count.
     { icon: Users, label: 'Organization Team', desc: `${members.length} members`, badge: members.length },
-    { icon: Wallet, label: 'Payout Settings', desc: 'Bank account and payout schedule' },
+    ...(canViewPayoutSettings ? [
+      { icon: Wallet, label: 'Payout Settings', desc: 'Bank account and payout schedule' },
+    ] : []),
     { icon: ShieldCheck, label: 'Security Question', desc: 'Required to withdraw funds' },
     { icon: Bell, label: 'Notifications', desc: 'Alerts and notification channels' },
     { icon: AlertTriangle, label: 'Alert Settings', desc: 'Speed limits and custom fleet safety alerts' },

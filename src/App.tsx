@@ -57,7 +57,7 @@ export default function App() {
         <Route path="/admin" element={<RoleGuard allowedRoles={['owner', 'manager']}><AdminPage /></RoleGuard>} />
         <Route path="/live-map" element={<LiveMapPage />} />
         <Route path="/ai" element={<AIChatPage />} />
-        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/reports" element={<RoleGuard allowedRoles={['owner', 'finance']}><ReportsPage /></RoleGuard>} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/help" element={<HelpPage />} />
 

@@ -8,6 +8,7 @@ import { vehiclesApi, fleetApi, organizationApi, ridesApi } from '../../api/clie
 import { adaptVehicle, adaptFleetDriver } from '../../lib/adapters'
 import { invalidateApiDataCache } from '../../lib/useApiData'
 import { NIGERIAN_STATES } from '../../lib/constants'
+import { calculateSooleCommission, grossFareForDesiredNet } from '../../lib/commission'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
 
@@ -97,10 +98,7 @@ function BusStopSearchInput({
 
 export function TripCreatePage() {
   const navigate = useNavigate()
-  const { orgUuid, org } = useOrg()
-  // Fraction (e.g. 0.1), sourced from the org's real commission_rate
-  // (see OrgContext) - never hardcoded here.
-  const commissionRate = org.commissionPct / 100
+  const { orgUuid } = useOrg()
   const [form, setForm] = useState({
     pickupLocation: '',
     dropoffLocation: '',
@@ -208,9 +206,9 @@ export function TripCreatePage() {
     // charge passengers - price_per_seat must be the fare grossed up so
     // that, after Soole's commission is deducted, the org actually nets
     // form.fare. Previously form.fare was sent as-is, so passengers were
-    // charged the net figure directly and the org received commissionRate
-    // less than they intended.
-    const passengerFarePerSeat = Math.round(form.fare / (1 - commissionRate))
+    // charged the net figure directly and the org received less than they
+    // intended.
+    const passengerFarePerSeat = grossFareForDesiredNet(form.fare)
 
     setPublishing(true)
     try {
@@ -375,7 +373,7 @@ export function TripCreatePage() {
               </button>
             </div>
             <p className="text-[11px] text-neutral-200 mb-2 leading-relaxed">
-              Enter the amount you normally charge for the trip. Soole's {org.commissionPct}% commission will be automatically added to this to determine the final passenger fare.
+              Enter the amount you want to net per seat. Soole's commission (10% up to ₦20,000, a flat ₦2,500 above that) will be added on top to determine the final passenger fare.
             </p>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-neutral-200">NGN</span>
@@ -400,10 +398,9 @@ export function TripCreatePage() {
             {showCalc && (() => {
               const capacity = selectedVehicle?.capacity || 14
               const netPerSeat = form.fare
-              // Grossed up (not netPerSeat * (1 + rate)) so that
-              // passengerFare * (1 - commissionRate) === netPerSeat exactly
-              // - matches what handlePublish actually sends.
-              const passengerFare = Math.round(netPerSeat / (1 - commissionRate))
+              // Grossed up so that passengerFare - calculateSooleCommission(passengerFare)
+              // === netPerSeat - matches what handlePublish actually sends.
+              const passengerFare = grossFareForDesiredNet(netPerSeat)
               const totalNet = netPerSeat * capacity
 
               return (

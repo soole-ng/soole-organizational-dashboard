@@ -92,9 +92,10 @@ export function CompleteProfileSection({ orgUuid, verificationStatus = 'incomple
         <div className="flex items-start gap-3">
           <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-black text-green-900">Profile Complete</h3>
+            <h3 className="font-black text-green-900">Profile Submitted</h3>
             <p className="text-sm text-green-700 mt-1">
-              Your organization profile is verified. You now have full access to all features.
+              Your NIN, date of birth, and CAC document are submitted and awaiting review by our team.
+              You'll be notified once your organization is approved.
             </p>
           </div>
         </div>

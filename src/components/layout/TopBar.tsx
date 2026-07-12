@@ -3,12 +3,13 @@
  * Shows Soole branding, current page, notification bell with badge, PWA install prompt.
  * ≤ 400 lines
  */
-import { Power, ChevronLeft, Bell, Sparkles } from 'lucide-react'
+import { Power, ChevronLeft, Bell, Sparkles, RefreshCw } from 'lucide-react'
 import { useNavigate, useLocation, useOutletContext } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { useState, useEffect } from 'react'
 import { useOrg } from '../../lib/OrgContext'
 import { authApi } from '../../api/client'
+import { notifyDataChanged } from '../../lib/useApiData'
 import toast from 'react-hot-toast'
 
 interface TopBarProps {
@@ -49,6 +50,7 @@ export function TopBar({
   const resolvedTitle = title ?? pageTitles[pathname] ?? 'Soole'
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [installed, setInstalled] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
   // Retrieve notifications from outlet context if props aren't explicitly passed
   let outletContext: any = null
@@ -95,6 +97,14 @@ export function TopBar({
 
   const handleTriggerTour = () => {
     window.dispatchEvent(new CustomEvent('start-soole-tour'))
+  }
+
+  const handleRefresh = () => {
+    if (refreshing) return
+    setRefreshing(true)
+    notifyDataChanged()
+    toast.success('Dashboard refreshed')
+    setTimeout(() => setRefreshing(false), 700)
   }
 
   return (
@@ -151,6 +161,16 @@ export function TopBar({
             Install
           </button>
         )}
+
+        {/* Refresh Button */}
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-primary-500 disabled:opacity-60"
+          aria-label="Refresh dashboard data"
+        >
+          <RefreshCw className={clsx('w-5 h-5', refreshing && 'animate-spin')} strokeWidth={1.8} />
+        </button>
 
         {/* Alerts (Bell) Button */}
         <button

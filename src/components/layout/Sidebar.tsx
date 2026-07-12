@@ -11,13 +11,14 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Home, Route, Map, Users, Car, Wallet, BarChart2,
   Settings, HelpCircle, Power, MessageSquare, Bell,
-  ChevronRight, Upload, Sparkles, ShieldCheck,
+  ChevronRight, Upload, Sparkles, ShieldCheck, RefreshCw,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useState, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { useOrg, orgInitials } from '../../lib/OrgContext'
 import { authApi } from '../../api/client'
+import { notifyDataChanged } from '../../lib/useApiData'
 
 interface NavItem {
   to: string
@@ -98,7 +99,16 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
   const { org, updateOrg } = useOrg()
   const [signingOut, setSigningOut] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
+
+  const handleRefresh = () => {
+    if (refreshing) return
+    setRefreshing(true)
+    notifyDataChanged()
+    toast.success('Dashboard refreshed')
+    setTimeout(() => setRefreshing(false), 700)
+  }
 
   const userRole = org.role
 
@@ -170,6 +180,17 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
 
         {/* Action buttons */}
         <div className="flex items-center gap-3">
+          {/* Refresh */}
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/10 text-white/80 transition-colors disabled:opacity-60"
+            title="Refresh dashboard data"
+            aria-label="Refresh dashboard data"
+          >
+            <RefreshCw className={clsx('w-4 h-4', refreshing && 'animate-spin')} strokeWidth={1.8} />
+          </button>
+
           {/* Start Website Tour */}
           <button
             onClick={() => {

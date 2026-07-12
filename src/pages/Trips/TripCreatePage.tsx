@@ -15,6 +15,20 @@ import { clsx } from 'clsx'
 type BusStop = { id: string; name: string; address: string | null; longitude: number | null; latitude: number | null; state: string | null }
 
 /**
+ * bustops_table is externally populated and stores the FCT's stops under
+ * the city name "Abuja", not the canonical NigerianState value "FCT" the
+ * Pickup/Dropoff State <select> options use - setting originState/
+ * destinationState straight from a stop's raw `state` field to "Abuja"
+ * left the <select> matching no <option>, so it visually snapped back to
+ * "Select state" even though the underlying form value wasn't actually
+ * empty. Normalize before it ever reaches form state.
+ */
+function normalizeStateForDropdown(state: string | null): string {
+  if (!state) return ''
+  return state.trim().toLowerCase() === 'abuja' ? 'FCT' : state
+}
+
+/**
  * Searches the same bus-stop list (rides/retrieve-popular-stops) mobile's
  * own driver/passenger location search picks from. Scoped to `state` once
  * one's picked (the picker above this field) so results are actually stops
@@ -166,10 +180,10 @@ export function TripCreatePage() {
   // itself is already scoped to the chosen state, this normally just
   // reaffirms it.
   const selectPickupStop = (stop: BusStop) =>
-    setForm(p => ({ ...p, pickupLocation: stop.name, originState: stop.state || p.originState, originLat: stop.latitude, originLng: stop.longitude }))
+    setForm(p => ({ ...p, pickupLocation: stop.name, originState: normalizeStateForDropdown(stop.state) || p.originState, originLat: stop.latitude, originLng: stop.longitude }))
 
   const selectDropoffStop = (stop: BusStop) =>
-    setForm(p => ({ ...p, dropoffLocation: stop.name, destinationState: stop.state || p.destinationState, destinationLat: stop.latitude, destinationLng: stop.longitude }))
+    setForm(p => ({ ...p, dropoffLocation: stop.name, destinationState: normalizeStateForDropdown(stop.state) || p.destinationState, destinationLat: stop.latitude, destinationLng: stop.longitude }))
 
   // Manually editing the text after picking a stop means it no longer
   // corresponds to that stop's coordinates - drop those, but keep the
@@ -203,6 +217,10 @@ export function TripCreatePage() {
       // matches origin_state/destination_state) - picking a bus stop fills
       // this in automatically, but it's also directly selectable.
       toast.error('Select pickup and dropoff states')
+      return
+    }
+    if (!form.vehicleId) {
+      toast.error('Select a vehicle')
       return
     }
     if (!form.driverId) {
@@ -265,7 +283,7 @@ export function TripCreatePage() {
               stop search below to stops actually in that state */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Pickup State</label>
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Pickup State <span className="text-red-500">*</span></label>
               <div className="relative">
                 <select
                   value={form.originState}
@@ -280,7 +298,7 @@ export function TripCreatePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Dropoff State</label>
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Dropoff State <span className="text-red-500">*</span></label>
               <div className="relative">
                 <select
                   value={form.destinationState}
@@ -300,7 +318,7 @@ export function TripCreatePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" /> Pickup Location
+                <MapPin className="w-3.5 h-3.5" /> Pickup Location <span className="text-red-500">*</span>
               </label>
               <BusStopSearchInput
                 value={form.pickupLocation}
@@ -313,7 +331,7 @@ export function TripCreatePage() {
 
             <div>
               <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" /> Dropoff Location
+                <MapPin className="w-3.5 h-3.5" /> Dropoff Location <span className="text-red-500">*</span>
               </label>
               <BusStopSearchInput
                 value={form.dropoffLocation}
@@ -328,7 +346,7 @@ export function TripCreatePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Vehicle selection */}
             <div>
-              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Vehicle</label>
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Vehicle <span className="text-red-500">*</span></label>
               <div className="relative">
                 <select
                   value={form.vehicleId}
@@ -349,7 +367,7 @@ export function TripCreatePage() {
 
             {/* Driver selection */}
             <div>
-              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Driver</label>
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Driver <span className="text-red-500">*</span></label>
               <div className="relative">
                 <select
                   value={form.driverId}
@@ -371,7 +389,7 @@ export function TripCreatePage() {
 
           {/* Departure */}
           <div>
-            <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure Date & Time</label>
+            <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure Date & Time <span className="text-red-500">*</span></label>
             <input
               type="datetime-local"
               value={form.departureAt}
@@ -382,7 +400,7 @@ export function TripCreatePage() {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-xs font-semibold text-primary-400">Desired Net Payout per seat</label>
+              <label className="text-xs font-semibold text-primary-400">Desired Net Payout per seat <span className="text-red-500">*</span></label>
               <button
                 onClick={() => setShowCalc(!showCalc)}
                 className="flex items-center gap-1 text-xs text-secondary-300 font-medium"

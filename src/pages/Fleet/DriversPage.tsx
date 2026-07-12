@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Phone, Award, Users, RefreshCw, Loader2 } from 'lucide-react'
+import { Plus, Phone, Award, Users, RefreshCw, Loader2, X, Star } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { useApiData, invalidateApiDataCache } from '../../lib/useApiData'
@@ -30,6 +30,10 @@ export function DriversPage() {
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null)
   const [resendingId, setResendingId] = useState<string | null>(null)
   const [statusChangingId, setStatusChangingId] = useState<string | null>(null)
+  const [removingDriver, setRemovingDriver] = useState<{ id: string; name: string } | null>(null)
+  const [removeReason, setRemoveReason] = useState('')
+  const [removeRating, setRemoveRating] = useState(0)
+  const [removeSubmitting, setRemoveSubmitting] = useState(false)
   // Matches the backend's own gate (org_trip_api.py's suspend/reinstate
   // both require OWNER or ADMIN/"finance" role).
   const canChangeDriverStatus = org.role === 'owner' || org.role === 'finance'
@@ -50,26 +54,31 @@ export function DriversPage() {
   }
 
   const removeDriver = (driverId: string, driverName: string) => {
-    guardAction(undefined, async () => {
-      if (!orgUuid) return
-      const reason = window.prompt(`Why are you removing ${driverName} from the company? This cannot be undone.`)
-      if (reason === null) return
-      if (!reason.trim()) {
-        toast.error('A reason is required to remove a driver')
-        return
-      }
-      setStatusChangingId(driverId)
-      try {
-        await driversApi.removeDriver(orgUuid, driverId, reason.trim())
-        toast.success(`${driverName} has been removed`)
-        invalidateApiDataCache()
-        refetch()
-      } catch (err: any) {
-        toast.error(err?.message ?? 'Failed to remove driver')
-      } finally {
-        setStatusChangingId(null)
-      }
+    guardAction(undefined, () => {
+      setRemoveReason('')
+      setRemoveRating(0)
+      setRemovingDriver({ id: driverId, name: driverName })
     })
+  }
+
+  const confirmRemoveDriver = async () => {
+    if (!orgUuid || !removingDriver) return
+    if (!removeReason.trim()) {
+      toast.error('A reason is required to remove a driver')
+      return
+    }
+    setRemoveSubmitting(true)
+    try {
+      await driversApi.removeDriver(orgUuid, removingDriver.id, removeReason.trim(), removeRating || undefined)
+      toast.success(`${removingDriver.name} has been removed`)
+      invalidateApiDataCache()
+      refetch()
+      setRemovingDriver(null)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to remove driver')
+    } finally {
+      setRemoveSubmitting(false)
+    }
   }
 
   const reinstateDriver = (driverId: string, driverName: string) => {
@@ -299,6 +308,73 @@ export function DriversPage() {
       {/* Invite Center Dialog Popup */}
       {showAddSheet && (
         <InviteDriverModal onClose={() => setShowAddSheet(false)} />
+      )}
+
+      {/* Remove Driver Modal — reason (required) + exit rating (optional) */}
+      {removingDriver && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-card w-full max-w-md p-6 shadow-float relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setRemovingDriver(null)}
+              className="absolute right-4 top-4 text-neutral-200 hover:text-primary-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-base font-bold text-primary-500 mb-1">Remove {removingDriver.name}?</h3>
+            <p className="text-xs text-neutral-200 mb-4">This permanently removes them from your driver roster and cannot be undone.</p>
+
+            <label className="block text-xs font-semibold text-primary-400 mb-1.5">Why are you removing this driver?</label>
+            <textarea
+              value={removeReason}
+              onChange={e => setRemoveReason(e.target.value)}
+              rows={3}
+              autoFocus
+              className="input-field bg-white resize-none"
+              placeholder="e.g. Repeated no-shows, relocating, requested by driver…"
+            />
+
+            <label className="block text-xs font-semibold text-primary-400 mb-1.5 mt-4">
+              Rate this driver's time with your company <span className="text-neutral-200 font-normal">(optional)</span>
+            </label>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map(i => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setRemoveRating(r => r === i ? 0 : i)}
+                  aria-label={`Rate ${i} star${i > 1 ? 's' : ''}`}
+                  className="p-0.5"
+                >
+                  <Star
+                    className={clsx('w-6 h-6 transition-colors', i <= removeRating ? 'text-accent fill-accent' : 'fill-white')}
+                    style={i > removeRating ? { stroke: 'rgba(0, 0, 0, 0.4)' } : undefined}
+                  />
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                className="btn-secondary flex-1"
+                onClick={() => setRemovingDriver(null)}
+                disabled={removeSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemoveDriver}
+                disabled={removeSubmitting || !removeReason.trim()}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-btn px-4 py-2.5 text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {removeSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {removeSubmitting ? 'Removing…' : 'Remove Driver'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Users, Wallet, Bell, RefreshCw, HelpCircle, ChevronRight, AlertTriangle, FileText, ShieldCheck } from 'lucide-react'
+import { Building2, Users, Wallet, Bell, RefreshCw, HelpCircle, ChevronRight, AlertTriangle, FileText, ShieldCheck, History } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { useApiData } from '../../lib/useApiData'
 import { settingsApi, authApi } from '../../api/client'
@@ -13,6 +13,7 @@ import { OrganizationTeam } from './components/OrganizationTeam'
 import { AlertSettings } from './components/AlertSettings'
 import { NotificationSettings } from './components/NotificationSettings'
 import { PayoutSettings } from './components/PayoutSettings'
+import { AuditLogSettings } from './components/AuditLogSettings'
 import { SecuritySettings } from './components/SecuritySettings'
 import { CompleteProfileSection } from './components/CompleteProfileSection'
 
@@ -161,6 +162,7 @@ export function SettingsPage() {
     { icon: Users, label: 'Organization Team', desc: `${members.length} members`, badge: members.length },
     ...(canViewPayoutSettings ? [
       { icon: Wallet, label: 'Payout Settings', desc: 'Bank account and payout schedule' },
+      { icon: History, label: 'Activity Log', desc: 'Who created, cancelled or deleted what' },
     ] : []),
     { icon: ShieldCheck, label: 'Security Question', desc: 'Required to withdraw funds' },
     { icon: Bell, label: 'Notifications', desc: 'Alerts and notification channels' },
@@ -247,6 +249,10 @@ export function SettingsPage() {
 
                     {label === 'Payout Settings' && (
                       <PayoutSettings />
+                    )}
+
+                    {label === 'Activity Log' && (
+                      <AuditLogSettings />
                     )}
 
                     {label === 'Security Question' && (

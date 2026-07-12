@@ -468,6 +468,20 @@ export const settingsApi = {
 }
 
 /**
+ * Audit log API — organization/api/audit.py, owner/finance only. Records
+ * who created/cancelled/deleted trips and vehicles, and who initiated
+ * withdrawals - see organization/services/org_services/audit.py.
+ */
+export const auditApi = {
+  getAuditLog: async (orgUuid: string, limit = 50) =>
+    apiRequest<Array<{
+      uuid: string; action: string; entity_type: string | null; entity_id: string | null
+      before: Record<string, any> | null; after: Record<string, any> | null
+      created_at: string; actor_id: string | null; actor_name: string
+    }>>(`/organizations/${orgUuid}/audit-log/?limit=${limit}`),
+}
+
+/**
  * Payments API — payments/api.py, mounted at /payment/ (shared with mobile app)
  * Used here only for real bank list + account-name verification (Paystack-backed).
  */

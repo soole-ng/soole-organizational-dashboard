@@ -117,10 +117,12 @@ function getOrgUuid(): string {
  * Only the bits the dashboard needs so far.
  */
 export const ridesApi = {
-  /** Same bus-stop list mobile's own location search picks from - state is required. */
-  getPopularStops: async (state: string, pageSize = 100) =>
+  /** Same bus-stop list mobile's own location search picks from. Searches
+   * by name alone - no state has to be picked first, the matched stop's
+   * own `state` field is the source of truth. */
+  searchPopularStops: async (search: string, pageSize = 20) =>
     apiRequest<{ items: Array<{ id: string; name: string; address: string | null; longitude: number | null; latitude: number | null; state: string | null }> }>(
-      `/rides/retrieve-popular-stops?state=${encodeURIComponent(state)}&page=1&page_size=${pageSize}`,
+      `/rides/retrieve-popular-stops?search=${encodeURIComponent(search)}&page=1&page_size=${pageSize}`,
     ),
 }
 

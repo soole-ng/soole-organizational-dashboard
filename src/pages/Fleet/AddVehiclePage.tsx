@@ -23,6 +23,13 @@ const DOC_TYPE_BY_KEY: Record<string, string> = {
 
 const colors = ['White', 'Black', 'Silver', 'Grey', 'Blue', 'Red', 'Gold', 'Other']
 
+/** Nigerian plate format: 3 letters, dash, 3 digits, 2 letters (e.g. ABC-123DE). */
+function formatPlateNumber(raw: string): string {
+  const clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8)
+  if (clean.length <= 3) return clean
+  return `${clean.slice(0, 3)}-${clean.slice(3)}`
+}
+
 const photoSteps = [
   {
     key: 'exteriorFront',
@@ -89,20 +96,15 @@ export function AddVehiclePage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitProgress, setSubmitProgress] = useState('')
+  const [submitProgressPct, setSubmitProgressPct] = useState(0)
 
   const brands = Object.keys(kVehicleMakeModels).sort()
   const models = brand && brand !== 'Other' ? kVehicleMakeModels[brand] || [] : []
 
   const handleFileUpload = async (key: string, rawFile: File) => {
-    const wasCompressible = rawFile.type.startsWith('image/') && rawFile.size > 300 * 1024
     const file = await compressImageIfNeeded(rawFile)
     const url = URL.createObjectURL(file)
     setUploads(prev => ({ ...prev, [key]: { url, file } }))
-    toast.success(
-      wasCompressible && file.size < rawFile.size
-        ? `File attached (compressed ${(rawFile.size / 1024).toFixed(0)}KB → ${(file.size / 1024).toFixed(0)}KB)`
-        : 'File attached successfully'
-    )
   }
 
   const renderStepIndicators = () => (
@@ -184,8 +186,9 @@ export function AddVehiclePage() {
                 <input
                   className="input-field uppercase"
                   placeholder="ABC-123DE"
+                  maxLength={9}
                   value={plate}
-                  onChange={e => setPlate(e.target.value.toUpperCase())}
+                  onChange={e => setPlate(formatPlateNumber(e.target.value))}
                 />
               </div>
 
@@ -433,7 +436,7 @@ export function AddVehiclePage() {
 
             <div className="mt-8">
               <button
-                className="btn-primary w-full flex justify-center items-center gap-2"
+                className="btn-primary w-full relative overflow-hidden flex justify-center items-center gap-2"
                 disabled={isSubmitting}
                 onClick={async () => {
                   if (!orgUuid) {
@@ -441,6 +444,7 @@ export function AddVehiclePage() {
                     return
                   }
                   setIsSubmitting(true)
+                  setSubmitProgressPct(0)
                   let vehicle: any = null
                   try {
                     setSubmitProgress('Registering vehicle...')
@@ -458,6 +462,7 @@ export function AddVehiclePage() {
                     toast.error(err?.message ?? 'Failed to register vehicle')
                     setIsSubmitting(false)
                     setSubmitProgress('')
+                    setSubmitProgressPct(0)
                     return
                   }
 
@@ -468,11 +473,16 @@ export function AddVehiclePage() {
                   // duplicate-plate error on retry).
                   try {
                     const entries = Object.entries(uploads).filter(([, v]) => v) as [string, { url: string; file: File }][]
+                    // +1 step for the vehicle-registration call above, so the
+                    // bar isn't sitting at 0% for that whole first request.
+                    const totalSteps = entries.length + 1
+                    setSubmitProgressPct(Math.round((1 / totalSteps) * 100))
                     for (let i = 0; i < entries.length; i++) {
                       const [key, { file }] = entries[i]
                       setSubmitProgress(`Uploading document ${i + 1} of ${entries.length}...`)
                       const publicUrl = await uploadApi.uploadFile(file, 'vehicle_document')
                       await vehiclesApi.uploadDocument(orgUuid, vehicle.id, DOC_TYPE_BY_KEY[key], publicUrl)
+                      setSubmitProgressPct(Math.round(((i + 2) / totalSteps) * 100))
                     }
                     invalidateApiDataCache()
                     toast.success('Vehicle registered and pending review!')
@@ -484,13 +494,25 @@ export function AddVehiclePage() {
                   } finally {
                     setIsSubmitting(false)
                     setSubmitProgress('')
+                    setSubmitProgressPct(0)
                   }
                   navigate('/fleet/vehicles')
                 }}
               >
-                {isSubmitting ? (
-                  <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> {submitProgress || 'Submitting...'}</>
-                ) : 'Submit Vehicle'}
+                {isSubmitting && (
+                  <span
+                    className="upload-progress-fill absolute inset-y-0 left-0 bg-white/25"
+                    style={{ width: `${Math.max(submitProgressPct, 6)}%` }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2">
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      {submitProgress || 'Submitting...'} {submitProgressPct > 0 && `(${submitProgressPct}%)`}
+                    </>
+                  ) : 'Submit Vehicle'}
+                </span>
               </button>
               <p className="text-[10px] text-neutral-300 text-center mt-2">
                 Your vehicle photos and documents will be uploaded and remain pending until verified by our team.

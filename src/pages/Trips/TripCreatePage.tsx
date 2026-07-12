@@ -16,17 +16,20 @@ type BusStop = { id: string; name: string; address: string | null; longitude: nu
 
 /**
  * Searches the same bus-stop list (rides/retrieve-popular-stops) mobile's
- * own driver/passenger location search picks from - by name alone, no
- * state has to be picked first. Selecting a stop carries its own `state`
- * field through, which is what actually backs origin_state/destination_state.
+ * own driver/passenger location search picks from. Scoped to `state` once
+ * one's picked (the picker above this field) so results are actually stops
+ * in that state rather than a nationwide list - selecting a stop still
+ * carries its own `state` field through as the source of truth for
+ * origin_state/destination_state, in case of an FCT/Abuja-style mismatch.
  */
 function BusStopSearchInput({
-  value, onChange, onSelectStop, placeholder,
+  value, onChange, onSelectStop, placeholder, state,
 }: {
   value: string
   onChange: (text: string) => void
   onSelectStop: (stop: BusStop) => void
   placeholder: string
+  state: string
 }) {
   const [stops, setStops] = useState<BusStop[]>([])
   const [loading, setLoading] = useState(false)
@@ -43,13 +46,13 @@ function BusStopSearchInput({
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       setLoading(true)
-      ridesApi.searchPopularStops(query)
+      ridesApi.searchPopularStops(query, state || undefined)
         .then(res => setStops(res.items || []))
         .catch(() => setStops([]))
         .finally(() => setLoading(false))
     }, 300)
     return () => clearTimeout(debounceRef.current)
-  }, [value])
+  }, [value, state])
 
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
@@ -66,16 +69,17 @@ function BusStopSearchInput({
         value={value}
         onChange={e => { onChange(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)}
-        placeholder={placeholder}
-        className="input-field py-2.5"
+        disabled={!state}
+        placeholder={state ? placeholder : 'Select a state first'}
+        className="input-field py-2.5 disabled:bg-neutral-50 disabled:text-neutral-200 disabled:cursor-not-allowed"
       />
-      {open && value.trim().length >= 2 && (
+      {open && state && value.trim().length >= 2 && (
         <div className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto bg-white border border-neutral-100 rounded-xl shadow-lg">
           {loading ? (
             <div className="px-3 py-2 text-xs text-neutral-300">Searching…</div>
           ) : stops.length === 0 ? (
             <div className="px-3 py-2 text-xs text-neutral-300">
-              No bus stops matching "{value.trim()}" - you can still type a custom location.
+              No bus stops in {state} matching "{value.trim()}" - you can still type a custom location.
             </div>
           ) : (
             stops.map(stop => (
@@ -157,20 +161,32 @@ export function TripCreatePage() {
   const set = (key: string, val: string | number) =>
     setForm(p => ({ ...p, [key]: val }))
 
+  // Selecting a stop still carries its own state through as the source of
+  // truth (covers an FCT/Abuja-style mismatch), but since the search
+  // itself is already scoped to the chosen state, this normally just
+  // reaffirms it.
   const selectPickupStop = (stop: BusStop) =>
-    setForm(p => ({ ...p, pickupLocation: stop.name, originState: stop.state || '', originLat: stop.latitude, originLng: stop.longitude }))
+    setForm(p => ({ ...p, pickupLocation: stop.name, originState: stop.state || p.originState, originLat: stop.latitude, originLng: stop.longitude }))
 
   const selectDropoffStop = (stop: BusStop) =>
-    setForm(p => ({ ...p, dropoffLocation: stop.name, destinationState: stop.state || '', destinationLat: stop.latitude, destinationLng: stop.longitude }))
+    setForm(p => ({ ...p, dropoffLocation: stop.name, destinationState: stop.state || p.destinationState, destinationLat: stop.latitude, destinationLng: stop.longitude }))
 
   // Manually editing the text after picking a stop means it no longer
-  // corresponds to that stop's state/coordinates - drop them rather than
-  // silently attaching them to a different location.
+  // corresponds to that stop's coordinates - drop those, but keep the
+  // state as-is (it's now picked independently, up front).
   const setPickupText = (text: string) =>
-    setForm(p => ({ ...p, pickupLocation: text, originState: '', originLat: null, originLng: null }))
+    setForm(p => ({ ...p, pickupLocation: text, originLat: null, originLng: null }))
 
   const setDropoffText = (text: string) =>
-    setForm(p => ({ ...p, dropoffLocation: text, destinationState: '', destinationLat: null, destinationLng: null }))
+    setForm(p => ({ ...p, dropoffLocation: text, destinationLat: null, destinationLng: null }))
+
+  // Changing the state invalidates whatever location was already picked
+  // for it (it belonged to the old state's search results).
+  const setOriginState = (stateValue: string) =>
+    setForm(p => ({ ...p, originState: stateValue, pickupLocation: '', originLat: null, originLng: null }))
+
+  const setDestinationState = (stateValue: string) =>
+    setForm(p => ({ ...p, destinationState: stateValue, dropoffLocation: '', destinationLat: null, destinationLng: null }))
 
   const handlePublish = async () => {
     if (!orgUuid) {
@@ -245,43 +261,15 @@ export function TripCreatePage() {
         <div className="card p-4 sm:p-5 space-y-4">
           <h2 className="text-sm font-semibold text-primary-500 hidden lg:block">Create a trip</h2>
 
-          {/* Pickup & Dropoff bus stop - searches the same stop list mobile uses */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" /> Pickup Location
-              </label>
-              <BusStopSearchInput
-                value={form.pickupLocation}
-                onChange={setPickupText}
-                onSelectStop={selectPickupStop}
-                placeholder="Search a bus stop"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" /> Dropoff Location
-              </label>
-              <BusStopSearchInput
-                value={form.dropoffLocation}
-                onChange={setDropoffText}
-                onSelectStop={selectDropoffStop}
-                placeholder="Search a bus stop"
-              />
-            </div>
-          </div>
-
-          {/* Pickup & Dropoff state - auto-filled when a bus stop is picked
-              above, but shown and editable directly too (e.g. if the
-              location was typed free-text rather than picked from search) */}
+          {/* Pickup & Dropoff state - picked first, since it scopes the bus
+              stop search below to stops actually in that state */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-primary-400 mb-1.5">Pickup State</label>
               <div className="relative">
                 <select
                   value={form.originState}
-                  onChange={e => set('originState', e.target.value)}
+                  onChange={e => setOriginState(e.target.value)}
                   className="input-field py-2.5 appearance-none pr-10"
                 >
                   <option value="">Select state</option>
@@ -296,7 +284,7 @@ export function TripCreatePage() {
               <div className="relative">
                 <select
                   value={form.destinationState}
-                  onChange={e => set('destinationState', e.target.value)}
+                  onChange={e => setDestinationState(e.target.value)}
                   className="input-field py-2.5 appearance-none pr-10"
                 >
                   <option value="">Select state</option>
@@ -304,6 +292,36 @@ export function TripCreatePage() {
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
               </div>
+            </div>
+          </div>
+
+          {/* Pickup & Dropoff bus stop - searches the same stop list mobile
+              uses, scoped to the state picked above */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" /> Pickup Location
+              </label>
+              <BusStopSearchInput
+                value={form.pickupLocation}
+                onChange={setPickupText}
+                onSelectStop={selectPickupStop}
+                placeholder="Search a bus stop"
+                state={form.originState}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" /> Dropoff Location
+              </label>
+              <BusStopSearchInput
+                value={form.dropoffLocation}
+                onChange={setDropoffText}
+                onSelectStop={selectDropoffStop}
+                placeholder="Search a bus stop"
+                state={form.destinationState}
+              />
             </div>
           </div>
 

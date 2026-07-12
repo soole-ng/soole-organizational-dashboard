@@ -41,8 +41,8 @@ export function ConfirmDialog({
         className="bg-white rounded-3xl shadow-float w-full max-w-sm mx-4 p-6 flex flex-col items-center gap-4"
         onClick={e => e.stopPropagation()}
       >
-        <div className={clsx('w-14 h-14 rounded-2xl flex items-center justify-center', danger ? 'bg-danger-50' : 'bg-primary-75')}>
-          <AlertTriangle className={clsx('w-6 h-6', danger ? 'text-danger-300' : 'text-primary-400')} />
+        <div className={clsx('w-14 h-14 rounded-2xl flex items-center justify-center', danger ? 'bg-red-50' : 'bg-primary-75')}>
+          <AlertTriangle className={clsx('w-6 h-6', danger ? 'text-red-500' : 'text-primary-400')} />
         </div>
 
         <div className="text-center">
@@ -63,7 +63,7 @@ export function ConfirmDialog({
             disabled={loading}
             className={clsx(
               'flex-1 py-3 rounded-2xl text-sm font-semibold text-white transition-colors disabled:opacity-60',
-              danger ? 'bg-danger-300 hover:bg-danger-400' : 'bg-primary-500 hover:bg-primary-400',
+              danger ? 'bg-red-500 hover:bg-red-600' : 'bg-primary-500 hover:bg-primary-400',
             )}
           >
             {loading ? 'Please wait…' : confirmLabel}

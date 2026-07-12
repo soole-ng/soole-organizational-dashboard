@@ -265,7 +265,9 @@ export function useHomeStats(): { stats: HomeStats; loading: boolean } {
   }, [])
 
   const todayStr = new Date().toDateString()
-  const todaysTrips = data.trips.filter(t => new Date(t.departureAt).toDateString() === todayStr)
+  const todaysTrips = data.trips.filter(
+    t => new Date(t.departureAt).toDateString() === todayStr && t.status !== 'cancelled',
+  )
 
   const stats: HomeStats = {
     tripsToday: todaysTrips.length,

@@ -124,8 +124,20 @@ export function TripCreatePage() {
     driverId: '',
     departureAt: '',
     fare: 5000,
+    // Optional - shown to passengers on the ride-details screen if set, but
+    // a trip with none of these touched creates no preferences record at
+    // all server-side (not a row of un-chosen defaults).
+    airConditioning: null as boolean | null,
+    smokingAllowed: null as boolean | null,
+    allowsFoodDrinks: null as boolean | null,
+    musicPreference: '',
+    maxLuggageSize: '',
+    luggageFeePerItem: '',
+    pickupGraceTimeMinutes: '',
+    additionalNotes: '',
   })
   const [showCalc, setShowCalc] = useState(true)
+  const [showPreferences, setShowPreferences] = useState(false)
   const [publishing, setPublishing] = useState(false)
   const [vehiclesList, setVehiclesList] = useState<ReturnType<typeof adaptVehicle>[]>([])
   const [driversList, setDriversList] = useState<ReturnType<typeof adaptFleetDriver>[]>([])
@@ -253,6 +265,14 @@ export function TripCreatePage() {
         departure_date: new Date(form.departureAt).toISOString(),
         total_seats: selectedVehicle?.capacity || 14,
         price_per_seat: passengerFarePerSeat,
+        air_conditioning: form.airConditioning ?? undefined,
+        smoking_allowed: form.smokingAllowed ?? undefined,
+        allows_food_drinks: form.allowsFoodDrinks ?? undefined,
+        music_preference: form.musicPreference || undefined,
+        max_luggage_size: form.maxLuggageSize || undefined,
+        luggage_fee_per_item: form.luggageFeePerItem ? Number(form.luggageFeePerItem) : undefined,
+        pickup_grace_time_minutes: form.pickupGraceTimeMinutes ? Number(form.pickupGraceTimeMinutes) : undefined,
+        additional_notes: form.additionalNotes.trim() || undefined,
       })
       invalidateApiDataCache()
       toast.success('Trip published!')
@@ -453,6 +473,123 @@ export function TripCreatePage() {
               )
             })()}
           </div>
+        </div>
+
+        <div className="card p-4 sm:p-5 space-y-4">
+          <button
+            type="button"
+            onClick={() => setShowPreferences(!showPreferences)}
+            className="w-full flex items-center justify-between text-left"
+          >
+            <div>
+              <h2 className="text-sm font-semibold text-primary-500">Trip Preferences (optional)</h2>
+              <p className="text-[11px] text-neutral-200 mt-0.5">
+                Shown to passengers on the ride details screen. Leave blank if not applicable.
+              </p>
+            </div>
+            <ChevronDown className={clsx('w-4 h-4 text-neutral-200 transition-transform flex-shrink-0', showPreferences && 'rotate-180')} />
+          </button>
+
+          {showPreferences && (
+            <div className="space-y-4 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {([
+                  ['airConditioning', 'Air Conditioning'],
+                  ['smokingAllowed', 'Smoking Allowed'],
+                  ['allowsFoodDrinks', 'Food & Drinks Allowed'],
+                ] as const).map(([key, label]) => (
+                  <div key={key}>
+                    <label className="block text-xs font-semibold text-primary-400 mb-1.5">{label}</label>
+                    <div className="relative">
+                      <select
+                        value={form[key] === null ? '' : form[key] ? 'yes' : 'no'}
+                        onChange={e => setForm(p => ({ ...p, [key]: e.target.value === '' ? null : e.target.value === 'yes' }))}
+                        className="input-field py-2.5 appearance-none pr-10"
+                      >
+                        <option value="">Not set</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-primary-400 mb-1.5">Music Preference</label>
+                  <div className="relative">
+                    <select
+                      value={form.musicPreference}
+                      onChange={e => set('musicPreference', e.target.value)}
+                      className="input-field py-2.5 appearance-none pr-10"
+                    >
+                      <option value="">Not set</option>
+                      <option value="none">No Music</option>
+                      <option value="soft">Soft/Background Music</option>
+                      <option value="upbeat">Upbeat</option>
+                      <option value="gbedu">Gbedu</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-primary-400 mb-1.5">Max Luggage Size</label>
+                  <div className="relative">
+                    <select
+                      value={form.maxLuggageSize}
+                      onChange={e => set('maxLuggageSize', e.target.value)}
+                      className="input-field py-2.5 appearance-none pr-10"
+                    >
+                      <option value="">Not set</option>
+                      <option value="small">Small (Backpack/Handbag)</option>
+                      <option value="medium">Medium (Suitcase)</option>
+                      <option value="large">Large (Multiple Suitcases)</option>
+                      <option value="xl">Extra Large (Cargo)</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-primary-400 mb-1.5">Luggage Fee Per Item (NGN)</label>
+                  <input
+                    type="text"
+                    value={form.luggageFeePerItem}
+                    onChange={e => set('luggageFeePerItem', e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="0"
+                    className="input-field py-2.5"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-primary-400 mb-1.5">Pickup Grace Time (minutes)</label>
+                  <input
+                    type="text"
+                    value={form.pickupGraceTimeMinutes}
+                    onChange={e => set('pickupGraceTimeMinutes', e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="10"
+                    className="input-field py-2.5"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Additional Notes</label>
+                <textarea
+                  value={form.additionalNotes}
+                  onChange={e => set('additionalNotes', e.target.value)}
+                  rows={2}
+                  maxLength={500}
+                  placeholder="Anything else passengers should know"
+                  className="input-field py-2.5 resize-none"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="pt-2">

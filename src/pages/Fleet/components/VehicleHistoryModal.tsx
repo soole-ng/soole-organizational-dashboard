@@ -49,7 +49,7 @@ export function VehicleHistoryModal({ historyVehicle, vehicleTrips, onClose }: V
               >
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <p className="text-sm font-bold text-black leading-snug">
-                    {trip.origin} → {trip.destination}
+                    {trip.origin}{trip.originState ? `, ${trip.originState}` : ''} → {trip.destination}{trip.destinationState ? `, ${trip.destinationState}` : ''}
                   </p>
                   <StatusPill status={trip.status} size="sm" />
                 </div>

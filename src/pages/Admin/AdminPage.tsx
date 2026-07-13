@@ -131,7 +131,7 @@ export function AdminPage() {
                       <tr key={trip.id} className="hover:bg-neutral-50/60 transition-colors">
                         <td className="px-4 py-3">
                           <Link to={`/trips/${trip.id}`} className="font-semibold text-primary-500 hover:underline">
-                            {trip.origin} → {trip.destination}
+                            {trip.origin}{trip.originState ? `, ${trip.originState}` : ''} → {trip.destination}{trip.destinationState ? `, ${trip.destinationState}` : ''}
                           </Link>
                         </td>
                         <td className="px-4 py-3 text-neutral-400">{trip.driverName || '—'}</td>

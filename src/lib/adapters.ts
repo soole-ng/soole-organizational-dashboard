@@ -159,7 +159,7 @@ export function adaptTrip(raw: any): Trip {
   return {
     id: raw.uuid,
     routeId: '',
-    routeName: `${raw.origin_address} → ${raw.destination_address}`,
+    routeName: `${raw.origin_address}${raw.origin_state ? `, ${raw.origin_state}` : ''} → ${raw.destination_address}${raw.destination_state ? `, ${raw.destination_state}` : ''}`,
     origin: raw.origin_address,
     destination: raw.destination_address,
     originState: raw.origin_state ?? undefined,

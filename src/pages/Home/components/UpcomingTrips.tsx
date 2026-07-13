@@ -46,7 +46,7 @@ export function UpcomingTrips() {
   return (
     <div className="px-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-primary-500">Departing Today</h3>
+        <h3 className="text-sm font-semibold text-primary-500">Upcoming Trips</h3>
         <Link
           to="/trips"
           className="text-xs text-secondary-300 font-semibold flex items-center gap-0.5 hover:text-secondary-400 transition-colors"
@@ -60,7 +60,7 @@ export function UpcomingTrips() {
           <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mx-auto mb-3">
             <MapPin className="w-6 h-6 text-primary-400" />
           </div>
-          <p className="text-sm font-semibold text-primary-500 mb-1">No trips today</p>
+          <p className="text-sm font-semibold text-primary-500 mb-1">No upcoming trips</p>
           <p className="text-xs text-neutral-200 mb-4">Create a trip to get started.</p>
           <Link to="/trips/new" onClick={guardAction as any} className="btn-accent text-sm">
             + New Trip
@@ -81,9 +81,13 @@ export function UpcomingTrips() {
                   <div className="min-w-0 flex-1">
                     {/* Route with arrow */}
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <p className="text-sm font-semibold text-primary-500 truncate">{trip.origin}</p>
+                      <p className="text-sm font-semibold text-primary-500 truncate">
+                        {trip.origin}{trip.originState ? `, ${trip.originState}` : ''}
+                      </p>
                       <ArrowRight className="w-3.5 h-3.5 text-neutral-200 flex-shrink-0" />
-                      <p className="text-sm font-semibold text-primary-500 truncate">{trip.destination}</p>
+                      <p className="text-sm font-semibold text-primary-500 truncate">
+                        {trip.destination}{trip.destinationState ? `, ${trip.destinationState}` : ''}
+                      </p>
                     </div>
                     <p className="text-xs text-neutral-200 truncate">{trip.vehiclePlate} · {trip.driverName}</p>
                   </div>

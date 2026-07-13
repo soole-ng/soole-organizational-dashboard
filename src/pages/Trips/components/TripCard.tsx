@@ -28,12 +28,16 @@ export function TripCard({ trip, compact }: TripCardProps) {
             <div className="flex items-center gap-1.5 flex-wrap">
               <div className="flex items-center gap-1 min-w-0">
                 <MapPin className="w-3 h-3 text-primary-300 flex-shrink-0" />
-                <p className="text-xs font-bold text-primary-500 truncate">{trip.origin}</p>
+                <p className="text-xs font-bold text-primary-500 truncate">
+                  {trip.origin}{trip.originState ? `, ${trip.originState}` : ''}
+                </p>
               </div>
               <ArrowRight className="w-3 h-3 text-neutral-200 flex-shrink-0" />
               <div className="flex items-center gap-1 min-w-0">
                 <MapPin className="w-3 h-3 text-secondary-300 flex-shrink-0" />
-                <p className="text-xs font-bold text-primary-500 truncate">{trip.destination}</p>
+                <p className="text-xs font-bold text-primary-500 truncate">
+                  {trip.destination}{trip.destinationState ? `, ${trip.destinationState}` : ''}
+                </p>
               </div>
             </div>
           </div>

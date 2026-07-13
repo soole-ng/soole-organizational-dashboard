@@ -70,6 +70,8 @@ export interface Trip {
   routeName: string
   origin: string
   destination: string
+  originState?: string
+  destinationState?: string
   vehicleId: string
   vehiclePlate: string
   driverId: string

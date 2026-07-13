@@ -75,13 +75,13 @@ export function SignupPasswordForm({
               <div
                 className={clsx(
                   'w-4 h-4 rounded-full flex items-center justify-center',
-                  suPassword.length >= 8 ? 'bg-green-500' : 'bg-neutral-200'
+                  suPassword.length === 8 ? 'bg-green-500' : 'bg-neutral-200'
                 )}
               >
-                {suPassword.length >= 8 && <div className="w-2 h-2 bg-white rounded-full" />}
+                {suPassword.length === 8 && <div className="w-2 h-2 bg-white rounded-full" />}
               </div>
-              <span className={clsx('text-xs font-black', suPassword.length >= 8 ? 'text-green-600' : 'text-neutral-400')}>
-                At least 8 characters
+              <span className={clsx('text-xs font-black', suPassword.length === 8 ? 'text-green-600' : 'text-neutral-400')}>
+                Exactly 8 characters
               </span>
             </div>
             <div className="flex items-center gap-2">

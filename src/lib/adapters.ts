@@ -162,6 +162,8 @@ export function adaptTrip(raw: any): Trip {
     routeName: `${raw.origin_address} → ${raw.destination_address}`,
     origin: raw.origin_address,
     destination: raw.destination_address,
+    originState: raw.origin_state ?? undefined,
+    destinationState: raw.destination_state ?? undefined,
     vehicleId: raw.vehicle_uuid ?? '',
     vehiclePlate: raw.vehicle_plate ?? 'Unassigned',
     driverId: raw.driver_uuid ?? '',

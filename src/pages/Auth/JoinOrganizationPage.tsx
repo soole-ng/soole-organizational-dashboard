@@ -239,8 +239,8 @@ export function JoinOrganizationPage() {
       const issue = result.error.issues[0]
       if (issue.message.includes('match')) {
         toast.error('❌ Passwords do not match. Please make sure they\'re identical.')
-      } else if (issue.message.includes('at least 8')) {
-        toast.error('🔑 Password needs at least 8 characters')
+      } else if (issue.message.includes('exactly 8')) {
+        toast.error('🔑 Password must be exactly 8 characters')
       } else if (issue.message.includes('uppercase')) {
         toast.error('🔑 Password needs at least 1 uppercase letter (A-Z)')
       } else if (issue.message.includes('lowercase')) {
@@ -564,7 +564,7 @@ export function JoinOrganizationPage() {
                 {password && (
                   <div className="space-y-1.5 mt-3">
                     {[
-                      { check: password.length >= 8, text: 'At least 8 characters' },
+                      { check: password.length === 8, text: 'Exactly 8 characters' },
                       { check: /[A-Z]/.test(password), text: 'Uppercase letter' },
                       { check: /[a-z]/.test(password), text: 'Lowercase letter' },
                       { check: /\d/.test(password), text: 'Number' },

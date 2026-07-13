@@ -20,7 +20,7 @@ export function HeroBand() {
     <div className="bg-primary-500 text-white px-4 py-5">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <p className="text-primary-200 text-xs font-medium">Good morning,</p>
+          <p className="text-primary-200 text-xs font-medium">Good day,</p>
           <h2 className="text-lg font-bold leading-tight">{org.name}</h2>
         </div>
         <div className="flex items-center gap-1.5 bg-secondary-500 rounded-full px-2.5 py-1">

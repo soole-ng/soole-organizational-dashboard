@@ -77,6 +77,7 @@ export interface Trip {
   driverId: string
   driverName: string
   driverPhotoUrl?: string
+  driverRating?: number
   departureAt: string
   capacity: number
   bookedSeats: number

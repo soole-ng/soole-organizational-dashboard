@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Clock, Users, ArrowRight, MapPin } from 'lucide-react'
+import { Clock, Users, ArrowRight, MapPin, Star } from 'lucide-react'
 import { clsx } from 'clsx'
 import { StatusPill } from '../../../components/ui/StatusPill'
 import { DriverAvatar } from '../../../components/ui/DriverAvatar'
@@ -84,7 +84,15 @@ export function TripCard({ trip, compact }: TripCardProps) {
             <div className="flex items-center gap-2.5">
               <DriverAvatar photoUrl={trip.driverPhotoUrl} name={trip.driverName} size="md" />
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-primary-500 truncate">{trip.driverName}</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-semibold text-primary-500 truncate">{trip.driverName}</p>
+                  {trip.driverRating != null && (
+                    <span className="flex items-center gap-0.5 text-[11px] font-bold text-neutral-300 flex-shrink-0">
+                      <Star className="w-3 h-3 fill-warning text-warning" />
+                      {trip.driverRating.toFixed(1)}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-neutral-200">{trip.vehiclePlate}</p>
               </div>
             </div>

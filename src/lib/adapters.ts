@@ -6,7 +6,6 @@ import type {
   Driver, DriverReview, Vehicle, Trip, Transaction, Payout, Alert, OrganizationMember,
   Passenger, VehicleDocument, StatusVariant,
 } from '../types'
-import { calculateSooleCommission } from './commission'
 
 function toStatusVariant(status: string | null | undefined): StatusVariant {
   const s = (status || '').toLowerCase()
@@ -153,8 +152,11 @@ export function adaptVehicle(raw: any): Vehicle {
 export function adaptTrip(raw: any): Trip {
   const pricePerSeat = parseFloat(raw.price_per_seat ?? '0')
   const bookedSeats = raw.booked_seats ?? 0
-  const gross = pricePerSeat * bookedSeats
-  const net = gross - calculateSooleCommission(pricePerSeat) * bookedSeats
+  // Real money actually credited for this trip (organization_trips_api's
+  // `earnings` field, sourced from SOOLE_EARNINGS Transaction rows) - not
+  // a price_per_seat * booked_seats projection, which doesn't account for
+  // a cancelled trip or one only partway through its 70%/30% payout.
+  const earnings = parseFloat(raw.earnings ?? '0')
 
   return {
     id: raw.uuid,
@@ -175,8 +177,8 @@ export function adaptTrip(raw: any): Trip {
     bookedSeats,
     status: toStatusVariant(raw.status),
     fare: pricePerSeat,
-    grossRevenue: gross,
-    netRevenue: net,
+    grossRevenue: earnings,
+    netRevenue: earnings,
     passengers: (raw.passengers || []).map(adaptPassenger),
     distanceKm: raw.distance_km ?? 0,
     durationMinutes: raw.duration_minutes ?? 0,

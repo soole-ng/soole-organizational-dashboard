@@ -150,7 +150,7 @@ export function TripDetailPage() {
               </div>
 
               <div className="flex justify-between items-center text-xs mt-2 px-2">
-                <span className="text-neutral-200">Total Est. Revenue</span>
+                <span className="text-neutral-200">Total Earnings</span>
                 <span className="font-bold text-secondary-300 text-sm stat-number">NGN {trip.grossRevenue.toLocaleString()}</span>
               </div>
             </div>

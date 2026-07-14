@@ -243,7 +243,7 @@ export function ReportsPage() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: 'Total Trips', value: filteredTrips.length.toString() },
-            { label: 'Total Gross', value: formatMoneyCompact(totalGross) },
+            { label: 'Total Earnings', value: formatMoneyCompact(totalGross) },
             { label: 'Avg Occupancy', value: `${avgOccupancyPct}%` },
           ].map(s => (
             <div key={s.label} className="card p-3 text-center">
@@ -302,7 +302,7 @@ export function ReportsPage() {
           </ResponsiveContainer>
           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-neutral-50 text-center text-xs">
             <div><p className="text-neutral-200">Total Trips</p><p className="font-bold text-primary-500 mt-0.5">{filteredTrips.length}</p></div>
-            <div className="border-x border-neutral-50"><p className="text-neutral-200">Total Gross</p><p className="font-bold text-primary-500 mt-0.5">{formatMoneyCompact(totalGross)}</p></div>
+            <div className="border-x border-neutral-50"><p className="text-neutral-200">Total Earnings</p><p className="font-bold text-primary-500 mt-0.5">{formatMoneyCompact(totalGross)}</p></div>
             <div><p className="text-neutral-200">Avg Occupancy</p><p className="font-bold text-secondary-300 mt-0.5">{avgOccupancyPct}%</p></div>
           </div>
         </div>

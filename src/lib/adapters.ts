@@ -192,6 +192,7 @@ export function adaptPassenger(raw: any): Passenger {
     seatNumber: raw.seat_number ?? 0,
     name: raw.name,
     phone: raw.phone,
+    photo: raw.picture ?? undefined,
     paymentStatus: raw.payment_status === 'paid' || raw.payment_status === 'confirmed' ? 'paid'
       : raw.payment_status === 'refunded' ? 'refunded' : 'pending',
     boardingStatus: raw.status === 'onboard' ? 'boarded' : raw.status === 'no_show' ? 'no_show' : 'waiting',
@@ -237,6 +238,7 @@ export function adaptVehicleLocation(raw: any) {
     id: raw.vehicle_uuid ?? raw.trip_uuid,
     plate: raw.vehicle_plate ?? 'N/A',
     driver: raw.driver_name ?? 'Unassigned',
+    driverPhotoUrl: raw.driver_picture ?? undefined,
     status: (onTrip ? 'on_trip' : 'idle') as 'on_trip' | 'idle',
     lat: raw.latitude,
     lng: raw.longitude,

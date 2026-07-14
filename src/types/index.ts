@@ -97,6 +97,7 @@ export interface Passenger {
   seatNumber: number
   name: string
   phone: string
+  photo?: string
   paymentStatus: 'paid' | 'pending' | 'refunded'
   boardingStatus: 'waiting' | 'boarded' | 'no_show'
   boardedAt?: string

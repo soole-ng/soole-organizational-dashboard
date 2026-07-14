@@ -7,6 +7,7 @@ type VehicleLoc = {
   id: string
   plate: string
   driver: string
+  driverPhotoUrl?: string
   status: 'on_trip' | 'idle'
   lat: number
   lng: number

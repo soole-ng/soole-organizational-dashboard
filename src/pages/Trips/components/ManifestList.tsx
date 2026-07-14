@@ -131,7 +131,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
               key={pass.id}
               className="flex flex-col items-center gap-3 p-4 rounded-2xl border border-neutral-100 bg-white text-center transition-colors"
             >
-              <DriverAvatar name={pass.name} size="lg" />
+              <DriverAvatar photoUrl={pass.photo} name={pass.name} size="lg" />
 
               {/* Name + status */}
               <div className="w-full min-w-0">

@@ -238,6 +238,10 @@ export const moneyApi = {
     apiRequest(`/organizations/${orgUuid}/money/weekly-revenue?week_offset=${weekOffset}`),
   initiateWithdrawal: async (orgUuid: string, payload: { amount: number; bank_account_id: string; pin: string; security_answer: string; description?: string }) =>
     apiRequest(`/organizations/${orgUuid}/money/withdraw`, { method: 'POST', body: payload }),
+  setWithdrawalPin: async (orgUuid: string, payload: { pin: string; confirm_pin: string }) =>
+    apiRequest(`/organizations/${orgUuid}/money/set-withdrawal-pin`, { method: 'POST', body: payload }),
+  changeWithdrawalPin: async (orgUuid: string, payload: { old_pin: string; new_pin: string; confirm_new_pin: string }) =>
+    apiRequest(`/organizations/${orgUuid}/money/change-withdrawal-pin`, { method: 'POST', body: payload }),
   /**
    * Downloads the CSV export directly (not JSON, so this bypasses apiRequest
    * and drives the browser's native file-save via a temporary blob link).

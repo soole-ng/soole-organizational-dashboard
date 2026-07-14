@@ -27,6 +27,11 @@ export function MoneyPage() {
   }
   const [activeTab, setActiveTab] = useState('Transactions')
   const [balance, setBalance] = useState({ available: 0, withdrawable: 0 })
+  const [hasWithdrawalPin, setHasWithdrawalPin] = useState<boolean | null>(null)
+  const [showSetPinModal, setShowSetPinModal] = useState(false)
+  const [setPinValue, setSetPinValue] = useState('')
+  const [setPinConfirmValue, setSetPinConfirmValue] = useState('')
+  const [isSettingPin, setIsSettingPin] = useState(false)
   // Sourced from the shared useApiData cache, not a page-local fetch - so
   // adding/removing/set-primary in Settings > Payout (which invalidates
   // that cache) is reflected here without needing a reload.
@@ -41,6 +46,7 @@ export function MoneyPage() {
         available: Number(balanceRes.available_balance ?? 0),
         withdrawable: Number(balanceRes.withdrawable_balance ?? 0),
       })
+      setHasWithdrawalPin(Boolean(balanceRes.has_withdrawal_pin))
     })
     return () => { cancelled = true }
   }, [orgUuid])
@@ -97,6 +103,12 @@ export function MoneyPage() {
     handleAction()
     if (!isProfileIncomplete) {
       guardAction(undefined, () => {
+        if (hasWithdrawalPin === false) {
+          setSetPinValue('')
+          setSetPinConfirmValue('')
+          setShowSetPinModal(true)
+          return
+        }
         setSelectedAccountId(primaryAccount?.uuid || '')
         setWithdrawPin('')
         setWithdrawSecurityAnswer('')
@@ -111,14 +123,48 @@ export function MoneyPage() {
     }
   }
 
+  const handleSetWithdrawalPin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!orgUuid) return
+    if (setPinValue.length !== 4) {
+      toast.error('PIN must be 4 digits')
+      return
+    }
+    if (setPinValue !== setPinConfirmValue) {
+      toast.error('PINs do not match')
+      return
+    }
+    setIsSettingPin(true)
+    try {
+      await moneyApi.setWithdrawalPin(orgUuid, { pin: setPinValue, confirm_pin: setPinConfirmValue })
+      toast.success('Withdrawal PIN set')
+      setHasWithdrawalPin(true)
+      setShowSetPinModal(false)
+      setSelectedAccountId(primaryAccount?.uuid || '')
+      setWithdrawPin('')
+      setWithdrawSecurityAnswer('')
+      setShowModal(true)
+      authApi.getSecurityQuestionStatus()
+        .then((res: any) => {
+          setSecurityQuestionConfigured(!!res.data?.configured)
+          setSecurityQuestion(res.data?.question ?? null)
+        })
+        .catch(() => setSecurityQuestionConfigured(false))
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Failed to set withdrawal PIN')
+    } finally {
+      setIsSettingPin(false)
+    }
+  }
+
   const handleConfirmWithdraw = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!orgUuid || !selectedAccountId) {
       toast.error('Select a withdrawal account')
       return
     }
-    if (withdrawPin.length !== 8) {
-      toast.error('Must be your 8-character login password')
+    if (withdrawPin.length !== 4) {
+      toast.error('Enter your 4-digit withdrawal PIN')
       return
     }
     if (!withdrawSecurityAnswer.trim()) {
@@ -464,14 +510,15 @@ export function MoneyPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Enter your 8-character login password to confirm</label>
+                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Enter your 4-digit withdrawal PIN</label>
                 <input
                   type="password"
-                  maxLength={8}
+                  inputMode="numeric"
+                  maxLength={4}
                   value={withdrawPin}
-                  onChange={e => setWithdrawPin(e.target.value.slice(0, 8))}
+                  onChange={e => setWithdrawPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                   className="input-field bg-white text-center tracking-[0.5em] text-lg font-black"
-                  placeholder="••••••••"
+                  placeholder="••••"
                   autoFocus
                 />
               </div>
@@ -514,6 +561,74 @@ export function MoneyPage() {
                     Processing Instant Payout…
                   </>
                 ) : 'Confirm Instant Withdrawal'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Set Withdrawal PIN Modal - first-time setup, gates the withdraw
+          flow above until a dedicated PIN exists (withdrawals previously
+          checked the login password instead, which mismatched this
+          modal's old 8-character field against actual login PINs). */}
+      {showSetPinModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-card w-full max-w-md p-6 shadow-float relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setShowSetPinModal(false)}
+              className="absolute right-4 top-4 text-neutral-200 hover:text-primary-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                <ShieldCheck className="w-6 h-6 text-accent-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-primary-500">Set Withdrawal PIN</h3>
+                <p className="text-xs text-neutral-200">Create a 4-digit PIN to protect withdrawals</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSetWithdrawalPin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-primary-400 mb-1.5">New PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={setPinValue}
+                  onChange={e => setSetPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  className="input-field bg-white text-center tracking-[0.5em] text-lg font-black"
+                  placeholder="••••"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Confirm PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={setPinConfirmValue}
+                  onChange={e => setSetPinConfirmValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  className="input-field bg-white text-center tracking-[0.5em] text-lg font-black"
+                  placeholder="••••"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSettingPin || setPinValue.length !== 4 || setPinConfirmValue.length !== 4}
+                className="btn-primary w-full py-4 text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-400 active:scale-95 transition-all disabled:opacity-60"
+              >
+                {isSettingPin ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Setting PIN…
+                  </>
+                ) : 'Set PIN & Continue'}
               </button>
             </form>
           </div>

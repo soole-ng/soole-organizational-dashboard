@@ -95,9 +95,13 @@ export function MoneyPage() {
 
   const allPayouts = data.payouts
 
-  const weekStart = Date.now() - 7 * 86400000
-  const bookingsThisWeek = data.transactions.filter(t => t.type === 'booking' && new Date(t.date).getTime() >= weekStart)
-  const totalEarningsThisWeek = bookingsThisWeek.reduce((sum, t) => sum + t.gross, 0)
+  // Sourced from GET /money/weekly-revenue (data.weeklyRevenue, via
+  // useApiData) instead of re-derived from the raw transactions list -
+  // that re-derivation used a rolling 7-day window instead of the
+  // backend's actual calendar-week logic, and never reflected the
+  // real-ledger fix to weekly-revenue at all.
+  const bookingsThisWeekCount = data.weeklyRevenue.reduce((sum, day) => sum + day.bookings, 0)
+  const totalEarningsThisWeek = data.weeklyRevenue.reduce((sum, day) => sum + day.gross, 0)
 
   const handleWithdrawClick = () => {
     handleAction()
@@ -269,7 +273,7 @@ export function MoneyPage() {
           <p className="text-xs text-primary-200 mb-3 font-semibold">This week so far</p>
           <div className="grid grid-cols-3 gap-4 text-center">
             {[
-              { label: 'Bookings', value: `${bookingsThisWeek.length}` },
+              { label: 'Bookings', value: `${bookingsThisWeekCount}` },
               { label: 'Total Earnings', value: `NGN ${(totalEarningsThisWeek / 1000).toFixed(1)}K` },
               { label: 'Available Balance', value: `NGN ${(balance.available / 1000).toFixed(1)}K` },
             ].map(s => (

@@ -45,7 +45,7 @@ export interface ApiData {
   payouts: Payout[]
   alerts: Alert[]
   organizationMembers: OrganizationMember[]
-  weeklyRevenue: { day: string; gross: number; net: number }[]
+  weeklyRevenue: { day: string; gross: number; net: number; bookings: number }[]
   vehicleLocations: VehicleLocation[]
   aiAssistantSuggestions: string[]
   bankAccounts: BankAccountRow[]

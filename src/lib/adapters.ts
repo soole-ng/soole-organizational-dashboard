@@ -280,5 +280,6 @@ export function adaptWeeklyRevenueDay(raw: any) {
     day: (raw.day_name || '').slice(0, 3),
     gross,
     net: gross - commission,
+    bookings: Number(raw.bookings ?? 0),
   }
 }

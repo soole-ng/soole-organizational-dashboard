@@ -46,7 +46,7 @@ export function UpcomingTrips() {
   return (
     <div className="px-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-primary-500">Upcoming Trips</h3>
+        <h3 className="text-sm font-semibold text-primary-500">Trips Updates</h3>
         <Link
           to="/trips"
           className="text-xs text-secondary-300 font-semibold flex items-center gap-0.5 hover:text-secondary-400 transition-colors"

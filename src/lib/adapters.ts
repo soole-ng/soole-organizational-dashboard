@@ -168,6 +168,7 @@ export function adaptTrip(raw: any): Trip {
     vehiclePlate: raw.vehicle_plate ?? 'Unassigned',
     driverId: raw.driver_uuid ?? '',
     driverName: raw.driver_name ?? 'Unassigned',
+    driverPhotoUrl: raw.driver_picture ?? undefined,
     departureAt: raw.departure_date,
     capacity: raw.total_seats,
     bookedSeats,

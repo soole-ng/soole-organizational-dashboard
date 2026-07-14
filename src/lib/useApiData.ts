@@ -5,7 +5,7 @@
  */
 import { useState, useEffect, useCallback } from 'react'
 import type { Driver, Vehicle, Trip, Transaction, Payout, Alert, OrganizationMember, Route } from '../types'
-import { organizationApi, vehiclesApi, fleetApi, moneyApi, trackingApi, notificationsApi, settingsApi } from '../api/client'
+import { organizationApi, vehiclesApi, fleetApi, moneyApi, trackingApi, notificationsApi, settingsApi, dashboardApi } from '../api/client'
 import {
   adaptFleetDriver, adaptVehicle, adaptTrip,
   adaptTransaction, adaptPayout, adaptVehicleLocation, adaptOrganizationMember,
@@ -240,6 +240,9 @@ export function useHomeStats(): { stats: HomeStats; loading: boolean } {
   const [balance, setBalance] = useState(0)
   const [weekOverWeekPercent, setWeekOverWeekPercent] = useState<number | null>(null)
   const [previousWeekRevenue, setPreviousWeekRevenue] = useState(0)
+  const [tripsToday, setTripsToday] = useState(0)
+  const [bookingsToday, setBookingsToday] = useState(0)
+  const [revenueToday, setRevenueToday] = useState(0)
   const [loadingExtra, setLoadingExtra] = useState(true)
 
   useEffect(() => {
@@ -252,27 +255,34 @@ export function useHomeStats(): { stats: HomeStats; loading: boolean } {
     Promise.all([
       moneyApi.getBalance(orgUuid).catch(() => null),
       moneyApi.getWeeklyRevenue(orgUuid).catch(() => null),
-    ]).then(([balanceRes, weekRes]: [any, any]) => {
+      // Trips today / bookings today / today's revenue - previously
+      // re-derived client-side from data.trips using the browser's local
+      // timezone (toDateString()), which drifts from the backend's
+      // Africa/Lagos day boundary and never reflected real credited
+      // revenue in the first place (see dashboard/api.py's
+      // revenue_from_transactions). Call the real endpoint instead.
+      dashboardApi.getSummary().catch(() => null),
+    ]).then(([balanceRes, weekRes, summaryRes]: [any, any, any]) => {
       if (cancelled) return
       if (balanceRes) setBalance(Number(balanceRes.available_balance ?? 0))
       if (weekRes?.comparison_previous_week) {
         setWeekOverWeekPercent(Number(weekRes.comparison_previous_week.revenue_change_percent ?? 0))
         setPreviousWeekRevenue(Number(weekRes.comparison_previous_week.previous_week_revenue ?? 0))
       }
+      if (summaryRes) {
+        setTripsToday(Number(summaryRes.trips_today ?? 0))
+        setBookingsToday(Number(summaryRes.total_bookings_today ?? 0))
+        setRevenueToday(Number(summaryRes.todays_revenue?.gross ?? 0))
+      }
       setLoadingExtra(false)
     })
     return () => { cancelled = true }
   }, [])
 
-  const todayStr = new Date().toDateString()
-  const todaysTrips = data.trips.filter(
-    t => new Date(t.departureAt).toDateString() === todayStr && t.status !== 'cancelled',
-  )
-
   const stats: HomeStats = {
-    tripsToday: todaysTrips.length,
-    bookingsToday: todaysTrips.reduce((sum, t) => sum + t.bookedSeats, 0),
-    revenueToday: todaysTrips.reduce((sum, t) => sum + t.grossRevenue, 0),
+    tripsToday,
+    bookingsToday,
+    revenueToday,
     walletBalance: balance,
     activeTripsCount: data.trips.filter(t => t.status === 'boarding' || t.status === 'in_progress').length,
     weekOverWeekPercent,

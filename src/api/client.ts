@@ -365,6 +365,24 @@ export const trackingApi = {
 }
 
 /**
+ * Dashboard API — dashboard/api.py, mounted at /dashboard/. Org is derived
+ * from the authenticated user server-side, no org_uuid param needed.
+ */
+export interface DashboardSummary {
+  trips_today: number
+  total_bookings_today: number
+  available_seats_today: number
+  todays_revenue: { gross: number; net: number; currency: string }
+  wallet_balance: { amount: number; currency: string; last_updated: string }
+  comparison: { trips_vs_yesterday: number; revenue_change_percent: number }
+}
+
+export const dashboardApi = {
+  getSummary: async (date?: string) =>
+    apiRequest<DashboardSummary>(`/dashboard/summary${date ? `?date=${date}` : ''}`),
+}
+
+/**
  * Notifications API — organization_notifications_api.py, mounted at /organizations/
  */
 export const notificationsApi = {

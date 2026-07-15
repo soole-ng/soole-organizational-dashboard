@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BarChart2, Bus, Users, Car, TrendingUp, Navigation, Download, AlertCircle } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { useOrg } from '../../lib/OrgContext'
@@ -23,7 +23,7 @@ const formatDateParam = (d: Date) => d.toISOString().slice(0, 10)
 
 export function ReportsPage() {
   const { org, orgUuid } = useOrg()
-  const { data, loading } = useApiData()
+  const { loading } = useApiData()
   const [exportingKey, setExportingKey] = useState<string | null>(null)
   const isProfileIncomplete = org.approvalStatus === 'incomplete'
   const [showProfileModal, setShowProfileModal] = useState(false)
@@ -36,6 +36,56 @@ export function ReportsPage() {
   const [selectedRange, setSelectedRange] = useState('This Week')
   const [showCustomPicker, setShowCustomPicker] = useState(false)
   const [customDates, setCustomDates] = useState({ start: '', end: '' })
+
+  // The on-screen summary tiles and chart were previously re-derived
+  // client-side from `data.trips` (a generic, 500-row-capped list fetched
+  // once on app load with no relation to the selected date range) and
+  // `data.weeklyRevenue` (always the current week, ignoring the tabs
+  // entirely) - the actual /reports/trips and /reports/revenue endpoints
+  // were only ever called from the Export buttons. This fetches the real
+  // per-range report data so the tabs and export produce consistent
+  // numbers.
+  const [tripsReport, setTripsReport] = useState<{ trips: any[]; summary: any } | null>(null)
+  const [revenueReport, setRevenueReport] = useState<{ data: any[]; summary: any } | null>(null)
+  const [reportLoading, setReportLoading] = useState(false)
+
+  const now = new Date()
+  let filterStart: Date
+  let filterEnd: Date
+  if (selectedRange === 'Today') {
+    filterStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    filterEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+  } else if (selectedRange === 'This Month') {
+    filterStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    filterEnd = now
+  } else if (selectedRange === 'Custom' && customDates.start && customDates.end) {
+    filterStart = new Date(customDates.start)
+    filterEnd = new Date(new Date(customDates.end).getTime() + 86400000 - 1)
+  } else {
+    // 'This Week', and the fallback for an unapplied Custom range
+    filterStart = new Date(now.getTime() - 7 * 86400000)
+    filterEnd = now
+  }
+  const rangeStartParam = formatDateParam(filterStart)
+  const rangeEndParam = formatDateParam(filterEnd)
+  const rangeIsReady = selectedRange !== 'Custom' || (customDates.start && customDates.end)
+
+  useEffect(() => {
+    if (!orgUuid || !rangeIsReady) return
+    let cancelled = false
+    setReportLoading(true)
+    const dateParams = { start_date: rangeStartParam, end_date: rangeEndParam }
+    Promise.all([
+      reportsApi.getTripsReport(orgUuid, dateParams).catch(() => null),
+      reportsApi.getRevenueReport(orgUuid, dateParams).catch(() => null),
+    ]).then(([trips, revenue]) => {
+      if (cancelled) return
+      setTripsReport(trips as any)
+      setRevenueReport(revenue as any)
+      setReportLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [orgUuid, rangeStartParam, rangeEndParam, rangeIsReady])
 
   const handleAction = () => {
     if (isProfileIncomplete) {
@@ -56,41 +106,30 @@ export function ReportsPage() {
     )
   }
 
-  const weeklyRevData = data.weeklyRevenue
-
-  const totalNet = weeklyRevData.reduce((a, d) => a + d.net, 0)
-
   const dateRanges = ['Today', 'This Week', 'This Month', 'Custom']
 
-  // Derives the actual [start, end] window the selected tab represents,
-  // then filters trips by departureAt - this is what makes the tabs above
-  // do something, instead of just toggling which one looks highlighted.
-  const now = new Date()
-  let filterStart: Date
-  let filterEnd: Date
-  if (selectedRange === 'Today') {
-    filterStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    filterEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
-  } else if (selectedRange === 'This Month') {
-    filterStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    filterEnd = now
-  } else if (selectedRange === 'Custom' && customDates.start && customDates.end) {
-    filterStart = new Date(customDates.start)
-    filterEnd = new Date(new Date(customDates.end).getTime() + 86400000 - 1)
-  } else {
-    // 'This Week', and the fallback for an unapplied Custom range
-    filterStart = new Date(now.getTime() - 7 * 86400000)
-    filterEnd = now
-  }
+  // Real per-range figures from the backend reports endpoints (the same
+  // ones the Export buttons call) rather than re-derived client-side from
+  // an unrelated, capped trips list.
+  const totalTrips = tripsReport?.summary?.total_trips ?? 0
+  const totalGross = Number(tripsReport?.summary?.total_net ?? 0)
+  const avgOccupancyPct = Math.round(tripsReport?.summary?.average_occupancy ?? 0)
+  const totalNet = Number(revenueReport?.summary?.total_net ?? 0)
 
-  const filteredTrips = data.trips.filter(t => {
-    const time = new Date(t.departureAt).getTime()
-    return time >= filterStart.getTime() && time <= filterEnd.getTime()
-  })
-  const totalGross = filteredTrips.reduce((a, t) => a + t.grossRevenue, 0)
-  const avgOccupancyPct = Math.round(
-    filteredTrips.reduce((a, t) => a + (t.capacity > 0 ? t.bookedSeats / t.capacity : 0), 0) / Math.max(filteredTrips.length, 1) * 100
-  )
+  const formatChartDay = (dateKey: string) => {
+    const d = new Date(dateKey)
+    return isNaN(d.getTime()) ? dateKey : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+  const weeklyRevData = (revenueReport?.data ?? []).map((r: any) => ({
+    day: formatChartDay(r.date),
+    gross: Number(r.gross ?? 0),
+    net: Number(r.net ?? 0),
+    bookings: Number(r.trips ?? 0),
+  }))
+  const revenueLabel = selectedRange === 'Today' ? "Today's revenue"
+    : selectedRange === 'This Month' ? "This month's revenue"
+    : selectedRange === 'Custom' ? 'Revenue (custom range)'
+    : "This week's revenue"
 
   const handleExport = async (reportKey: ReportKey, format: 'pdf' | 'csv') => {
     if (!orgUuid) return
@@ -240,9 +279,9 @@ export function ReportsPage() {
         )}
 
         {/* Summary stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className={`grid grid-cols-3 gap-3 transition-opacity ${reportLoading ? 'opacity-50' : ''}`}>
           {[
-            { label: 'Total Trips', value: filteredTrips.length.toString() },
+            { label: 'Total Trips', value: totalTrips.toString() },
             { label: 'Total Earnings', value: formatMoneyCompact(totalGross) },
             { label: 'Avg Occupancy', value: `${avgOccupancyPct}%` },
           ].map(s => (
@@ -256,7 +295,7 @@ export function ReportsPage() {
         <div className="card">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-xs text-neutral-200">This week's revenue</p>
+              <p className="text-xs text-neutral-200">{revenueLabel}</p>
               <p className="text-3xl sm:text-4xl font-extrabold text-primary-500 stat-number">
                 NGN {totalNet.toLocaleString()}
               </p>
@@ -301,7 +340,7 @@ export function ReportsPage() {
             </BarChart>
           </ResponsiveContainer>
           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-neutral-50 text-center text-xs">
-            <div><p className="text-neutral-200">Total Trips</p><p className="font-bold text-primary-500 mt-0.5">{filteredTrips.length}</p></div>
+            <div><p className="text-neutral-200">Total Trips</p><p className="font-bold text-primary-500 mt-0.5">{totalTrips}</p></div>
             <div className="border-x border-neutral-50"><p className="text-neutral-200">Total Earnings</p><p className="font-bold text-primary-500 mt-0.5">{formatMoneyCompact(totalGross)}</p></div>
             <div><p className="text-neutral-200">Avg Occupancy</p><p className="font-bold text-secondary-300 mt-0.5">{avgOccupancyPct}%</p></div>
           </div>

@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
-import { useApiData, invalidateApiDataCache } from '../../lib/useApiData'
+import { useApiData } from '../../lib/useApiData'
 import { useOrg } from '../../lib/OrgContext'
 import { vehiclesApi } from '../../api/client'
 import { clsx } from 'clsx'
@@ -48,8 +48,7 @@ export function VehiclesPage() {
     try {
       await vehiclesApi.deleteVehicle(orgUuid, pendingDelete.id)
       toast.success('Vehicle deleted')
-      invalidateApiDataCache()
-      refetch()
+      refetch(['vehicles'])
       setPendingDelete(null)
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to delete vehicle')

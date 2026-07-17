@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Plus, Phone, Award, Users, RefreshCw, Loader2, X, Star } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { useApiData, invalidateApiDataCache } from '../../lib/useApiData'
+import { useApiData } from '../../lib/useApiData'
 import { useOrg } from '../../lib/OrgContext'
 import { fleetApi, driversApi } from '../../api/client'
 import { clsx } from 'clsx'
@@ -76,8 +76,7 @@ export function DriversPage() {
     try {
       await driversApi.removeDriver(orgUuid, removingDriver.id, removeReason.trim(), removeRating || undefined)
       toast.success(`${removingDriver.name} has been removed`)
-      invalidateApiDataCache()
-      refetch()
+      refetch(['drivers'])
       setRemovingDriver(null)
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to remove driver')
@@ -93,8 +92,7 @@ export function DriversPage() {
       try {
         await driversApi.reinstateDriver(orgUuid, driverId)
         toast.success(`${driverName} has been reinstated`)
-        invalidateApiDataCache()
-        refetch()
+        refetch(['drivers'])
       } catch (err: any) {
         toast.error(err?.message ?? 'Failed to reinstate driver')
       } finally {

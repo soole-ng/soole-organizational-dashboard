@@ -70,57 +70,83 @@ function getOrgUuid(): string | null {
   return localStorage.getItem('org_uuid')
 }
 
+// These list endpoints are server-paginated (trips default to 12/page,
+// vehicles/transactions/payouts to 20/page) - fetching with the default
+// limit meant the dashboard only ever saw page 1, so any org with more
+// than one page of trips/vehicles/transactions silently lost the rest
+// regardless of which filter tab was clicked. Requesting a generous
+// limit here is a stopgap; a real fix would thread pagination through
+// each consuming page instead of the single shared useApiData cache.
+const LIST_FETCH_LIMIT = 500
+
+export type ApiDataKey = keyof ApiData
+
+// One fetcher per resource, each returning just its own slice of ApiData.
+// This is what makes scoped refreshes possible below: a mutation that only
+// touches drivers (e.g. removing one) can re-fetch just `drivers` instead
+// of re-running all 11 requests that fetchAll used to fire as one unit.
+const RESOURCE_FETCHERS: { [K in ApiDataKey]: (orgUuid: string) => Promise<Pick<ApiData, K>> } = {
+  routes: async (orgUuid) => {
+    const routesRaw = await organizationApi.getRoutes(orgUuid).catch(() => [])
+    return {
+      routes: (routesRaw || []).map((r: any) => ({
+        id: r.id,
+        origin: r.origin,
+        destination: r.destination,
+        baseFare: parseFloat(r.base_fare ?? '0'),
+        durationMinutes: r.estimated_duration_minutes ?? 0,
+        distanceKm: r.distance_km ?? 0,
+      })),
+    }
+  },
+  drivers: async (orgUuid) => {
+    const driversRes: any = await fleetApi.getDrivers(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ drivers: [] }))
+    return { drivers: (driversRes.drivers || []).map(adaptFleetDriver) }
+  },
+  vehicles: async (orgUuid) => {
+    const vehiclesRes: any = await vehiclesApi.getVehicles(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ vehicles: [] }))
+    return { vehicles: (vehiclesRes.vehicles || []).map(adaptVehicle) }
+  },
+  trips: async (orgUuid) => {
+    const tripsRes: any = await organizationApi.getTrips(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ trips: [] }))
+    return { trips: (tripsRes.trips || []).map(adaptTrip) }
+  },
+  transactions: async (orgUuid) => {
+    const transactionsRes: any = await moneyApi.getTransactions(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ transactions: [] }))
+    return { transactions: (transactionsRes.transactions || []).map(adaptTransaction) }
+  },
+  payouts: async (orgUuid) => {
+    const payoutsRes: any = await moneyApi.getPayouts(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ payouts: [] }))
+    return { payouts: (payoutsRes.payouts || []).map(adaptPayout) }
+  },
+  alerts: async (orgUuid) => {
+    const alertsRes: any = await notificationsApi.getNotifications(orgUuid).catch(() => ({ notifications: [] }))
+    return { alerts: (alertsRes.notifications || []).map(adaptAlert) }
+  },
+  organizationMembers: async (orgUuid) => {
+    const membersRes: any = await settingsApi.getMembers(orgUuid).catch(() => [])
+    return { organizationMembers: (membersRes || []).map(adaptOrganizationMember) }
+  },
+  weeklyRevenue: async (orgUuid) => {
+    const weeklyRevenueRes: any = await moneyApi.getWeeklyRevenue(orgUuid).catch(() => ({ daily_breakdown: [] }))
+    return { weeklyRevenue: (weeklyRevenueRes.daily_breakdown || []).map(adaptWeeklyRevenueDay) }
+  },
+  vehicleLocations: async (orgUuid) => {
+    const locationsRaw = await trackingApi.getVehiclesLocations(orgUuid).catch(() => [])
+    return { vehicleLocations: (locationsRaw || []).map(adaptVehicleLocation) }
+  },
+  aiAssistantSuggestions: async () => ({ aiAssistantSuggestions: [] }),
+  bankAccounts: async (orgUuid) => {
+    const bankAccountsRaw = await settingsApi.getBankAccounts(orgUuid).catch(() => [])
+    return { bankAccounts: (bankAccountsRaw as BankAccountRow[]) || [] }
+  },
+}
+
+const ALL_RESOURCE_KEYS = Object.keys(RESOURCE_FETCHERS) as ApiDataKey[]
+
 async function fetchAll(orgUuid: string): Promise<ApiData> {
-  // These list endpoints are server-paginated (trips default to 12/page,
-  // vehicles/transactions/payouts to 20/page) - fetching with the default
-  // limit meant the dashboard only ever saw page 1, so any org with more
-  // than one page of trips/vehicles/transactions silently lost the rest
-  // regardless of which filter tab was clicked. Requesting a generous
-  // limit here is a stopgap; a real fix would thread pagination through
-  // each consuming page instead of the single shared useApiData cache.
-  const LIST_FETCH_LIMIT = 500
-
-  const [
-    driversRes, vehiclesRes, tripsRes, transactionsRes,
-    payoutsRes, alertsRes, membersRes, weeklyRevenueRes, locationsRaw, routesRaw,
-    bankAccountsRaw,
-  ] = await Promise.all([
-    fleetApi.getDrivers(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ drivers: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } })),
-    vehiclesApi.getVehicles(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ vehicles: [], total: 0 })),
-    organizationApi.getTrips(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ trips: [], total: 0, page: 1, limit: 20 })),
-    moneyApi.getTransactions(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ transactions: [], total_count: 0, page: 1, limit: 20 })),
-    moneyApi.getPayouts(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ payouts: [], total_amount: 0, total_count: 0, page: 1, limit: 20 })),
-    notificationsApi.getNotifications(orgUuid).catch(() => ({ notifications: [], total: 0, unread_count: 0 })),
-    settingsApi.getMembers(orgUuid).catch(() => []),
-    moneyApi.getWeeklyRevenue(orgUuid).catch(() => ({ daily_breakdown: [] })),
-    trackingApi.getVehiclesLocations(orgUuid).catch(() => []),
-    organizationApi.getRoutes(orgUuid).catch(() => []),
-    settingsApi.getBankAccounts(orgUuid).catch(() => []),
-  ]) as [any, any, any, any, any, any, any, any, any[], any[], BankAccountRow[]]
-
-  const drivers = (driversRes.drivers || []).map(adaptFleetDriver)
-
-  return {
-    routes: (routesRaw || []).map((r: any) => ({
-      id: r.id,
-      origin: r.origin,
-      destination: r.destination,
-      baseFare: parseFloat(r.base_fare ?? '0'),
-      durationMinutes: r.estimated_duration_minutes ?? 0,
-      distanceKm: r.distance_km ?? 0,
-    })),
-    drivers,
-    vehicles: (vehiclesRes.vehicles || []).map(adaptVehicle),
-    trips: (tripsRes.trips || []).map(adaptTrip),
-    transactions: (transactionsRes.transactions || []).map(adaptTransaction),
-    payouts: (payoutsRes.payouts || []).map(adaptPayout),
-    alerts: (alertsRes.notifications || []).map(adaptAlert),
-    organizationMembers: (membersRes || []).map(adaptOrganizationMember),
-    weeklyRevenue: (weeklyRevenueRes.daily_breakdown || []).map(adaptWeeklyRevenueDay),
-    vehicleLocations: (locationsRaw || []).map(adaptVehicleLocation),
-    aiAssistantSuggestions: [],
-    bankAccounts: bankAccountsRaw || [],
-  }
+  const parts = await Promise.all(ALL_RESOURCE_KEYS.map(key => RESOURCE_FETCHERS[key](orgUuid)))
+  return Object.assign({}, EMPTY_DATA, ...parts) as ApiData
 }
 
 let _cache: ApiData | null = null
@@ -154,10 +180,58 @@ export function invalidateApiDataCache() {
 // server-side event; it'd stay stale until its own local mutation or a
 // manual refresh. This is what makes a websocket push actually propagate
 // to every open screen instead of just the one that happens to remount.
-const _listeners = new Set<() => void>()
+//
+// A listener is called with the refreshed ApiData when a *scoped* refresh
+// (see refreshResources below) already has fresh data ready to hand over -
+// each hook just adopts it directly, no loading flicker. It's called with
+// no argument for a full invalidate, which still goes through the normal
+// loading state since there's no data to hand over yet.
+const _listeners = new Set<(updated?: ApiData) => void>()
 
-/** Clears the cache and tells every mounted useApiData() to refetch now. */
-export function notifyDataChanged() {
+/**
+ * Re-fetches only the given resources and merges them into the existing
+ * cache, instead of nuking and re-fetching all 11 collections. Falls back
+ * to a full invalidate if there's no valid cache to merge into (e.g. the
+ * org changed or nothing has loaded yet).
+ */
+async function refreshResources(orgUuid: string, keys: ApiDataKey[]) {
+  if (!(_cache && _cacheOrgUuid === orgUuid)) {
+    invalidateApiDataCache()
+    _listeners.forEach(listener => listener())
+    return
+  }
+  const uniqueKeys = Array.from(new Set(keys))
+  try {
+    const parts = await Promise.all(uniqueKeys.map(key => RESOURCE_FETCHERS[key](orgUuid)))
+    // Re-check after the await: another refresh/invalidate may have run
+    // while these requests were in flight (e.g. org switched, or a manual
+    // "Refresh" was clicked), in which case this stale merge should be
+    // dropped rather than clobbering newer data.
+    if (!(_cache && _cacheOrgUuid === orgUuid)) return
+    _cache = Object.assign({}, _cache, ...parts)
+    _listeners.forEach(listener => listener(_cache!))
+  } catch {
+    invalidateApiDataCache()
+    _listeners.forEach(listener => listener())
+  }
+}
+
+/**
+ * Tells every mounted useApiData() to refresh now.
+ * - No args: full invalidate + refetch of all 11 collections (used by the
+ *   manual "Refresh" button, where the intent is genuinely "reload
+ *   everything").
+ * - With `keys`: merges just those resources into the existing cache. Use
+ *   this whenever the caller knows exactly what changed (a mutation, a
+ *   targeted websocket event) - it avoids the full 11-request fetch and
+ *   the page-wide loading flicker that comes with it.
+ */
+export function notifyDataChanged(keys?: ApiDataKey[]) {
+  const orgUuid = getOrgUuid()
+  if (keys && keys.length && orgUuid) {
+    refreshResources(orgUuid, keys)
+    return
+  }
   invalidateApiDataCache()
   _listeners.forEach(listener => listener())
 }
@@ -166,7 +240,11 @@ export interface UseApiDataResult {
   data: ApiData
   loading: boolean
   error: string | null
-  refetch: () => void
+  /** Pass specific keys (e.g. `['drivers']`) when the caller knows exactly
+   *  what changed, to avoid re-fetching all 11 collections and the
+   *  page-wide loading flicker that comes with a full refetch. Omit for a
+   *  full reload. */
+  refetch: (keys?: ApiDataKey[]) => void
 }
 
 export function useApiData(): UseApiDataResult {
@@ -177,7 +255,15 @@ export function useApiData(): UseApiDataResult {
   const [refetchToken, setRefetchToken] = useState(0)
 
   useEffect(() => {
-    const listener = () => setRefetchToken(t => t + 1)
+    const listener = (updated?: ApiData) => {
+      if (updated) {
+        // Scoped refresh: fresh data is already in hand, adopt it directly
+        // instead of routing through the loading-state effect below.
+        setData(updated)
+        return
+      }
+      setRefetchToken(t => t + 1)
+    }
     _listeners.add(listener)
     return () => { _listeners.delete(listener) }
   }, [])
@@ -216,7 +302,12 @@ export function useApiData(): UseApiDataResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgUuid, refetchToken])
 
-  const refetch = useCallback(() => {
+  const refetch = useCallback((keys?: ApiDataKey[]) => {
+    const currentOrgUuid = getOrgUuid()
+    if (keys && keys.length && currentOrgUuid && _cache && _cacheOrgUuid === currentOrgUuid) {
+      refreshResources(currentOrgUuid, keys)
+      return
+    }
     invalidateApiDataCache()
     setRefetchToken(t => t + 1)
   }, [])

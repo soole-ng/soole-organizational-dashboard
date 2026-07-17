@@ -7,9 +7,23 @@
  * change as a side effect of a notification firing. Rather than teach every
  * screen its own subscription, this just calls notifyDataChanged() so the
  * shared useApiData cache refreshes everywhere it's mounted, the same way a
- * local mutation already does.
+ * local mutation already does. The payload doesn't say which resource
+ * changed, so this can't scope the refresh to a specific collection like
+ * a known mutation can - it stays a full refetch of all 11 collections.
+ * It's debounced below so a burst of notifications (e.g. several trips
+ * booked back-to-back) collapses into one refetch instead of one per event.
  */
 import { notifyDataChanged } from './useApiData'
+
+const NOTIFY_DEBOUNCE_MS = 500
+let notifyTimer: ReturnType<typeof setTimeout> | null = null
+function scheduleDataRefresh() {
+  if (notifyTimer) return
+  notifyTimer = setTimeout(() => {
+    notifyTimer = null
+    notifyDataChanged()
+  }, NOTIFY_DEBOUNCE_MS)
+}
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://soole-backend-8cku.onrender.com/api'
 
@@ -45,7 +59,7 @@ function connect() {
       return
     }
     if (payload?.type !== 'notification') return
-    notifyDataChanged()
+    scheduleDataRefresh()
     onNotificationCallback?.(payload)
   }
 
@@ -72,6 +86,10 @@ export function startNotificationsSocket(onNotification?: (payload: any) => void
 export function stopNotificationsSocket() {
   stopped = true
   onNotificationCallback = null
+  if (notifyTimer) {
+    clearTimeout(notifyTimer)
+    notifyTimer = null
+  }
   if (reconnectTimer) {
     clearTimeout(reconnectTimer)
     reconnectTimer = null

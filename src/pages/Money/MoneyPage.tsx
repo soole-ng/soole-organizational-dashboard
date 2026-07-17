@@ -58,6 +58,7 @@ export function MoneyPage() {
   const [showModal, setShowModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedAccountId, setSelectedAccountId] = useState('')
+  const [withdrawAmount, setWithdrawAmount] = useState('')
   const [withdrawPin, setWithdrawPin] = useState('')
   const [withdrawSecurityAnswer, setWithdrawSecurityAnswer] = useState('')
   const [securityQuestion, setSecurityQuestion] = useState<string | null>(null)
@@ -130,6 +131,7 @@ export function MoneyPage() {
           return
         }
         setSelectedAccountId(primaryAccount?.uuid || '')
+        setWithdrawAmount('')
         setWithdrawPin('')
         setWithdrawSecurityAnswer('')
         setShowModal(true)
@@ -161,6 +163,7 @@ export function MoneyPage() {
       setHasWithdrawalPin(true)
       setShowSetPinModal(false)
       setSelectedAccountId(primaryAccount?.uuid || '')
+      setWithdrawAmount('')
       setWithdrawPin('')
       setWithdrawSecurityAnswer('')
       setShowModal(true)
@@ -183,6 +186,15 @@ export function MoneyPage() {
       toast.error('Select a withdrawal account')
       return
     }
+    const amount = Number(withdrawAmount)
+    if (!withdrawAmount || !Number.isFinite(amount) || amount <= 0) {
+      toast.error('Enter an amount to withdraw')
+      return
+    }
+    if (amount > balance.withdrawable) {
+      toast.error(`You can withdraw up to NGN ${balance.withdrawable.toLocaleString()}`)
+      return
+    }
     if (withdrawPin.length !== 4) {
       toast.error('Enter your 4-digit withdrawal PIN')
       return
@@ -195,16 +207,17 @@ export function MoneyPage() {
     setIsProcessing(true)
     try {
       const res: any = await moneyApi.initiateWithdrawal(orgUuid, {
-        amount: balance.withdrawable,
+        amount,
         bank_account_id: selectedAccountId,
         pin: withdrawPin,
         security_answer: withdrawSecurityAnswer,
       })
-      toast.success(res.message ?? `Withdrawal of NGN ${balance.withdrawable.toLocaleString()} initiated`)
+      toast.success(res.message ?? `Withdrawal of NGN ${amount.toLocaleString()} initiated`)
       setShowModal(false)
+      setWithdrawAmount('')
       setWithdrawPin('')
       setWithdrawSecurityAnswer('')
-      refetch()
+      refetch(['transactions', 'payouts'])
       moneyApi.getBalance(orgUuid).then((b: any) => setBalance({
         available: Number(b.available_balance ?? 0),
         withdrawable: Number(b.withdrawable_balance ?? 0),
@@ -239,7 +252,7 @@ export function MoneyPage() {
           <p className="text-sm font-bold text-primary-500">Couldn't load your money data</p>
           <p className="text-xs text-neutral-300 max-w-xs">{error}</p>
           <button
-            onClick={refetch}
+            onClick={() => refetch()}
             className="btn-primary px-6 py-2.5 text-sm font-bold mt-2"
           >
             Retry
@@ -536,9 +549,39 @@ export function MoneyPage() {
                 </div>
               </div>
 
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-primary-400">Amount to withdraw</label>
+                  <button
+                    type="button"
+                    onClick={() => setWithdrawAmount(String(balance.withdrawable))}
+                    className="text-xs font-semibold text-secondary-300 hover:underline"
+                  >
+                    Withdraw all (NGN {balance.withdrawable.toLocaleString()})
+                  </button>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-neutral-300">NGN</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={1}
+                    max={balance.withdrawable}
+                    step="0.01"
+                    value={withdrawAmount}
+                    onChange={e => setWithdrawAmount(e.target.value)}
+                    className="input-field bg-white pl-12"
+                    placeholder="0.00"
+                  />
+                </div>
+                {Number(withdrawAmount) > balance.withdrawable && (
+                  <p className="text-xs text-danger mt-1">Exceeds your withdrawable balance.</p>
+                )}
+              </div>
+
               <div className="bg-primary-75 border border-primary-100 rounded-xl p-3 text-xs text-primary-400">
                 <p className="font-semibold text-primary-500">Payout details:</p>
-                <p className="mt-1">Amount: NGN {balance.withdrawable.toLocaleString()}</p>
+                <p className="mt-1">Amount: NGN {(Number(withdrawAmount) || 0).toLocaleString()}</p>
                 <p>Destination: {selectedAccount ? `${selectedAccount.bank_name} ****${selectedAccount.account_number?.slice(-4)}` : 'No account selected'}</p>
               </div>
 
@@ -585,7 +628,16 @@ export function MoneyPage() {
 
               <button
                 type="submit"
-                disabled={isProcessing || !selectedAccountId || withdrawPin.length < 4 || !securityQuestionConfigured || !withdrawSecurityAnswer.trim()}
+                disabled={
+                  isProcessing ||
+                  !selectedAccountId ||
+                  !withdrawAmount ||
+                  Number(withdrawAmount) <= 0 ||
+                  Number(withdrawAmount) > balance.withdrawable ||
+                  withdrawPin.length < 4 ||
+                  !securityQuestionConfigured ||
+                  !withdrawSecurityAnswer.trim()
+                }
                 className="btn-primary w-full py-4 text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary-400 active:scale-95 transition-all disabled:opacity-60"
               >
                 {isProcessing ? (

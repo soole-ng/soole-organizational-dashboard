@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Route, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
@@ -64,7 +64,11 @@ export function TripsListPage() {
     setCurrentPage(1)
   }
 
-  const filtered = trips.filter((t: any) => {
+  // trips can be up to 500 rows (useApiData's fetch cap) - re-running this
+  // filter/search chain on every unrelated render (e.g. a page tour tooltip
+  // state change) instead of only when trips/filters actually change was
+  // wasted work on every keystroke in the search box too.
+  const filtered = useMemo(() => trips.filter((t: any) => {
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
 
     let matchesTab = true;
@@ -85,10 +89,13 @@ export function TripsListPage() {
     }
 
     return matchesStatus && matchesTab && matchesSearch;
-  })
+  }), [trips, statusFilter, activeTab, searchQuery])
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginatedTrips = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedTrips = useMemo(
+    () => filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage),
+    [filtered, currentPage],
+  );
 
   return (
     <div className="flex flex-col min-h-screen bg-white">

@@ -58,12 +58,16 @@ export function LiveMapPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const mapRef = useRef<any>(null)
 
-  // Load real vehicle locations, then poll for live updates.
+  // Load real vehicle locations, then poll for live updates. Paused while
+  // the browser tab isn't visible - a Live Map tab commonly gets left open
+  // in the background, and there's no point polling every 10s for a map
+  // nobody's looking at.
   useEffect(() => {
     if (!orgUuid) return
     let cancelled = false
 
     const load = () => {
+      if (document.hidden) return
       trackingApi.getVehiclesLocations(orgUuid)
         .then((raw: any[]) => {
           if (!cancelled) setVehicleLocations((raw || []).map(adaptVehicleLocation))
@@ -73,7 +77,13 @@ export function LiveMapPage() {
 
     load()
     const interval = setInterval(load, 10000)
-    return () => { cancelled = true; clearInterval(interval) }
+    const onVisibilityChange = () => { if (!document.hidden) load() }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
   }, [orgUuid])
 
   const filtered = useMemo(() =>

@@ -4,7 +4,7 @@
  * ≤ 400 lines
  */
 import { Outlet, useLocation } from 'react-router-dom'
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { TopBar } from './TopBar'
@@ -67,6 +67,14 @@ function adaptNotification(raw: any): Notification {
 export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
+  // Was a new object literal on every AppShell render (including the 60s
+  // countdown tick and 30s notification poll) - every useOutletContext()
+  // consumer (HomePage, TripDetailPage, ...) re-rendered on a timer even
+  // when neither notifications nor the page itself actually changed.
+  const outletContext = useMemo(
+    () => ({ notifications, setNotifications }),
+    [notifications],
+  )
   const [showProfileModal, setShowProfileModal] = useState(false)
   const mainRef = useRef<HTMLElement>(null)
   const { pathname } = useLocation()
@@ -198,7 +206,7 @@ export function AppShell() {
                 </span>
               </div>
             )}
-            <Outlet context={{ notifications, setNotifications }} />
+            <Outlet context={outletContext} />
           </div>
         ) : (
           // All other pages: 5% padding left/right on desktop to give 20% more horizontal screen space
@@ -220,7 +228,7 @@ export function AppShell() {
                 </span>
               </div>
             )}
-            <Outlet context={{ notifications, setNotifications }} />
+            <Outlet context={outletContext} />
           </div>
         )}
       </main>

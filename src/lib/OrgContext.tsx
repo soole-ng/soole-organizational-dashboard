@@ -3,7 +3,7 @@
  * Organizations can set their own logo & name in Settings.
  * The Soole platform logo is shown separately (powered by).
  */
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react'
 import { orgApi, settingsApi, authApi } from '../api/client'
 
 export interface BankAccount {
@@ -220,8 +220,17 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     return true
   }, [org.approvalStatus])
 
+  // Unmemoized, this was a new object every OrgProvider render, forcing
+  // every one of the 25+ useOrg() consumers app-wide to re-render on any
+  // state change here (e.g. isBalanceHidden toggling), not just the ones
+  // that actually depend on the field that changed.
+  const value = useMemo(
+    () => ({ org, orgUuid, updateOrg, guardAction }),
+    [org, orgUuid, updateOrg, guardAction],
+  )
+
   return (
-    <OrgContext.Provider value={{ org, orgUuid, updateOrg, guardAction }}>
+    <OrgContext.Provider value={value}>
       {children}
     </OrgContext.Provider>
   )

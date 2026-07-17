@@ -263,7 +263,7 @@ export function TripDetailPage() {
           onClose={() => setShowEditModal(false)}
           onSaved={() => {
             setShowEditModal(false)
-            window.location.reload()
+            invalidateApiDataCache()
           }}
         />
       )}
@@ -283,7 +283,6 @@ export function TripDetailPage() {
           onSaved={() => {
             invalidateApiDataCache()
             setShowReassignModal(false)
-            window.location.reload()
           }}
         />
       )}

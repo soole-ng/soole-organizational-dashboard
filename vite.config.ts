@@ -26,4 +26,22 @@ export default defineConfig({
   resolve: {
     alias: { '@': '/src' },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // recharts and jspdf were landing inside whichever page chunk
+        // first imported them (measured: a 412kB ReportsPage chunk) -
+        // splitting them into their own vendor chunks means pages that
+        // don't use charts/PDF export (Settings, Drivers, ...) don't pay
+        // to parse them. mapbox-gl/react-map-gl are listed as
+        // dependencies but aren't actually imported anywhere in src/ (Live
+        // Map renders without them) - not worth a manualChunks entry that
+        // would just produce an empty chunk.
+        manualChunks: {
+          charts: ['recharts'],
+          pdf: ['jspdf'],
+        },
+      },
+    },
+  },
 })

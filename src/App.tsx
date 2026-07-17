@@ -29,7 +29,20 @@ const SettingsPage = lazy(() => import('./pages/Settings/SettingsPage').then(m =
 const HelpPage = lazy(() => import('./pages/Help/HelpPage').then(m => ({ default: m.HelpPage })))
 const AdminPage = lazy(() => import('./pages/Admin/AdminPage').then(m => ({ default: m.AdminPage })))
 
-const queryClient = new QueryClient()
+// No defaultOptions meant every useQuery call used React Query's global
+// default staleTime of 0 - QuickStats' two weekly-revenue queries were
+// refetched from scratch every time HomePage remounted (nav away and
+// back), on top of the identical fetch useApiData's own cache already
+// makes. A minute of staleness is fine for revenue figures that don't
+// change second-to-second.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      gcTime: 5 * 60_000,
+    },
+  },
+})
 
 function RouteFallback() {
   return (

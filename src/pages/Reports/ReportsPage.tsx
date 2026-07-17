@@ -6,7 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import { useApiData } from '../../lib/useApiData'
 import { reportsApi } from '../../api/client'
 import { formatMoneyCompact } from '../../lib/formatters'
-import { downloadReportCsv, downloadReportPdf } from '../../lib/reportExport'
+import { downloadReportCsv } from '../../lib/reportExport'
 import toast from 'react-hot-toast'
 
 type ReportKey = 'trip' | 'driver' | 'vehicle' | 'revenue' | 'route'
@@ -172,6 +172,8 @@ export function ReportsPage() {
       if (format === 'csv') {
         downloadReportCsv(`${filenameBase}.csv`, headers, rows)
       } else {
+        // jsPDF (large dep) only fetched when a PDF export actually happens
+        const { downloadReportPdf } = await import('../../lib/reportExportPdf')
         downloadReportPdf(`${filenameBase}.pdf`, title, headers, rows)
       }
     } catch (err: any) {

@@ -21,6 +21,10 @@ export function LiveTracker({
     let cancelled = false
 
     const poll = () => {
+      // Was polling every 8s regardless of tab visibility - the most
+      // aggressive interval in the app, left running for as long as
+      // TripDetailPage stays mounted in a background tab.
+      if (document.hidden) return
       trackingApi.getTripTracking(orgUuid, tripId)
         .then((raw: any) => {
           if (cancelled) return
@@ -35,7 +39,13 @@ export function LiveTracker({
 
     poll()
     const interval = setInterval(poll, 8000)
-    return () => { cancelled = true; clearInterval(interval) }
+    const onVisibilityChange = () => { if (!document.hidden) poll() }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
   }, [orgUuid, tripId, vehiclePlate, driverName, onSpeedViolation])
 
   const speed = tracking?.speed ?? 0

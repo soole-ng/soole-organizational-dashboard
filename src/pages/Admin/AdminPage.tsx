@@ -6,7 +6,7 @@
  * and drivers stay read-only tables with a link into their existing (already
  * fully-featured) dedicated pages rather than duplicating that UI.
  */
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Route, Car, Users, Search, Edit2, XCircle, ExternalLink } from 'lucide-react'
 import { clsx } from 'clsx'
@@ -38,16 +38,20 @@ export function AdminPage() {
 
   const q = search.trim().toLowerCase()
 
-  const trips = data.trips.filter(t =>
+  // data.trips/vehicles/drivers can each be up to 500 rows (useApiData's
+  // fetch cap) - these three filters re-ran on every render (including
+  // unrelated ones, e.g. opening the cancel-trip confirmation) instead of
+  // only when the underlying data or search text actually change.
+  const trips = useMemo(() => data.trips.filter(t =>
     !q || t.origin.toLowerCase().includes(q) || t.destination.toLowerCase().includes(q) ||
     t.driverName.toLowerCase().includes(q) || t.vehiclePlate.toLowerCase().includes(q)
-  )
-  const vehicles = data.vehicles.filter(v =>
+  ), [data.trips, q])
+  const vehicles = useMemo(() => data.vehicles.filter(v =>
     !q || v.plate.toLowerCase().includes(q) || v.model.toLowerCase().includes(q)
-  )
-  const drivers = data.drivers.filter(d =>
+  ), [data.vehicles, q])
+  const drivers = useMemo(() => data.drivers.filter(d =>
     !q || d.name.toLowerCase().includes(q) || d.phone.toLowerCase().includes(q)
-  )
+  ), [data.drivers, q])
 
   const editingTrip = editingTripId ? data.trips.find(t => t.id === editingTripId) : null
 

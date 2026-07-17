@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, History, Car, CheckCircle2, Trash2 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -30,6 +30,10 @@ export function VehiclesPage() {
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
   const [deletingVehicleId, setDeletingVehicleId] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; plate: string } | null>(null)
+  // Caps rendered vehicle cards instead of rendering all of them at once -
+  // filtered can be up to 500 rows (useApiData's fetch cap), and unlike
+  // TripsListPage this list previously had no pagination or windowing.
+  const [visibleCount, setVisibleCount] = useState(30)
   // Matches the backend's own gate (organization_vehicles_api.py's
   // delete_vehicle requires OWNER or ADMIN/"finance" role).
   const canChangeVehicleStatus = org.role === 'owner' || org.role === 'finance'
@@ -55,13 +59,24 @@ export function VehiclesPage() {
   }
 
 
-  const filtered = data.vehicles.filter(v => filter === 'all' || v.status === filter)
-  const totalSeats = data.vehicles.reduce((a, v) => a + v.capacity, 0)
-  const verified = data.vehicles.filter(v => v.status === 'verified').length
+  // data.vehicles/data.trips can each be up to 500 rows (useApiData's
+  // fetch cap) - these were recomputed on every render instead of only
+  // when the underlying data/filter/selected vehicle actually change.
+  const filtered = useMemo(
+    () => data.vehicles.filter(v => filter === 'all' || v.status === filter),
+    [data.vehicles, filter],
+  )
+  const { totalSeats, verified } = useMemo(() => ({
+    totalSeats: data.vehicles.reduce((a, v) => a + v.capacity, 0),
+    verified: data.vehicles.filter(v => v.status === 'verified').length,
+  }), [data.vehicles])
 
-  const vehicleTrips = historyVehicle
-    ? data.trips.filter((t: any) => t.vehicleId === historyVehicle.id)
-    : []
+  const vehicleTrips = useMemo(
+    () => historyVehicle
+      ? data.trips.filter((t: any) => t.vehicleId === historyVehicle.id)
+      : [],
+    [data.trips, historyVehicle],
+  )
 
   if (loading) {
     return (
@@ -100,7 +115,7 @@ export function VehiclesPage() {
           {filters.map(f => (
             <button
               key={f.value}
-              onClick={() => setFilter(f.value)}
+              onClick={() => { setFilter(f.value); setVisibleCount(30) }}
               className={clsx(
                 'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors',
                 filter === f.value
@@ -133,7 +148,7 @@ export function VehiclesPage() {
           <EmptyState icon={Car} title="No vehicles yet" description="Add your first vehicle to start publishing trips." action={{ label: '+ Add Vehicle', onClick: () => guardAction(undefined, () => navigate('/fleet/vehicles/new')) }} />
         ) : (
           <div id="tour-vehicles-list" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map(vehicle => {
+            {filtered.slice(0, visibleCount).map(vehicle => {
               const approvedDocs = vehicle.documents.filter((d: any) => d.status === 'approved').length
               const totalDocs = vehicle.documents.length
 
@@ -216,6 +231,16 @@ export function VehiclesPage() {
                 </div>
               )
             })}
+          </div>
+        )}
+        {visibleCount < filtered.length && (
+          <div className="flex justify-center pt-2">
+            <button
+              onClick={() => setVisibleCount(c => c + 30)}
+              className="px-4 py-2 text-sm font-semibold text-primary-500 border border-neutral-100 rounded-xl hover:bg-neutral-50 transition-colors"
+            >
+              Load more ({filtered.length - visibleCount} remaining)
+            </button>
           </div>
         )}
       </div>

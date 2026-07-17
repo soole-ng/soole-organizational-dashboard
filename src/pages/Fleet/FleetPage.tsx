@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Users, Car, ChevronRight, AlertTriangle, TrendingUp, Activity, ShieldCheck } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
@@ -11,15 +12,20 @@ export function FleetPage() {
   const { org } = useOrg()
   const canManageAdmin = org.role === 'owner' || org.role === 'manager'
 
-  const pendingDrivers = data.drivers.filter(d => d.status === 'pending').length
-  const pendingDocs = data.vehicles.reduce((acc, v) =>
-    acc + v.documents.filter(d => d.status === 'pending' || d.status === 'uploaded').length, 0)
-  const verifiedDrivers = data.drivers.filter(d => d.status === 'verified').length
-  const verifiedVehicles = data.vehicles.filter(v => v.status === 'verified').length
-  const totalSeats = data.vehicles.reduce((t, v) => t + v.capacity, 0)
-  const avgRating = data.drivers
-    .filter(d => (d.avgRating ?? 0) > 0)
-    .reduce((a, d, _, arr) => a + (d.avgRating ?? 0) / arr.length, 0)
+  // data.drivers/data.vehicles can each be up to 500 rows (useApiData's
+  // fetch cap) - these summary stats were recomputed on every render.
+  const stats = useMemo(() => {
+    const pendingDrivers = data.drivers.filter(d => d.status === 'pending').length
+    const pendingDocs = data.vehicles.reduce((acc, v) =>
+      acc + v.documents.filter(d => d.status === 'pending' || d.status === 'uploaded').length, 0)
+    const verifiedDrivers = data.drivers.filter(d => d.status === 'verified').length
+    const verifiedVehicles = data.vehicles.filter(v => v.status === 'verified').length
+    const totalSeats = data.vehicles.reduce((t, v) => t + v.capacity, 0)
+    const rated = data.drivers.filter(d => (d.avgRating ?? 0) > 0)
+    const avgRating = rated.reduce((a, d, _, arr) => a + (d.avgRating ?? 0) / arr.length, 0)
+    return { pendingDrivers, pendingDocs, verifiedDrivers, verifiedVehicles, totalSeats, avgRating }
+  }, [data.drivers, data.vehicles])
+  const { pendingDrivers, pendingDocs, verifiedDrivers, verifiedVehicles, totalSeats, avgRating } = stats
 
   const hasAlerts = pendingDrivers > 0 || pendingDocs > 0
 

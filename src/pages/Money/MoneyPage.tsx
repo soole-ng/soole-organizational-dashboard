@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X, ChevronDown, Eye, EyeOff, Filter, AlertCircle, Download, Loader2 } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay'
@@ -68,6 +68,12 @@ export function MoneyPage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [exportingCsv, setExportingCsv] = useState(false)
+  // Caps rendered rows instead of rendering all of them at once -
+  // allTransactions/filteredPayouts can each be up to 500 rows
+  // (useApiData's fetch cap), and this list previously had no pagination
+  // or windowing at all.
+  const [visibleTxCount, setVisibleTxCount] = useState(30)
+  const [visiblePayoutCount, setVisiblePayoutCount] = useState(30)
 
   const handleExportCsv = async () => {
     if (!orgUuid) return
@@ -83,17 +89,27 @@ export function MoneyPage() {
 
   const selectedAccount = bankAccounts.find(a => a.uuid === selectedAccountId) || primaryAccount
 
-  let allTransactions = data.transactions
-  if (startDate && endDate) {
+  // data.transactions/data.payouts can each be up to 500 rows (useApiData's
+  // fetch cap) - both were re-filtered on every render (including
+  // unrelated ones, e.g. typing in the withdrawal PIN field).
+  const allTransactions = useMemo(() => {
+    if (!(startDate && endDate)) return data.transactions
     const start = new Date(startDate).getTime()
     const end = new Date(endDate).getTime() + 86400000 // include the end day
-    allTransactions = allTransactions.filter(t => {
+    return data.transactions.filter(t => {
       const time = new Date(t.date).getTime()
       return time >= start && time <= end
     })
-  }
+  }, [data.transactions, startDate, endDate])
 
   const allPayouts = data.payouts
+  const filteredPayouts = useMemo(() => allPayouts.filter(p => {
+    if (!startDate || !endDate) return true
+    const payoutTime = new Date(p.dateInitiated).getTime()
+    const start = new Date(startDate).getTime()
+    const end = new Date(endDate).getTime() + 86400000
+    return payoutTime >= start && payoutTime <= end
+  }), [allPayouts, startDate, endDate])
 
   // Sourced from GET /money/weekly-revenue (data.weeklyRevenue, via
   // useApiData) instead of re-derived from the raw transactions list -
@@ -328,7 +344,7 @@ export function MoneyPage() {
             {allTransactions.length === 0 ? (
               <div className="card text-center py-8 text-neutral-200 text-sm">No transactions yet.</div>
             ) : (
-              allTransactions.map(tx => (
+              allTransactions.slice(0, visibleTxCount).map(tx => (
                 <div key={tx.id} className="card">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -356,6 +372,16 @@ export function MoneyPage() {
                 </div>
               ))
             )}
+            {visibleTxCount < allTransactions.length && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => setVisibleTxCount(c => c + 30)}
+                  className="px-4 py-2 text-sm font-semibold text-primary-500 border border-neutral-100 rounded-xl hover:bg-neutral-50 transition-colors"
+                >
+                  Load more ({allTransactions.length - visibleTxCount} remaining)
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -364,36 +390,37 @@ export function MoneyPage() {
             <p className="text-xs text-neutral-200 px-1">
               Withdrawals you've made from your Soole wallet to your bank account.
             </p>
-            {(() => {
-              const filteredPayouts = allPayouts.filter(p => {
-                if (!startDate || !endDate) return true
-                const payoutTime = new Date(p.dateInitiated).getTime()
-                const start = new Date(startDate).getTime()
-                const end = new Date(endDate).getTime() + 86400000
-                return payoutTime >= start && payoutTime <= end
-              })
-              return filteredPayouts.length === 0 ? (
-                <div className="card text-center py-8 text-neutral-200 text-sm">No withdrawals found.</div>
-              ) : (
-                filteredPayouts.map(payout => (
-                  <div key={payout.id} className="card">
-                    <div className="flex items-center justify-between mb-2">
-                      <MoneyDisplay amount={payout.amount} size="lg" hidden={isHidden} className="font-bold text-lg" />
-                      <StatusPill status={payout.status} />
-                    </div>
-                    <div className="space-y-1 text-xs text-neutral-200">
-                      <p>
-                        {payout.dateCompleted
-                          ? `Received: ${formatDate(payout.dateCompleted)}`
-                          : `Initiated: ${formatDate(payout.dateInitiated)}`}
-                      </p>
-                      <p>Ref: {payout.reference}</p>
-                      {payout.description && <p>{payout.description}</p>}
-                    </div>
+            {filteredPayouts.length === 0 ? (
+              <div className="card text-center py-8 text-neutral-200 text-sm">No withdrawals found.</div>
+            ) : (
+              filteredPayouts.slice(0, visiblePayoutCount).map(payout => (
+                <div key={payout.id} className="card">
+                  <div className="flex items-center justify-between mb-2">
+                    <MoneyDisplay amount={payout.amount} size="lg" hidden={isHidden} className="font-bold text-lg" />
+                    <StatusPill status={payout.status} />
                   </div>
-                ))
-              )
-            })()}
+                  <div className="space-y-1 text-xs text-neutral-200">
+                    <p>
+                      {payout.dateCompleted
+                        ? `Received: ${formatDate(payout.dateCompleted)}`
+                        : `Initiated: ${formatDate(payout.dateInitiated)}`}
+                    </p>
+                    <p>Ref: {payout.reference}</p>
+                    {payout.description && <p>{payout.description}</p>}
+                  </div>
+                </div>
+              ))
+            )}
+            {visiblePayoutCount < filteredPayouts.length && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => setVisiblePayoutCount(c => c + 30)}
+                  className="px-4 py-2 text-sm font-semibold text-primary-500 border border-neutral-100 rounded-xl hover:bg-neutral-50 transition-colors"
+                >
+                  Load more ({filteredPayouts.length - visiblePayoutCount} remaining)
+                </button>
+              </div>
+            )}
 
             <button
               onClick={handleWithdrawClick}
@@ -423,6 +450,8 @@ export function MoneyPage() {
               e.preventDefault()
               setShowFilterModal(false)
               if (startDate && endDate) {
+                setVisibleTxCount(30)
+                setVisiblePayoutCount(30)
                 toast.success('Transactions filtered!')
               } else {
                 toast.error('Please select both start and end dates.')

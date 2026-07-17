@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus, Phone, Award, Users, RefreshCw, Loader2, X, Star } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -34,6 +34,11 @@ export function DriversPage() {
   const [removeReason, setRemoveReason] = useState('')
   const [removeRating, setRemoveRating] = useState(0)
   const [removeSubmitting, setRemoveSubmitting] = useState(false)
+  // Caps rendered driver cards instead of rendering all of them at once -
+  // filtered can be up to 500 rows (useApiData's fetch cap), and unlike
+  // TripsListPage this list previously had no pagination or windowing at
+  // all.
+  const [visibleCount, setVisibleCount] = useState(30)
   // Matches the backend's own gate (org_trip_api.py's suspend/reinstate
   // both require OWNER or ADMIN/"finance" role).
   const canChangeDriverStatus = org.role === 'owner' || org.role === 'finance'
@@ -98,11 +103,20 @@ export function DriversPage() {
     })
   }
 
-  const filtered = data.drivers.filter(d => filter === 'all' || d.status === filter)
-  const verified = data.drivers.filter(d => d.status === 'verified').length
-  const totalTrips = data.drivers.reduce((a, d) => a + d.tripsCompleted, 0)
-  const avgRating = data.drivers.filter(d => (d.avgRating ?? 0) > 0)
-    .reduce((a, d, _, arr) => a + (d.avgRating ?? 0) / arr.length, 0)
+  // data.drivers can be up to 500 rows (useApiData's fetch cap) - these
+  // were recomputed on every render (e.g. every keystroke in unrelated
+  // modals) instead of only when drivers/filter actually change.
+  const filtered = useMemo(
+    () => data.drivers.filter(d => filter === 'all' || d.status === filter),
+    [data.drivers, filter],
+  )
+  const { verified, totalTrips, avgRating } = useMemo(() => {
+    const verified = data.drivers.filter(d => d.status === 'verified').length
+    const totalTrips = data.drivers.reduce((a, d) => a + d.tripsCompleted, 0)
+    const rated = data.drivers.filter(d => (d.avgRating ?? 0) > 0)
+    const avgRating = rated.reduce((a, d, _, arr) => a + (d.avgRating ?? 0) / arr.length, 0)
+    return { verified, totalTrips, avgRating }
+  }, [data.drivers])
 
 
 
@@ -143,7 +157,7 @@ export function DriversPage() {
           {filters.map(f => (
             <button
               key={f.value}
-              onClick={() => setFilter(f.value)}
+              onClick={() => { setFilter(f.value); setVisibleCount(30) }}
               className={clsx(
                 'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors',
                 filter === f.value
@@ -180,7 +194,7 @@ export function DriversPage() {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map(driver => (
+            {filtered.slice(0, visibleCount).map(driver => (
               <div
                 key={driver.id}
                 onClick={() => setSelectedDriver(driver)}
@@ -284,6 +298,16 @@ export function DriversPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {visibleCount < filtered.length && (
+          <div className="flex justify-center pt-2">
+            <button
+              onClick={() => setVisibleCount(c => c + 30)}
+              className="px-4 py-2 text-sm font-semibold text-primary-500 border border-neutral-100 rounded-xl hover:bg-neutral-50 transition-colors"
+            >
+              Load more ({filtered.length - visibleCount} remaining)
+            </button>
           </div>
         )}
       </div>

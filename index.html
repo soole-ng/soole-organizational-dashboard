@@ -12,8 +12,16 @@
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- API origin - every page calls this on load via useApiData; without
+         a preconnect hint the DNS+TLS handshake only starts once the JS
+         bundle finishes loading and fires the first fetch. -->
+    <link rel="preconnect" href="https://soole-backend-8cku.onrender.com" />
     <link href="https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css" rel="stylesheet" />
+    <!-- mapbox-gl.css removed: Live Map actually renders with MapLibre GL,
+         loaded dynamically at runtime only when that page mounts
+         (MapContainer.tsx) - this static link was pure dead weight,
+         render-blocking a stylesheet for a library nothing on the page
+         uses (mapbox-gl/react-map-gl aren't imported anywhere in src/). -->
     <title>Mobiliti Dashboard | Organization Fleet Management</title>
   </head>
   <body>

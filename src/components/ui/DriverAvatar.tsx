@@ -24,6 +24,7 @@ export function DriverAvatar({ photoUrl, name, size = 'md' }: { photoUrl?: strin
       <img
         src={photoUrl}
         alt={name}
+        loading="lazy"
         className={clsx('rounded-full object-cover flex-shrink-0 border border-neutral-100/50', sizeClass)}
       />
     )

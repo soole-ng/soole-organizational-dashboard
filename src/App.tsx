@@ -1,28 +1,43 @@
+import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppShell } from './components/layout/AppShell'
-import { LoginPage } from './pages/Auth/LoginPage'
-import { JoinOrganizationPage } from './pages/Auth/JoinOrganizationPage'
-import { SignupChoicePage } from './pages/Auth/SignupChoicePage'
-import { HomePage } from './pages/Home/HomePage'
-import { TripsListPage } from './pages/Trips/TripsListPage'
-import { TripCreatePage } from './pages/Trips/TripCreatePage'
-import { TripDetailPage } from './pages/Trips/TripDetailPage'
 import { OrgProvider } from './lib/OrgContext'
-import { FleetPage } from './pages/Fleet/FleetPage'
-import { DriversPage } from './pages/Fleet/DriversPage'
-import { VehiclesPage } from './pages/Fleet/VehiclesPage'
-import { AddVehiclePage } from './pages/Fleet/AddVehiclePage'
-import { MoneyPage } from './pages/Money/MoneyPage'
-import { LiveMapPage } from './pages/LiveMap/LiveMapPage'
-import { AIChatPage } from './pages/AI/AIChatPage'
-import { ReportsPage } from './pages/Reports/ReportsPage'
-import { SettingsPage } from './pages/Settings/SettingsPage'
-import { HelpPage } from './pages/Help/HelpPage'
-import { AdminPage } from './pages/Admin/AdminPage'
 import { RoleGuard } from './components/layout/RoleGuard'
 
+// Route-level code splitting - previously every page was statically
+// imported here, so the very first load shipped all 17 pages (including
+// ones like Reports/Admin/AI Chat that most sessions never visit) in one
+// bundle. React.lazy defers each page's chunk until its route is actually
+// navigated to.
+const LoginPage = lazy(() => import('./pages/Auth/LoginPage').then(m => ({ default: m.LoginPage })))
+const JoinOrganizationPage = lazy(() => import('./pages/Auth/JoinOrganizationPage').then(m => ({ default: m.JoinOrganizationPage })))
+const SignupChoicePage = lazy(() => import('./pages/Auth/SignupChoicePage').then(m => ({ default: m.SignupChoicePage })))
+const HomePage = lazy(() => import('./pages/Home/HomePage').then(m => ({ default: m.HomePage })))
+const TripsListPage = lazy(() => import('./pages/Trips/TripsListPage').then(m => ({ default: m.TripsListPage })))
+const TripCreatePage = lazy(() => import('./pages/Trips/TripCreatePage').then(m => ({ default: m.TripCreatePage })))
+const TripDetailPage = lazy(() => import('./pages/Trips/TripDetailPage').then(m => ({ default: m.TripDetailPage })))
+const FleetPage = lazy(() => import('./pages/Fleet/FleetPage').then(m => ({ default: m.FleetPage })))
+const DriversPage = lazy(() => import('./pages/Fleet/DriversPage').then(m => ({ default: m.DriversPage })))
+const VehiclesPage = lazy(() => import('./pages/Fleet/VehiclesPage').then(m => ({ default: m.VehiclesPage })))
+const AddVehiclePage = lazy(() => import('./pages/Fleet/AddVehiclePage').then(m => ({ default: m.AddVehiclePage })))
+const MoneyPage = lazy(() => import('./pages/Money/MoneyPage').then(m => ({ default: m.MoneyPage })))
+const LiveMapPage = lazy(() => import('./pages/LiveMap/LiveMapPage').then(m => ({ default: m.LiveMapPage })))
+const AIChatPage = lazy(() => import('./pages/AI/AIChatPage').then(m => ({ default: m.AIChatPage })))
+const ReportsPage = lazy(() => import('./pages/Reports/ReportsPage').then(m => ({ default: m.ReportsPage })))
+const SettingsPage = lazy(() => import('./pages/Settings/SettingsPage').then(m => ({ default: m.SettingsPage })))
+const HelpPage = lazy(() => import('./pages/Help/HelpPage').then(m => ({ default: m.HelpPage })))
+const AdminPage = lazy(() => import('./pages/Admin/AdminPage').then(m => ({ default: m.AdminPage })))
+
 const queryClient = new QueryClient()
+
+function RouteFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <span className="w-8 h-8 border-2 border-primary-100 border-t-primary-500 rounded-full animate-spin" />
+    </div>
+  )
+}
 
 export default function App() {
   const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -36,6 +51,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <OrgProvider>
+        <Suspense fallback={<RouteFallback />}>
         <Routes>
       <Route path="/signup" element={<SignupChoicePage />} />
       <Route path="/login" element={<LoginPage />} />
@@ -64,6 +80,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
       </Routes>
+        </Suspense>
       </OrgProvider>
     </QueryClientProvider>
   )

@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useState, useRef } from 'react'
 import { clsx } from 'clsx'
 import { useNavigate } from 'react-router-dom'
 import { useApiData } from '../../../lib/useApiData'
+import { trackingApi } from '../../../api/client'
 
 type VehicleLoc = {
   id: string
@@ -56,10 +57,15 @@ interface MapContainerProps {
   vehicles: VehicleLoc[]
   onSelectDriver: (vehicle: VehicleLoc) => void
   markerColor: (status: string) => string
+  orgUuid?: string | null
 }
 
+// Per-trip guard so we only ever fetch the recorded history once per trip,
+// not on every polling tick that touches that vehicle.
+const historyHydratedTrips = new Set<string>()
+
 export const MapContainer = forwardRef<any, MapContainerProps>(
-  ({ basemap, selectedDriver, vehicles, onSelectDriver, markerColor }, ref) => {
+  ({ basemap, selectedDriver, vehicles, onSelectDriver, markerColor, orgUuid }, ref) => {
     const [mapLoaded, setMapLoaded] = useState(false)
     const [loadError, setLoadError] = useState(false)
     const [isOffline, setIsOffline] = useState(!navigator.onLine)
@@ -169,6 +175,39 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
           if (!trailsRef.current[vehicle.id] || tripChanged) {
             trailsRef.current[vehicle.id] = [[vehicle.lng, vehicle.lat]]
             saveTrail(vehicle.id, trailsRef.current[vehicle.id])
+
+            // Backfill with the trail actually recorded in the database for
+            // this trip, so the line reflects the whole trip so far rather
+            // than only points polled while this tab happened to be open.
+            if (orgUuid && vehicle.trip && !historyHydratedTrips.has(vehicle.trip)) {
+              historyHydratedTrips.add(vehicle.trip)
+              const vehicleId = vehicle.id
+              const tripId = vehicle.trip
+              trackingApi.getTripLocationHistory(orgUuid, tripId)
+                .then(history => {
+                  // Bail if the vehicle moved on to yet another trip while this was in flight.
+                  if (trailTripIds[vehicleId] !== tripId || !history?.length) return
+                  const historyPoints: [number, number][] = history.map(p => [p.longitude, p.latitude])
+                  const liveTail = trailsRef.current[vehicleId] ?? []
+                  const merged = [...historyPoints, ...liveTail].slice(-MAX_TRAIL_POINTS)
+                  trailsRef.current[vehicleId] = merged
+                  saveTrail(vehicleId, merged)
+
+                  const historySourceId = `trail-source-${vehicleId}`
+                  const source = map.getSource?.(historySourceId)
+                  if (source) {
+                    source.setData({
+                      type: 'Feature',
+                      properties: {},
+                      geometry: { type: 'LineString', coordinates: merged },
+                    })
+                  }
+                })
+                .catch(() => {
+                  // No history yet (brand new trip) or request failed - the
+                  // live-polled trail still works, just without backfill.
+                })
+            }
           } else {
             const path = trailsRef.current[vehicle.id]
             const last = path[path.length - 1]

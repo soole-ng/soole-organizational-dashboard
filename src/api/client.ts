@@ -360,6 +360,9 @@ export const trackingApi = {
     apiRequest<any[]>(`/organizations/${orgUuid}/live-tracking/vehicles${status ? `?status=${status}` : ''}`),
   getTripTracking: async (orgUuid: string, tripUuid: string) =>
     apiRequest(`/organizations/${orgUuid}/live-tracking/trips/${tripUuid}`),
+  /** Full recorded GPS trail for a trip, in chronological order - the real stored path, not just the latest point. */
+  getTripLocationHistory: async (orgUuid: string, tripUuid: string) =>
+    apiRequest<{ latitude: number; longitude: number; recorded_at: string }[]>(`/organizations/${orgUuid}/live-tracking/trips/${tripUuid}/history`),
   updateLocation: async (orgUuid: string, tripUuid: string, payload: { latitude: number; longitude: number; speed?: number; heading?: number }) =>
     apiRequest(`/organizations/${orgUuid}/live-tracking/trips/${tripUuid}/update-location`, { method: 'POST', body: payload }),
 }

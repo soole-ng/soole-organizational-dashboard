@@ -146,6 +146,7 @@ export function LiveMapPage() {
             vehicles={filtered}
             onSelectDriver={handleSelectDriver}
             markerColor={markerColor}
+            orgUuid={orgUuid}
           />
         </div>
 

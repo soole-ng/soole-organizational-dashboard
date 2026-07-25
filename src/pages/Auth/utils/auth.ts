@@ -65,7 +65,13 @@ export const COUNTRY_CODES = [
   { code: '+237', flag: 'https://flagcdn.com/w40/cm.png', name: 'Cameroon' },
 ]
 
-/** Backend requires latitude/longitude on every login step; falls back to 0,0 if denied. */
+/**
+ * Backend requires latitude/longitude on every login step; falls back to 0,0 if denied.
+ * A multi-step auth flow (login -> OTP -> security question) can call this 2-3 times in
+ * a row - maximumAge lets the browser return the position it already acquired moments
+ * earlier instead of re-triggering a fresh location fix on every step, and the shorter
+ * timeout caps the worst-case wait when location is unavailable/denied.
+ */
 export function getBrowserLocation(): Promise<{ latitude: number; longitude: number }> {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
@@ -75,7 +81,7 @@ export function getBrowserLocation(): Promise<{ latitude: number; longitude: num
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
       () => resolve({ latitude: 0, longitude: 0 }),
-      { timeout: 5000 }
+      { timeout: 3000, maximumAge: 5 * 60 * 1000 }
     )
   })
 }

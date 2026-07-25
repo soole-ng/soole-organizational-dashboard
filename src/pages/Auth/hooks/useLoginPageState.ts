@@ -80,12 +80,24 @@ export function useLoginPageState() {
     localStorage.setItem('auth_token', tokenData.access_token)
     localStorage.setItem('refresh_token', tokenData.refresh_token.token)
 
+    // Org/settings pre-fetch is a cache warm-up for pages navigated to after
+    // login, not a requirement for login itself. Firing it in the background
+    // instead of awaiting it here means the button's loading spinner (and the
+    // user) isn't stuck waiting on two more sequential round trips after auth
+    // has already succeeded.
+    prefetchOrgProfile()
+
+    toast.success('Welcome back to Soole!')
+    navigate('/')
+  }
+
+  const prefetchOrgProfile = async () => {
     try {
       const orgs = await orgApi.getMine()
       if (orgs && orgs.length > 0) {
         const primary = orgs[0]
         localStorage.setItem('org_uuid', primary.uuid)
-        
+
         const verificationStatus = primary.verification_status
           ? (primary.verification_status as 'incomplete' | 'complete')
           : (primary.rc_number ? 'complete' : 'incomplete')
@@ -93,12 +105,12 @@ export function useLoginPageState() {
         const approvalStatus = primary.approval_status
           ? (primary.approval_status === 'approved' ? 'approved' : 'pending')
           : (verificationStatus === 'incomplete' ? 'incomplete' : 'pending')
-        
+
         let name = primary.name
         let logoUrl = primary.logo_url ?? null
         let email = undefined
         let phone = undefined
-        
+
         try {
           const settings = await settingsApi.getSettings(primary.uuid) as any
           name = settings.name ?? primary.name
@@ -124,9 +136,6 @@ export function useLoginPageState() {
     } catch (e) {
       console.error('Failed to pre-fetch organization during login:', e)
     }
-
-    toast.success('Welcome back to Soole!')
-    navigate('/')
   }
 
   const handleInitiateForgotPassword = async () => {

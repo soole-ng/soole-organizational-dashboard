@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 import { OTPInput } from '../../components/auth/OTPInput'
+import { API_BASE_URL } from '../../api/client'
 
 // Modular imports
 import { LeftIllustration } from './components/LeftIllustration'
@@ -88,6 +90,16 @@ export function LoginPage() {
     handleResetPassword,
     getBorderClass,
   } = useLoginPageState()
+
+  // The API host (Render free tier) spins down when idle and can take many
+  // seconds to wake on the first request. Firing a lightweight, no-auth ping
+  // as soon as the login page mounts lets that cold start happen while the
+  // user is still typing their phone/password, instead of after they hit
+  // Sign in - the response (even an error) is irrelevant, this is only to
+  // wake the server up early.
+  useEffect(() => {
+    fetch(API_BASE_URL).catch(() => {})
+  }, [])
 
   return (
     <div className="min-h-screen bg-primary-75 flex flex-col lg:flex-row">

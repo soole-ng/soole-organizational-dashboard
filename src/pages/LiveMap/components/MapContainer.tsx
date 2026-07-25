@@ -13,6 +13,7 @@ type VehicleLoc = {
   lat: number
   lng: number
   trip: string | null
+  tripUuid: string | null
   eta: string | null
   speed: number
 }
@@ -169,8 +170,8 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
         // current position (not an interpolated guess), then grows as real
         // polled positions arrive on subsequent effect runs.
         if (vehicle.status === 'on_trip') {
-          const tripChanged = trailTripIds[vehicle.id] !== undefined && trailTripIds[vehicle.id] !== vehicle.trip
-          trailTripIds[vehicle.id] = vehicle.trip
+          const tripChanged = trailTripIds[vehicle.id] !== undefined && trailTripIds[vehicle.id] !== vehicle.tripUuid
+          trailTripIds[vehicle.id] = vehicle.tripUuid
 
           if (!trailsRef.current[vehicle.id] || tripChanged) {
             trailsRef.current[vehicle.id] = [[vehicle.lng, vehicle.lat]]
@@ -179,10 +180,10 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
             // Backfill with the trail actually recorded in the database for
             // this trip, so the line reflects the whole trip so far rather
             // than only points polled while this tab happened to be open.
-            if (orgUuid && vehicle.trip && !historyHydratedTrips.has(vehicle.trip)) {
-              historyHydratedTrips.add(vehicle.trip)
+            if (orgUuid && vehicle.tripUuid && !historyHydratedTrips.has(vehicle.tripUuid)) {
+              historyHydratedTrips.add(vehicle.tripUuid)
               const vehicleId = vehicle.id
-              const tripId = vehicle.trip
+              const tripId = vehicle.tripUuid
               trackingApi.getTripLocationHistory(orgUuid, tripId)
                 .then(history => {
                   // Bail if the vehicle moved on to yet another trip while this was in flight.

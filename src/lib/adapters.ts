@@ -245,6 +245,7 @@ export function adaptVehicleLocation(raw: any) {
     lat: raw.latitude,
     lng: raw.longitude,
     trip: raw.trip_route ?? null,
+    tripUuid: raw.trip_uuid ?? null,
     eta: raw.eta ?? null,
     speed: raw.speed ?? 0,
   }

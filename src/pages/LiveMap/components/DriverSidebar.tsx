@@ -11,6 +11,7 @@ type VehicleLoc = {
   lat: number
   lng: number
   trip: string | null
+  tripUuid: string | null
   eta: string | null
   speed: number
 }

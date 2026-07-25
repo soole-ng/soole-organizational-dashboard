@@ -16,6 +16,40 @@ type VehicleLoc = {
   speed: number
 }
 
+// Max points kept per vehicle trail — prevents unbounded memory growth over a
+// long session while still comfortably covering a full trip's worth of pings.
+const MAX_TRAIL_POINTS = 2000
+const TRAIL_STORAGE_KEY = 'soole_live_map_trails'
+
+// Trails live outside the component (module scope, backed by sessionStorage)
+// so navigating away from Live Map and back - which remounts MapContainer -
+// doesn't wipe the accumulated path back to a single point. A useRef here
+// would reset on every remount since it's tied to the component instance,
+// which was why trails looked "restarted" instead of one continuous line.
+function loadPersistedTrails(): Record<string, [number, number][]> {
+  try {
+    const raw = sessionStorage.getItem(TRAIL_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+const persistedTrails: Record<string, [number, number][]> = loadPersistedTrails()
+// Tracks which trip each vehicle's current trail belongs to, so starting a
+// new trip resets the path instead of drawing a straight line connecting the
+// previous trip's last point to the new trip's first point.
+const trailTripIds: Record<string, string | null> = {}
+
+function saveTrail(vehicleId: string, path: [number, number][]) {
+  persistedTrails[vehicleId] = path
+  try {
+    sessionStorage.setItem(TRAIL_STORAGE_KEY, JSON.stringify(persistedTrails))
+  } catch {
+    // sessionStorage full/unavailable - trail still works in-memory for this session
+  }
+}
+
 interface MapContainerProps {
   basemap: string
   selectedDriver: VehicleLoc | null
@@ -33,7 +67,7 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
     const popupRef = useRef<any>(null)
     const navigate = useNavigate()
     const { data } = useApiData()
-    const trailsRef = useRef<Record<string, [number, number][]>>({})
+    const trailsRef = useRef<Record<string, [number, number][]>>(persistedTrails)
 
     useEffect(() => {
       const handleOnline = () => setIsOffline(false)
@@ -129,13 +163,19 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
         // current position (not an interpolated guess), then grows as real
         // polled positions arrive on subsequent effect runs.
         if (vehicle.status === 'on_trip') {
-          if (!trailsRef.current[vehicle.id]) {
+          const tripChanged = trailTripIds[vehicle.id] !== undefined && trailTripIds[vehicle.id] !== vehicle.trip
+          trailTripIds[vehicle.id] = vehicle.trip
+
+          if (!trailsRef.current[vehicle.id] || tripChanged) {
             trailsRef.current[vehicle.id] = [[vehicle.lng, vehicle.lat]]
+            saveTrail(vehicle.id, trailsRef.current[vehicle.id])
           } else {
             const path = trailsRef.current[vehicle.id]
             const last = path[path.length - 1]
             if (last && (Math.abs(last[0] - vehicle.lng) > 0.0001 || Math.abs(last[1] - vehicle.lat) > 0.0001)) {
               path.push([vehicle.lng, vehicle.lat])
+              if (path.length > MAX_TRAIL_POINTS) path.splice(0, path.length - MAX_TRAIL_POINTS)
+              saveTrail(vehicle.id, path)
             }
           }
 

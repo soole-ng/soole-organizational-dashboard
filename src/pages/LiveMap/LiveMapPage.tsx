@@ -63,6 +63,13 @@ export function LiveMapPage() {
   // the browser tab isn't visible - a Live Map tab commonly gets left open
   // in the background, and there's no point polling every 10s for a map
   // nobody's looking at.
+  //
+  // The driver/vehicle app only sends a location ping once a minute
+  // (location_background_service.dart's _kTrackingInterval), so polling
+  // every 10s was firing ~6x more often than the data could possibly
+  // change - wasted requests for no fresher data. 20s keeps the map
+  // feeling responsive (a new ping shows up within 20s of arriving,
+  // not a full minute later) without hammering the backend needlessly.
   useEffect(() => {
     if (!orgUuid) return
     let cancelled = false
@@ -77,7 +84,7 @@ export function LiveMapPage() {
     }
 
     load()
-    const interval = setInterval(load, 10000)
+    const interval = setInterval(load, 20000)
     const onVisibilityChange = () => { if (!document.hidden) load() }
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => {

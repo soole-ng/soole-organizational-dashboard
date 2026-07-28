@@ -129,6 +129,9 @@ export interface Payout {
   dateInitiated: string
   dateCompleted?: string
   description?: string
+  bankName?: string
+  accountNumber?: string
+  accountName?: string
 }
 
 export interface Alert {

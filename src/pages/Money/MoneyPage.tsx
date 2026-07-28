@@ -892,6 +892,18 @@ export function MoneyPage() {
                   <p><span className="font-semibold text-primary-500">Description:</span> {selectedPayout.description}</p>
                 )}
               </div>
+              {selectedPayout.bankName || selectedPayout.accountNumber ? (
+                <div className="border-t border-neutral-50 pt-3 space-y-1.5 text-xs text-neutral-300">
+                  <p className="font-semibold text-primary-500 text-sm">Sent to</p>
+                  {selectedPayout.bankName && <p><span className="font-semibold text-primary-500">Bank:</span> {selectedPayout.bankName}</p>}
+                  {selectedPayout.accountNumber && <p><span className="font-semibold text-primary-500">Account number:</span> {selectedPayout.accountNumber}</p>}
+                  {selectedPayout.accountName && <p><span className="font-semibold text-primary-500">Account name:</span> {selectedPayout.accountName}</p>}
+                </div>
+              ) : (
+                <div className="border-t border-neutral-50 pt-3">
+                  <p className="text-xs text-neutral-200 italic">Destination account details weren't recorded for this payout.</p>
+                </div>
+              )}
             </div>
 
             <button
@@ -947,6 +959,18 @@ export function MoneyPage() {
                 <p><strong>Completed:</strong> {formatDateTime(printPayload.payout.dateCompleted)}</p>
               )}
               {printPayload.payout.description && <p><strong>Description:</strong> {printPayload.payout.description}</p>}
+            </div>
+            <div className="mt-4 pt-3 border-t border-black space-y-1.5 text-sm">
+              <p className="font-bold">Sent to</p>
+              {printPayload.payout.bankName || printPayload.payout.accountNumber ? (
+                <>
+                  {printPayload.payout.bankName && <p><strong>Bank:</strong> {printPayload.payout.bankName}</p>}
+                  {printPayload.payout.accountNumber && <p><strong>Account number:</strong> {printPayload.payout.accountNumber}</p>}
+                  {printPayload.payout.accountName && <p><strong>Account name:</strong> {printPayload.payout.accountName}</p>}
+                </>
+              ) : (
+                <p className="italic">Destination account details weren't recorded for this payout.</p>
+              )}
             </div>
           </div>
         )}

@@ -220,7 +220,7 @@ export function adaptTransaction(raw: any): Transaction {
   }
 }
 
-/** organization_money_api.PayoutItemSchema — {id, driver_name, driver_phone, amount, trips_count, period_end, status, date_processed} */
+/** organization_money_api.PayoutItemSchema — {id, amount, status, date_initiated, date_completed, reference, description, bank_name, account_number, account_name} */
 export function adaptPayout(raw: any): Payout {
   return {
     id: raw.id,
@@ -230,6 +230,9 @@ export function adaptPayout(raw: any): Payout {
     dateInitiated: raw.date_initiated,
     dateCompleted: raw.date_completed ?? undefined,
     description: raw.description ?? undefined,
+    bankName: raw.bank_name ?? undefined,
+    accountNumber: raw.account_number ?? undefined,
+    accountName: raw.account_name ?? undefined,
   }
 }
 

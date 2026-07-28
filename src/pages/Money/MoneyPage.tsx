@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X, ChevronDown, Eye, EyeOff, Filter, AlertCircle, Download, Loader2 } from 'lucide-react'
+import { Calendar, ArrowUpRight, ArrowDownLeft, ShieldCheck, X, ChevronDown, Eye, EyeOff, Filter, AlertCircle, Download, Loader2, Printer } from 'lucide-react'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay'
 import { StatusPill } from '../../components/ui/StatusPill'
@@ -10,8 +10,21 @@ import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
 import { Link } from 'react-router-dom'
+import type { Transaction, Payout } from '../../types'
 
 const tabs = ['Transactions', 'Payouts']
+
+type TripTransactionGroup = {
+  key: string
+  label: string
+  date: string
+  total: number
+  items: Transaction[]
+}
+
+type PrintPayload =
+  | { kind: 'trip'; group: TripTransactionGroup }
+  | { kind: 'payout'; payout: Payout }
 
 export function MoneyPage() {
   const { org, updateOrg, guardAction, orgUuid } = useOrg()
@@ -111,6 +124,49 @@ export function MoneyPage() {
     const end = new Date(endDate).getTime() + 86400000
     return payoutTime >= start && payoutTime <= end
   }), [allPayouts, startDate, endDate])
+
+  // Each ride can produce more than one credited transaction (e.g. a
+  // start-of-trip advance and an end-of-trip settlement), which used to
+  // show up as separate, unlabeled rows. Grouping by tripId turns that
+  // into one line per trip with a drill-down, instead of an ever-growing
+  // flat list of same-trip entries.
+  const groupedTransactions = useMemo<TripTransactionGroup[]>(() => {
+    const groups = new Map<string, TripTransactionGroup>()
+    for (const tx of allTransactions) {
+      const key = tx.tripId || 'other'
+      let group = groups.get(key)
+      if (!group) {
+        group = { key, label: tx.tripId ? tx.description : 'Other', date: tx.date, total: 0, items: [] }
+        groups.set(key, group)
+      }
+      group.total += tx.net
+      group.items.push(tx)
+      if (new Date(tx.date).getTime() > new Date(group.date).getTime()) group.date = tx.date
+    }
+    return Array.from(groups.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }, [allTransactions])
+
+  const [expandedTrips, setExpandedTrips] = useState<Set<string>>(new Set())
+  const toggleTripExpanded = (key: string) => setExpandedTrips(prev => {
+    const next = new Set(prev)
+    if (next.has(key)) next.delete(key)
+    else next.add(key)
+    return next
+  })
+
+  const [selectedPayout, setSelectedPayout] = useState<Payout | null>(null)
+  const [printPayload, setPrintPayload] = useState<PrintPayload | null>(null)
+
+  useEffect(() => {
+    if (!printPayload) return
+    const timer = setTimeout(() => window.print(), 50)
+    const clear = () => setPrintPayload(null)
+    window.addEventListener('afterprint', clear)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('afterprint', clear)
+    }
+  }, [printPayload])
 
   // Sourced from GET /money/weekly-revenue (data.weeklyRevenue, via
   // useApiData) instead of re-derived from the raw transactions list -
@@ -263,7 +319,8 @@ export function MoneyPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <>
+    <div className="flex flex-col min-h-screen bg-white print:hidden">
       <TopBar title="Money" />
 
       {/* Main Stats Banner */}
@@ -354,44 +411,78 @@ export function MoneyPage() {
 
         {activeTab === 'Transactions' && (
           <div className="space-y-2">
-            {allTransactions.length === 0 ? (
+            {groupedTransactions.length === 0 ? (
               <div className="card text-center py-8 text-neutral-200 text-sm">No transactions yet.</div>
             ) : (
-              allTransactions.slice(0, visibleTxCount).map(tx => (
-                <div key={tx.id} className="card">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-white">
-                        {tx.type === 'payout'
-                          ? <ArrowUpRight className="w-5 h-5 text-primary-400" />
-                          : tx.type === 'refund'
-                          ? <ArrowDownLeft className="w-5 h-5 text-danger" />
-                          : <ArrowDownLeft className="w-5 h-5 text-secondary-300" />
-                        }
+              groupedTransactions.slice(0, visibleTxCount).map(group => {
+                const isExpanded = expandedTrips.has(group.key)
+                return (
+                  <div key={group.key} className="card">
+                    <button
+                      onClick={() => toggleTripExpanded(group.key)}
+                      className="w-full flex items-center justify-between gap-3 text-left"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-white">
+                          <ArrowDownLeft className="w-5 h-5 text-secondary-300" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-primary-500 leading-snug truncate">{group.label}</p>
+                          <p className="text-xs text-neutral-200 mt-0.5">
+                            {formatDateTime(group.date)}
+                            {group.items.length > 1 ? ` · ${group.items.length} transactions` : ''}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-primary-500 leading-snug">{tx.description}</p>
-                        <p className="text-xs text-neutral-200 mt-0.5">{formatDateTime(tx.date)}</p>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <MoneyDisplay
+                          amount={group.total}
+                          size="sm"
+                          showSign
+                          hidden={isHidden}
+                          className={clsx('font-bold', group.total > 0 ? 'text-secondary-300' : 'text-danger')}
+                        />
+                        <ChevronDown className={clsx('w-4 h-4 text-neutral-200 transition-transform', isExpanded && 'rotate-180')} />
                       </div>
-                    </div>
-                    <MoneyDisplay
-                      amount={tx.net}
-                      size="sm"
-                      showSign
-                      hidden={isHidden}
-                      className={clsx('font-bold', tx.net > 0 ? 'text-secondary-300' : 'text-danger')}
-                    />
+                    </button>
+
+                    {isExpanded && (
+                      <div className="mt-3 pt-3 border-t border-neutral-50 space-y-2">
+                        {group.items.map(tx => (
+                          <div key={tx.id} className="flex items-center justify-between gap-3 text-xs pl-1">
+                            <div className="min-w-0">
+                              <p className="text-neutral-400 font-medium truncate">{tx.description}</p>
+                              <p className="text-neutral-200 mt-0.5">{formatDateTime(tx.date)}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className={clsx('font-semibold', tx.net > 0 ? 'text-secondary-300' : 'text-danger')}>
+                                {tx.net > 0 ? '+' : ''}NGN {tx.net.toLocaleString()}
+                              </p>
+                              {tx.commission > 0 && (
+                                <p className="text-neutral-200">Commission: NGN {tx.commission.toLocaleString()}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => setPrintPayload({ kind: 'trip', group })}
+                          className="flex items-center gap-1.5 text-xs font-semibold text-secondary-300 hover:underline pt-1"
+                        >
+                          <Printer className="w-3.5 h-3.5" /> Print breakdown
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
-            {visibleTxCount < allTransactions.length && (
+            {visibleTxCount < groupedTransactions.length && (
               <div className="flex justify-center pt-2">
                 <button
                   onClick={() => setVisibleTxCount(c => c + 30)}
                   className="px-4 py-2 text-sm font-semibold text-primary-500 border border-neutral-100 rounded-xl hover:bg-neutral-50 transition-colors"
                 >
-                  Load more ({allTransactions.length - visibleTxCount} remaining)
+                  Load more ({groupedTransactions.length - visibleTxCount} remaining)
                 </button>
               </div>
             )}
@@ -407,9 +498,16 @@ export function MoneyPage() {
               <div className="card text-center py-8 text-neutral-200 text-sm">No withdrawals found.</div>
             ) : (
               filteredPayouts.slice(0, visiblePayoutCount).map(payout => (
-                <div key={payout.id} className="card">
+                <button
+                  key={payout.id}
+                  onClick={() => setSelectedPayout(payout)}
+                  className="card w-full text-left hover:bg-neutral-50 transition-colors"
+                >
                   <div className="flex items-center justify-between mb-2">
-                    <MoneyDisplay amount={payout.amount} size="lg" hidden={isHidden} className="font-bold text-lg" />
+                    <div className="flex items-center gap-2">
+                      <ArrowUpRight className="w-4 h-4 text-primary-400" />
+                      <MoneyDisplay amount={payout.amount} size="lg" hidden={isHidden} className="font-bold text-lg" />
+                    </div>
                     <StatusPill status={payout.status} />
                   </div>
                   <div className="space-y-1 text-xs text-neutral-200">
@@ -421,7 +519,7 @@ export function MoneyPage() {
                     <p>Ref: {payout.reference}</p>
                     {payout.description && <p>{payout.description}</p>}
                   </div>
-                </div>
+                </button>
               ))
             )}
             {visiblePayoutCount < filteredPayouts.length && (
@@ -757,6 +855,103 @@ export function MoneyPage() {
           </div>
         </div>
       )}
+
+      {/* Payout Detail Modal */}
+      {selectedPayout && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-card w-full max-w-sm p-6 shadow-float relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setSelectedPayout(null)}
+              className="absolute right-4 top-4 text-neutral-200 hover:text-primary-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                <ArrowUpRight className="w-6 h-6 text-primary-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-primary-500">Payout Details</h3>
+                <p className="text-xs text-neutral-200">Withdrawal to your bank account</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center justify-between">
+                <MoneyDisplay amount={selectedPayout.amount} size="lg" hidden={isHidden} className="font-bold text-xl" />
+                <StatusPill status={selectedPayout.status} />
+              </div>
+              <div className="border-t border-neutral-50 pt-3 space-y-1.5 text-xs text-neutral-300">
+                <p><span className="font-semibold text-primary-500">Reference:</span> {selectedPayout.reference}</p>
+                <p><span className="font-semibold text-primary-500">Initiated:</span> {formatDateTime(selectedPayout.dateInitiated)}</p>
+                {selectedPayout.dateCompleted && (
+                  <p><span className="font-semibold text-primary-500">Completed:</span> {formatDateTime(selectedPayout.dateCompleted)}</p>
+                )}
+                {selectedPayout.description && (
+                  <p><span className="font-semibold text-primary-500">Description:</span> {selectedPayout.description}</p>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={() => setPrintPayload({ kind: 'payout', payout: selectedPayout })}
+              className="mt-5 w-full flex items-center justify-center gap-1.5 text-sm font-semibold text-secondary-300 border border-neutral-100 rounded-xl py-2.5 hover:bg-neutral-50 transition-colors"
+            >
+              <Printer className="w-4 h-4" /> Print receipt
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+
+    {/* Print-only content - hidden on screen, shown only when window.print()
+        is triggered above. Kept out of the normal flow (rather than styling
+        the on-screen cards for print) so what prints is a clean receipt/
+        breakdown, not the whole page chrome. */}
+    {printPayload && (
+      <div className="hidden print:block p-8 text-black">
+        {printPayload.kind === 'trip' ? (
+          <div>
+            <h1 className="text-xl font-bold mb-1">Soole — Trip Earnings Breakdown</h1>
+            <p className="text-sm mb-4">{printPayload.group.label}</p>
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-black">
+                  <th className="text-left py-1.5">Date</th>
+                  <th className="text-left py-1.5">Description</th>
+                  <th className="text-right py-1.5">Amount (NGN)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {printPayload.group.items.map(tx => (
+                  <tr key={tx.id} className="border-b border-neutral-200">
+                    <td className="py-1.5">{formatDateTime(tx.date)}</td>
+                    <td className="py-1.5">{tx.description}</td>
+                    <td className="text-right py-1.5">{tx.net.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-right font-bold mt-3">Total: NGN {printPayload.group.total.toLocaleString()}</p>
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-xl font-bold mb-4">Soole — Payout Receipt</h1>
+            <div className="space-y-1.5 text-sm">
+              <p><strong>Reference:</strong> {printPayload.payout.reference}</p>
+              <p><strong>Amount:</strong> NGN {printPayload.payout.amount.toLocaleString()}</p>
+              <p><strong>Status:</strong> {printPayload.payout.status}</p>
+              <p><strong>Initiated:</strong> {formatDateTime(printPayload.payout.dateInitiated)}</p>
+              {printPayload.payout.dateCompleted && (
+                <p><strong>Completed:</strong> {formatDateTime(printPayload.payout.dateCompleted)}</p>
+              )}
+              {printPayload.payout.description && <p><strong>Description:</strong> {printPayload.payout.description}</p>}
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+    </>
   )
 }

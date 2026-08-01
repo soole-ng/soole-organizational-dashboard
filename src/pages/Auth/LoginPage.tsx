@@ -106,15 +106,51 @@ export function LoginPage() {
       <LeftIllustration />
 
       {/* Right panel */}
-      <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-        <AuthHeader step={step} securityQuestion={securityQuestion} type="mobile" />
-
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto bg-white lg:bg-primary-75">
         {/* Form card container */}
         <div className="flex-1 flex items-start lg:items-center justify-center p-1 sm:p-6 lg:p-12 pt-12 sm:pt-6">
           <div className={clsx("w-[85%] mx-auto sm:w-full transition-all duration-300", step === 'signup' ? "max-w-full lg:max-w-lg" : "max-w-full lg:max-w-md mt-6 sm:mt-0")}>
-            <AuthHeader step={step} securityQuestion={securityQuestion} type="desktop" />
 
-            <div className="bg-white rounded-3xl sm:rounded-card shadow-card p-6 sm:p-8 lg:p-10 relative z-10 w-full mb-8 sm:mb-0 mt-4 sm:mt-0">
+            <div className="bg-white rounded-3xl sm:rounded-card lg:shadow-card p-6 sm:p-8 lg:p-10 relative z-10 w-full mb-8 sm:mb-0 mt-4 sm:mt-0 border border-neutral-100/10">
+              {/* Center Logo Header */}
+              <div className="flex flex-col items-center text-center mb-6 select-none">
+                <div className="flex items-center gap-2 mb-3">
+                  <img src="/soole-icon.png" alt="Soole logo" className="w-7 h-7 object-contain" />
+                  <span className="text-xl font-bold tracking-tight text-[#042011] font-display">Soole</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#042011] tracking-tight">
+                  {(() => {
+                    switch (step) {
+                      case 'login': return 'Welcome back 👋'
+                      case 'signup': return 'Create Account 👋'
+                      case 'signup_otp': return 'Verify Phone 📱'
+                      case 'signup_password': return 'Create Password 🔒'
+                      case 'security_setup': return 'Secure Account 🛡️'
+                      case 'security_question': return 'Security Verification 🔑'
+                      case 'forgot_password':
+                      case 'forgot_password_otp':
+                      case 'forgot_password_reset': return 'Reset Password 🔑'
+                      default: return 'Verification Required'
+                    }
+                  })()}
+                </h2>
+                <p className="text-xs text-neutral-400 mt-1 max-w-[280px] leading-relaxed">
+                  {(() => {
+                    switch (step) {
+                      case 'login': return 'Sign in to access your organization dashboard'
+                      case 'signup': return 'Register your company on the Soole platform'
+                      case 'signup_otp': return 'Enter the verification code sent via SMS'
+                      case 'signup_password': return 'Create a strong password for your new company account'
+                      case 'security_setup': return 'Set up a recovery question before continuing'
+                      case 'security_question': return 'Please answer your backup security question to continue'
+                      case 'forgot_password': return 'Enter your phone number to receive a reset code'
+                      case 'forgot_password_otp': return 'Enter the verification code sent to your phone'
+                      case 'forgot_password_reset': return 'Create a strong new password for your account'
+                      default: return 'Please follow the steps to continue'
+                    }
+                  })()}
+                </p>
+              </div>
               {step === 'login' ? (
                 <LoginForm
                   phone={phone}

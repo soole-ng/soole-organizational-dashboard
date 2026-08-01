@@ -1,4 +1,4 @@
-import { Phone, Lock, Eye, EyeOff, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { Phone, Shield, Eye, EyeOff } from 'lucide-react'
 import { clsx } from 'clsx'
 import { COUNTRY_CODES, Step } from '../utils/auth'
 import { OTPInput } from '../../../components/auth/OTPInput'
@@ -31,14 +31,6 @@ interface ForgotPasswordFlowProps {
   getBorderClass: (field: string) => string
 }
 
-const passwordRules = [
-  { label: 'At least 8 characters', test: (pw: string) => pw.length >= 8 },
-  { label: 'Uppercase letter', test: (pw: string) => /[A-Z]/.test(pw) },
-  { label: 'Lowercase letter', test: (pw: string) => /[a-z]/.test(pw) },
-  { label: 'Number', test: (pw: string) => /\d/.test(pw) },
-  { label: 'Special character (!@#$%^&*)', test: (pw: string) => /[!@#$%^&*]/.test(pw) },
-]
-
 export function ForgotPasswordFlow({
   step,
   forgotPhone,
@@ -66,25 +58,23 @@ export function ForgotPasswordFlow({
   setStep,
   getBorderClass,
 }: ForgotPasswordFlowProps) {
-
-  /* ─── Step 1: Enter Phone ─────────────────────────────────────── */
   if (step === 'forgot_password') {
     return (
-      <div className="space-y-5">
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-neutral-500 flex items-center gap-1.5">
-            <Phone className="w-3.5 h-3.5 text-neutral-400" />
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <label className="block text-xs font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+            <Phone className="w-3.5 h-3.5 text-black" />
             Phone Number <span className="text-red-500">*</span>
           </label>
           <div className="flex gap-2 items-center">
             <div
               className={clsx(
-                'h-[48px] px-3.5 bg-white border border-neutral-200 rounded-xl flex items-center justify-center gap-1.5 text-sm font-semibold flex-shrink-0',
+                'h-[52px] px-4 bg-white border rounded-xl flex items-center justify-center gap-2 text-base font-black flex-shrink-0 text-black',
                 getBorderClass('phone')
               )}
             >
-              <img src={country.flag} alt={country.name} className="w-5 h-3.5 object-cover rounded-sm" />
-              <span className="text-xs font-bold text-neutral-800">{country.code}</span>
+              <img src={country.flag} alt={country.name} className="w-6 h-4 object-cover rounded-sm" />
+              <span className="text-sm font-black text-black">{country.code}</span>
             </div>
             <input
               type="tel"
@@ -95,10 +85,10 @@ export function ForgotPasswordFlow({
                 setErrors(errors.filter(err => err !== 'phone'))
               }}
               className={clsx(
-                'w-full h-[48px] bg-white border border-neutral-200 rounded-xl px-4 py-0 text-sm text-neutral-800 font-semibold placeholder:text-neutral-300 focus:border-primary-500 focus:outline-none transition-all',
+                'w-full h-[52px] bg-white border rounded-xl px-5 py-0 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none transition-all',
                 getBorderClass('phone')
               )}
-              placeholder="803 123 4567"
+              placeholder="8031234567"
               autoComplete="tel"
               inputMode="tel"
               onKeyDown={e => e.key === 'Enter' && handleInitiateForgotPassword()}
@@ -110,39 +100,33 @@ export function ForgotPasswordFlow({
           onClick={handleInitiateForgotPassword}
           disabled={loading || !forgotPhone}
           className={clsx(
-            'w-full bg-primary-500 text-white font-bold rounded-xl px-6 h-[48px] text-sm active:scale-[0.98] hover:bg-[#07361d] transition-all flex items-center justify-center gap-1.5 shadow-sm mt-4 disabled:opacity-50 disabled:cursor-not-allowed',
+            'w-full bg-primary-500 text-white font-black rounded-2xl px-6 h-[56px] text-lg active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4',
             loading && 'opacity-70'
           )}
         >
           {loading ? (
             <>
-              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               Sending Code…
             </>
           ) : (
-            <>
-              Send Reset Code
-              <ArrowRight className="w-4.5 h-4.5" />
-            </>
+            'Send Reset Code'
           )}
         </button>
 
         <button
-          onClick={() => { setStep('login'); setErrors([]) }}
-          className="w-full text-neutral-500 font-semibold text-sm rounded-xl px-4 py-2.5 hover:bg-neutral-50 transition-all"
+          onClick={() => {
+            setStep('login')
+            setErrors([])
+          }}
+          className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm"
         >
           ← Back to login
         </button>
-
-        <div className="text-center pt-4 mt-2 border-t border-neutral-100 flex items-center justify-center gap-1.5 text-[10px] text-neutral-400/80">
-          <span>🔒</span>
-          <span>Protected by Soole • 2FA enabled for all accounts</span>
-        </div>
       </div>
     )
   }
 
-  /* ─── Step 2: Enter OTP ───────────────────────────────────────── */
   if (step === 'forgot_password_otp') {
     return (
       <div className="space-y-4">
@@ -159,8 +143,11 @@ export function ForgotPasswordFlow({
           description="We've sent a 5-digit password reset code to your phone number. Please enter it below."
         />
         <button
-          onClick={() => { setStep('forgot_password'); setOtp('') }}
-          className="w-full text-neutral-500 font-semibold text-sm rounded-xl px-4 py-2.5 hover:bg-neutral-50 transition-all"
+          onClick={() => {
+            setStep('forgot_password')
+            setOtp('')
+          }}
+          className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm"
         >
           ← Back
         </button>
@@ -168,16 +155,18 @@ export function ForgotPasswordFlow({
     )
   }
 
-  /* ─── Step 3: Set New Password ────────────────────────────────── */
   if (step === 'forgot_password_reset') {
-    const allRulesPassed = passwordRules.every(r => r.test(newPassword))
-
     return (
-      <div className="space-y-5">
-        {/* New password */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-neutral-500 flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5 text-neutral-400" />
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
+          <Shield className="w-5 h-5 text-black flex-shrink-0" />
+          <p className="text-xs text-black leading-relaxed font-black">
+            Create a strong new password to secure your account.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-xs font-black uppercase tracking-wider text-black">
             New Password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
@@ -189,7 +178,7 @@ export function ForgotPasswordFlow({
                 setErrors(errors.filter(err => err !== 'password'))
               }}
               className={clsx(
-                'w-full h-[48px] bg-white border border-neutral-200 rounded-xl px-4 pr-11 text-sm font-semibold text-neutral-800 placeholder:text-neutral-300 focus:border-primary-500 focus:outline-none transition-all',
+                'w-full h-[52px] bg-white border rounded-xl px-5 pr-12 text-base font-black focus:outline-none transition-all',
                 getBorderClass('password')
               )}
               placeholder="Enter new password"
@@ -198,34 +187,90 @@ export function ForgotPasswordFlow({
             <button
               type="button"
               onClick={() => setShowNewPw(!showNewPw)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-neutral-700 transition-colors"
             >
-              {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showNewPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
 
           {newPassword && (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-3 p-3 bg-neutral-50 rounded-xl border border-neutral-100">
-              {passwordRules.map(rule => {
-                const passed = rule.test(newPassword)
-                return (
-                  <div key={rule.label} className="flex items-center gap-1.5">
-                    <CheckCircle2
-                      className={clsx('w-3.5 h-3.5 flex-shrink-0', passed ? 'text-emerald-500' : 'text-neutral-300')}
-                    />
-                    <span className={clsx('text-[10px] font-semibold', passed ? 'text-emerald-700' : 'text-neutral-400')}>
-                      {rule.label}
-                    </span>
-                  </div>
-                )
-              })}
+            <div className="space-y-1.5 mt-3">
+              <div className="flex items-center gap-2">
+                <div
+                  className={clsx(
+                    'w-4 h-4 rounded-full flex items-center justify-center',
+                    newPassword.length >= 8 ? 'bg-green-500' : 'bg-neutral-200'
+                  )}
+                >
+                  {newPassword.length >= 8 && <div className="w-2 h-2 bg-white rounded-full" />}
+                </div>
+                <span className={clsx('text-xs font-black', newPassword.length >= 8 ? 'text-green-600' : 'text-neutral-400')}>
+                  At least 8 characters
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div
+                  className={clsx(
+                    'w-4 h-4 rounded-full flex items-center justify-center',
+                    /[A-Z]/.test(newPassword) ? 'bg-green-500' : 'bg-neutral-200'
+                  )}
+                >
+                  {/[A-Z]/.test(newPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
+                </div>
+                <span className={clsx('text-xs font-black', /[A-Z]/.test(newPassword) ? 'text-green-600' : 'text-neutral-400')}>
+                  Uppercase letter
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div
+                  className={clsx(
+                    'w-4 h-4 rounded-full flex items-center justify-center',
+                    /[a-z]/.test(newPassword) ? 'bg-green-500' : 'bg-neutral-200'
+                  )}
+                >
+                  {/[a-z]/.test(newPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
+                </div>
+                <span className={clsx('text-xs font-black', /[a-z]/.test(newPassword) ? 'text-green-600' : 'text-neutral-400')}>
+                  Lowercase letter
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div
+                  className={clsx(
+                    'w-4 h-4 rounded-full flex items-center justify-center',
+                    /\d/.test(newPassword) ? 'bg-green-500' : 'bg-neutral-200'
+                  )}
+                >
+                  {/\d/.test(newPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
+                </div>
+                <span className={clsx('text-xs font-black', /\d/.test(newPassword) ? 'text-green-600' : 'text-neutral-400')}>
+                  Number
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div
+                  className={clsx(
+                    'w-4 h-4 rounded-full flex items-center justify-center',
+                    /[!@#$%^&*]/.test(newPassword) ? 'bg-green-500' : 'bg-neutral-200'
+                  )}
+                >
+                  {/[!@#$%^&*]/.test(newPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
+                </div>
+                <span
+                  className={clsx(
+                    'text-xs font-black',
+                    /[!@#$%^&*]/.test(newPassword) ? 'text-green-600' : 'text-neutral-400'
+                  )}
+                >
+                  Special character (!@#$%^&*)
+                </span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Confirm password */}
-        <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-neutral-500">
+        <div className="space-y-2">
+          <label className="block text-xs font-black uppercase tracking-wider text-black">
             Confirm Password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
@@ -237,22 +282,22 @@ export function ForgotPasswordFlow({
                 setErrors(errors.filter(err => err !== 'confirmPassword'))
               }}
               className={clsx(
-                'w-full h-[48px] bg-white border border-neutral-200 rounded-xl px-4 pr-11 text-sm font-semibold text-neutral-800 placeholder:text-neutral-300 focus:border-primary-500 focus:outline-none transition-all',
+                'w-full h-[52px] bg-white border rounded-xl px-5 pr-12 text-base font-black focus:outline-none transition-all',
                 getBorderClass('confirmPassword')
               )}
-              placeholder="Confirm your password"
+              placeholder="Confirm password"
               onKeyDown={e => e.key === 'Enter' && handleResetPassword()}
             />
             <button
               type="button"
               onClick={() => setShowConfirmNewPw(!showConfirmNewPw)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-neutral-700 transition-colors"
             >
-              {showConfirmNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showConfirmNewPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
           {confirmNewPassword && newPassword !== confirmNewPassword && (
-            <p className="text-xs text-red-500 font-semibold mt-1">Passwords do not match</p>
+            <p className="text-xs text-red-500 font-black">Passwords do not match</p>
           )}
         </div>
 
@@ -263,30 +308,26 @@ export function ForgotPasswordFlow({
             !newPassword ||
             !confirmNewPassword ||
             newPassword !== confirmNewPassword ||
-            !allRulesPassed
+            newPassword.length < 8 ||
+            !/[A-Z]/.test(newPassword) ||
+            !/[a-z]/.test(newPassword) ||
+            !/\d/.test(newPassword) ||
+            !/[!@#$%^&*]/.test(newPassword)
           }
           className={clsx(
-            'w-full bg-primary-500 text-white font-bold rounded-xl px-6 h-[48px] text-sm active:scale-[0.98] hover:bg-[#07361d] transition-all flex items-center justify-center gap-1.5 shadow-sm mt-4 disabled:opacity-50 disabled:cursor-not-allowed',
+            'w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500',
             loading && 'opacity-70'
           )}
         >
           {loading ? (
             <>
-              <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               Saving Password…
             </>
           ) : (
-            <>
-              Reset Password
-              <ArrowRight className="w-4.5 h-4.5" />
-            </>
+            'Reset Password'
           )}
         </button>
-
-        <div className="text-center pt-4 mt-2 border-t border-neutral-100 flex items-center justify-center gap-1.5 text-[10px] text-neutral-400/80">
-          <span>🔒</span>
-          <span>Protected by Soole • 2FA enabled for all accounts</span>
-        </div>
       </div>
     )
   }

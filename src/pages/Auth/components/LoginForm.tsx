@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Phone, Lock, ChevronDown, Eye, EyeOff, ShieldCheck, ArrowRight } from 'lucide-react'
+import { Phone, ChevronDown, Eye, EyeOff } from 'lucide-react'
 import { clsx } from 'clsx'
 import { COUNTRY_CODES } from '../utils/auth'
 
@@ -43,12 +43,12 @@ export function LoginForm({
   const navigate = useNavigate()
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 sm:space-y-8">
       {/* Phone field */}
-      <div className="space-y-1.5">
-        <label className="block text-xs font-semibold text-neutral-500 flex items-center gap-1.5 mb-1">
-          <Phone className="w-3.5 h-3.5 text-neutral-400" />
-          Phone number <span className="text-red-500">*</span>
+      <div className="space-y-2">
+        <label className="block text-sm sm:text-base font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+          <Phone className="w-3.5 h-3.5 text-black" />
+          Phone Number <span className="text-red-500">*</span>
         </label>
         <div className="flex gap-2 items-center">
           {/* Country code selector */}
@@ -57,13 +57,13 @@ export function LoginForm({
               type="button"
               onClick={() => setShowCC(!showCC)}
               className={clsx(
-                'flex items-center gap-1.5 h-[48px] px-3.5 bg-white border border-neutral-200 rounded-xl text-sm font-semibold text-neutral-800 transition-colors focus:border-primary-500',
+                'flex items-center gap-2 h-[52px] px-4 bg-white border rounded-xl text-base font-black text-black transition-colors',
                 getBorderClass('phone')
               )}
             >
-              <img src={country.flag} alt={country.name} className="w-5 h-3.5 object-cover rounded-sm" />
-              <span className="text-xs font-bold text-neutral-800">{country.code}</span>
-              <ChevronDown className={clsx('w-3.5 h-3.5 text-neutral-400 transition-transform', showCC && 'rotate-180')} />
+              <img src={country.flag} alt={country.name} className="w-6 h-4 object-cover rounded-sm" />
+              <span className="text-sm font-black text-black">{country.code}</span>
+              <ChevronDown className={clsx('w-4 h-4 text-black transition-transform', showCC && 'rotate-180')} />
             </button>
 
             {showCC && (
@@ -77,13 +77,13 @@ export function LoginForm({
                       setShowCC(false)
                     }}
                     className={clsx(
-                      'w-full flex items-center gap-2 px-3.5 py-2.5 text-xs transition-colors hover:bg-primary-50 text-left',
-                      country.code === c.code ? 'bg-primary-50 font-bold text-neutral-900' : 'text-neutral-500'
+                      'w-full flex items-center gap-2.5 px-4 py-3 text-sm transition-colors hover:bg-primary-75 text-left',
+                      country.code === c.code ? 'bg-primary-75 font-black text-black' : 'text-neutral-400'
                     )}
                   >
-                    <img src={c.flag} alt={c.name} className="w-5 h-3.5 object-cover rounded-sm flex-shrink-0" />
-                    <span className="font-bold text-xs text-neutral-800">{c.code}</span>
-                    <span className="flex-1 text-xs font-semibold text-neutral-600">{c.name}</span>
+                    <img src={c.flag} alt={c.name} className="w-6 h-4 object-cover rounded-sm flex-shrink-0" />
+                    <span className="font-black text-xs text-black">{c.code}</span>
+                    <span className="flex-1 text-xs font-black text-black">{c.name}</span>
                   </button>
                 ))}
               </div>
@@ -99,10 +99,10 @@ export function LoginForm({
               setErrors(errors.filter(err => err !== 'phone'))
             }}
             className={clsx(
-              'w-full h-[48px] bg-white border border-neutral-200 rounded-xl px-4 py-0 text-sm text-neutral-800 font-semibold placeholder:text-neutral-300 focus:border-primary-500 focus:outline-none transition-all',
+              'w-full h-[52px] bg-white border rounded-xl px-5 py-0 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none transition-all',
               getBorderClass('phone')
             )}
-            placeholder="803 123 4567"
+            placeholder="8031234567"
             autoComplete="tel"
             inputMode="tel"
             onKeyDown={e => e.key === 'Enter' && handleLogin()}
@@ -111,10 +111,9 @@ export function LoginForm({
       </div>
 
       {/* Password field */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between items-center mb-1">
-          <label className="text-xs font-semibold text-neutral-500 flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5 text-neutral-400" />
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <label className="text-xs font-black uppercase tracking-wider text-black">
             Password <span className="text-red-500">*</span>
           </label>
           <button
@@ -123,7 +122,7 @@ export function LoginForm({
               setStep('forgot_password')
               setErrors([])
             }}
-            className="text-xs font-bold text-secondary-300 hover:underline"
+            className="text-xs font-black text-primary-500 hover:underline"
           >
             Forgot password?
           </button>
@@ -137,74 +136,56 @@ export function LoginForm({
               setErrors(errors.filter(err => err !== 'password'))
             }}
             className={clsx(
-              'w-full h-[48px] bg-white border border-neutral-200 rounded-xl px-4 py-0 pr-11 text-sm text-neutral-800 font-semibold placeholder:text-neutral-300 focus:border-primary-500 focus:outline-none transition-all',
+              'w-full h-[52px] bg-white border rounded-xl px-5 py-0 pr-12 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none transition-all',
               getBorderClass('password')
             )}
-            placeholder="Enter your password"
+            placeholder="Password"
             autoComplete="current-password"
             onKeyDown={e => e.key === 'Enter' && handleLogin()}
           />
           <button
             type="button"
             onClick={() => setShowPw(!showPw)}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-black hover:text-neutral-700 transition-colors"
           >
-            {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Sign In Button */}
       <button
         onClick={handleLogin}
         disabled={loading}
         className={clsx(
-          'w-full bg-primary-500 text-white font-bold rounded-xl px-6 h-[48px] text-sm active:scale-[0.98] hover:bg-[#07361d] transition-all duration-150 flex items-center justify-center gap-1.5 shadow-sm mt-6',
+          'w-full bg-primary-500 text-white font-black rounded-2xl px-6 h-[56px] text-lg active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4 mb-4',
           loading && 'opacity-70'
         )}
       >
         {loading ? (
           <>
-            <span className="w-4.5 h-4.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
             Signing in…
           </>
         ) : (
-          <>
-            Sign in
-            <ArrowRight className="w-4.5 h-4.5" />
-          </>
+          'Sign in'
         )}
       </button>
 
-      {/* Secure Access Box */}
-      <div className="flex items-start gap-3 p-3.5 bg-emerald-50/40 border border-emerald-100/50 rounded-xl">
-        <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-        <div className="text-left">
-          <h5 className="font-bold text-xs text-emerald-950">Secure access</h5>
-          <p className="text-[10px] text-emerald-800 leading-normal">
-            Your data is protected with enterprise-grade security
-          </p>
-        </div>
-      </div>
-
-      {/* Center Create Organization link */}
-      <div className="text-center pt-2">
-        <p className="text-xs text-neutral-400 font-medium">
-          New to Soole?{' '}
+      <div className="rounded-2xl bg-primary-75 p-5 border border-primary-100">
+        <p className="text-base text-primary-500 text-center leading-relaxed font-black">
+          Don't have an account?{' '}
           <button
             onClick={() => navigate('/signup')}
-            className="text-secondary-300 font-bold hover:underline inline-flex items-center gap-0.5 ml-1"
+            className="text-teal-300 font-black underline hover:text-teal-200 transition-colors inline"
           >
-            Create your organization <span className="text-xs">→</span>
+            Sign up your organization
           </button>
         </p>
       </div>
 
-      {/* Protected footnote */}
-      <div className="text-center pt-6 mt-4 border-t border-neutral-100 flex items-center justify-center gap-1.5 text-[10px] text-neutral-400/80">
-        <span>🔒</span>
-        <span>Protected by Soole • 2FA enabled for all accounts</span>
-      </div>
+      <p className="block sm:hidden text-center text-xs text-neutral-300 mt-6 font-medium pb-4">
+        Protected by Soole Secure Auth
+      </p>
     </div>
   )
 }

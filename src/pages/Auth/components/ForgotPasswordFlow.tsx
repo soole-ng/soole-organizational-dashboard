@@ -106,7 +106,7 @@ export function ForgotPasswordFlow({
         >
           {loading ? (
             <>
-              <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               Sending Code…
             </>
           ) : (
@@ -321,7 +321,7 @@ export function ForgotPasswordFlow({
         >
           {loading ? (
             <>
-              <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               Saving Password…
             </>
           ) : (

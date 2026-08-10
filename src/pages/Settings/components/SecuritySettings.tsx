@@ -182,7 +182,7 @@ export function SecuritySettings() {
               disabled={saving || (questionChoice === CUSTOM_SECURITY_QUESTION_OPTION && !customQuestion.trim()) || !answer.trim()}
               className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</> : configured ? 'Update Security Question' : 'Save Security Question'}
+              {saving ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving…</> : configured ? 'Update Security Question' : 'Save Security Question'}
             </button>
           </div>
         </div>
@@ -234,7 +234,7 @@ export function SecuritySettings() {
                 disabled={reverifying || !reverifyAnswer.trim()}
                 className="px-4 py-2 bg-primary-500 hover:bg-primary-400 disabled:opacity-60 text-xs font-semibold rounded-xl text-white transition-colors flex items-center justify-center gap-2"
               >
-                {reverifying ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Verifying…</> : 'Confirm'}
+                {reverifying ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Verifying…</> : 'Confirm'}
               </button>
             </div>
           </div>

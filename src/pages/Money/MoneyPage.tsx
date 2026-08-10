@@ -740,7 +740,7 @@ export function MoneyPage() {
               >
                 {isProcessing ? (
                   <>
-                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Processing Instant Payout…
                   </>
                 ) : 'Confirm Instant Withdrawal'}
@@ -808,7 +808,7 @@ export function MoneyPage() {
               >
                 {isSettingPin ? (
                   <>
-                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Setting PIN…
                   </>
                 ) : 'Set PIN & Continue'}

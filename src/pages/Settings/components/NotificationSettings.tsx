@@ -61,7 +61,7 @@ export function NotificationSettings({ alertChannels, setAlertChannels, executeS
           disabled={saving}
           className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
         >
-          {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</> : 'Save Notification Settings'}
+          {saving ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving…</> : 'Save Notification Settings'}
         </button>
       </div>
     </div>

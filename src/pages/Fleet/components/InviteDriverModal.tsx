@@ -93,7 +93,7 @@ export function InviteDriverModal({ onClose }: InviteDriverModalProps) {
             disabled={!form.name || form.phone.length !== 10 || sending}
             className="btn-primary w-full disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {sending ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Sending…</> : 'Send Invite'}
+            {sending ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending…</> : 'Send Invite'}
           </button>
         </div>
       </div>

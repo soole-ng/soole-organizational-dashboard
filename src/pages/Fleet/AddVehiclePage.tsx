@@ -508,7 +508,7 @@ export function AddVehiclePage() {
                 <span className="relative z-10 flex items-center gap-2">
                   {isSubmitting ? (
                     <>
-                      <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       {submitProgress || 'Submitting...'} {submitProgressPct > 0 && `(${submitProgressPct}%)`}
                     </>
                   ) : 'Submit Vehicle'}

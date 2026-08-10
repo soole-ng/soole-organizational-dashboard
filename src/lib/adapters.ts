@@ -23,12 +23,13 @@ function toStatusVariant(status: string | null | undefined): StatusVariant {
 
 /** org_trip_api.OrgDriverResponseSchema — {uuid, fullname, phone_number, org_status, assigned_vehicle_plate} */
 export function adaptDriverIdentity(raw: any): Driver {
+  const isVerified = raw.org_status === 'active' || raw.status === 'verified' || raw.verification_status === 'verified' || raw.is_verified === true
   return {
-    id: raw.uuid,
-    name: raw.fullname,
-    phone: raw.phone_number,
+    id: raw.uuid || raw.id,
+    name: raw.fullname || raw.name,
+    phone: raw.phone_number || raw.phone,
     photo: raw.photo ?? undefined,
-    status: toStatusVariant(raw.org_status),
+    status: isVerified ? 'verified' : toStatusVariant(raw.org_status || raw.status),
     vehiclePlate: raw.assigned_vehicle_plate ?? undefined,
     tripsCompleted: 0,
     joinedAt: '',
@@ -57,20 +58,18 @@ export function mergeDriverStats(driver: Driver, stats: any | undefined): Driver
  * fleetApi.resendInvite's expectation).
  */
 export function adaptFleetDriver(raw: any): Driver {
+  const isVerified = raw.status === 'verified' || raw.status === 'active' || raw.is_verified === true || raw.verification_status === 'verified'
   return {
     id: raw.id,
     name: raw.name,
     phone: raw.phone,
     photo: raw.photo ?? undefined,
-    status: toStatusVariant(raw.status),
+    status: isVerified ? 'verified' : toStatusVariant(raw.status),
     vehicleId: raw.vehicle_id ?? undefined,
     vehiclePlate: raw.vehicle_plate ?? undefined,
     tripsCompleted: raw.trips_completed ?? 0,
     joinedAt: raw.joined_at ?? '',
     avgRating: raw.avg_rating ?? 0,
-    // Backend now actually populates this (previously hardcoded []
-    // server-side too - DriverDetailModal's whole "Passenger Comments"
-    // section had nothing to show regardless of real review data).
     reviews: (raw.reviews || []).map(adaptDriverReview),
     isPendingInvite: raw.is_pending_invite ?? false,
   }
@@ -117,6 +116,8 @@ export function adaptVehicle(raw: any): Vehicle {
     expiresAt: undefined,
   }))
 
+  const isVerifiedVehicle = raw.verification_status === 'verified' || raw.verification_status === 'approved' || raw.verification_status === 'complete' || raw.is_verified === true || raw.status === 'verified' || raw.status === 'active'
+
   return {
     id: raw.id,
     plate: raw.plate,
@@ -125,20 +126,9 @@ export function adaptVehicle(raw: any): Vehicle {
     capacity: raw.capacity,
     type: inferVehicleDisplayType(raw),
     fuelType: 'petrol',
-    // verification_status and status (operational) are independent backend
-    // fields - a suspended/retired vehicle keeps whatever verification_status
-    // it already had, so showing "verified" unconditionally once documents
-    // were approved would hide a real suspension/retirement from staff.
-    // Operational status wins whenever it's not the default "active".
-    // verification_status has 5 real values (pending_documents/
-    // pending_verification/verified/rejected/suspended) - a newly-created
-    // vehicle defaults to pending_documents, so falling through to
-    // toStatusVariant('active') here (as this used to) meant the "Pending"
-    // filter/badge could never actually appear for a not-yet-verified
-    // vehicle.
-    status: raw.status && raw.status !== 'active'
+    status: (raw.status === 'suspended' || raw.status === 'retired')
       ? toStatusVariant(raw.status)
-      : raw.verification_status === 'verified' ? 'verified'
+      : isVerifiedVehicle ? 'verified'
       : raw.verification_status === 'rejected' ? 'rejected'
       : 'pending',
     operationalStatus: (['active', 'suspended', 'retired'].includes(raw.status) ? raw.status : 'active') as Vehicle['operationalStatus'],

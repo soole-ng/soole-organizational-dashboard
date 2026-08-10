@@ -316,7 +316,7 @@ export function PayoutSettings() {
                   disabled={saving || !tempDetails.accountName}
                   className="px-4 py-2 bg-primary-500 hover:bg-primary-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                 >
-                  {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</> : 'Save Account'}
+                  {saving ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving…</> : 'Save Account'}
                 </button>
               </div>
             </div>
@@ -361,7 +361,7 @@ export function PayoutSettings() {
                 disabled={deleting}
                 className="px-4 py-2 bg-danger-300 hover:bg-danger-400 text-xs font-semibold rounded-xl text-white transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                {deleting ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Deleting…</> : 'Delete Account'}
+                {deleting ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Deleting…</> : 'Delete Account'}
               </button>
             </div>
           </div>

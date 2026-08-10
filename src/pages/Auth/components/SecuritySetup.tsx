@@ -84,7 +84,7 @@ export function SecuritySetup({
           savingSecurityQuestion && 'opacity-70'
         )}
       >
-        {savingSecurityQuestion ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving…</> : 'Save & Continue'}
+        {savingSecurityQuestion ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />Saving…</> : 'Save & Continue'}
       </button>
       <button onClick={onSkip} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
         Set up later in Settings

@@ -184,14 +184,11 @@ export function SignupPasswordForm({
           !/\d/.test(suPassword) ||
           !/[!@#$%^&*]/.test(suPassword)
         }
-        className={clsx(
-          'w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500',
-          loading && 'opacity-70'
-        )}
+        className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500"
       >
         {loading ? (
           <>
-            <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             Creating Account…
           </>
         ) : (

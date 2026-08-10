@@ -4,8 +4,8 @@ import { Calculator, ChevronDown, MapPin } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
 import { formatMoney } from '../../lib/formatters'
 import { useOrg } from '../../lib/OrgContext'
-import { vehiclesApi, fleetApi, organizationApi, ridesApi } from '../../api/client'
-import { adaptVehicle, adaptFleetDriver } from '../../lib/adapters'
+import { vehiclesApi, fleetApi, driversApi, organizationApi, ridesApi } from '../../api/client'
+import { adaptVehicle, adaptFleetDriver, adaptDriverIdentity } from '../../lib/adapters'
 import { invalidateApiDataCache } from '../../lib/useApiData'
 import { NIGERIAN_STATES } from '../../lib/constants'
 import { calculateSooleCommission, grossFareForDesiredNet } from '../../lib/commission'
@@ -149,24 +149,35 @@ export function TripCreatePage() {
 
     Promise.all([
       vehiclesApi.getVehicles(orgUuid).catch(() => ({ vehicles: [] })),
-      // fleetApi.getDrivers (not driversApi's thinner org_trip_api list) -
-      // it's the one that actually carries KYC-derived verification status
-      // (see fleet/api/core.py's get_driver_status), which is what a driver
-      // must have to be assignable to a trip - same bar as the vehicle
-      // dropdown already enforces via its own 'verified' filter below.
       fleetApi.getDrivers(orgUuid, { limit: 100 }).catch(() => ({ drivers: [], pagination: { page: 1, limit: 100, total: 0, pages: 0 } })),
-    ]).then(([vehiclesRes, driversRes]: [any, any]) => {
+      driversApi.getDrivers(orgUuid).catch(() => []),
+    ]).then(([vehiclesRes, fleetDriversRes, orgDriversRes]: [any, any, any]) => {
       if (cancelled) return
       const vehicles = (vehiclesRes.vehicles || []).map(adaptVehicle)
-      const drivers = (driversRes.drivers || [])
+      
+      const fleetDrivers = (fleetDriversRes.drivers || [])
         .map(adaptFleetDriver)
-        .filter((d: any) => d.status === 'verified' && !d.isPendingInvite)
+        .filter((d: any) => !d.isPendingInvite && d.status !== 'suspended' && d.status !== 'rejected')
+      
+      // Fallback/merge orgDrivers if fleetDrivers is empty or incomplete
+      const orgDrivers = (Array.isArray(orgDriversRes) ? orgDriversRes : [])
+        .map(adaptDriverIdentity)
+        .filter((d: any) => d.status !== 'suspended' && d.status !== 'rejected')
+      
+      const driverMap = new Map<string, any>()
+      for (const d of [...fleetDrivers, ...orgDrivers]) {
+        if (d.id && !driverMap.has(d.id)) {
+          driverMap.set(d.id, d)
+        }
+      }
+      const drivers = Array.from(driverMap.values())
+
       setVehiclesList(vehicles)
       setDriversList(drivers)
       setForm(f => ({
         ...f,
-        vehicleId: f.vehicleId || vehicles.find((v: any) => v.status === 'verified')?.id || '',
-        driverId: f.driverId || drivers[0]?.id || '',
+        vehicleId: f.vehicleId || vehicles.find((v: any) => v.status === 'verified')?.id || vehicles[0]?.id || '',
+        driverId: f.driverId || drivers.find((d: any) => d.status === 'verified')?.id || drivers[0]?.id || '',
       }))
       setLoading(false)
     })

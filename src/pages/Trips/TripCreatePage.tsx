@@ -174,11 +174,6 @@ export function TripCreatePage() {
 
       setVehiclesList(vehicles)
       setDriversList(drivers)
-      setForm(f => ({
-        ...f,
-        vehicleId: f.vehicleId || vehicles.find((v: any) => v.status === 'verified')?.id || vehicles[0]?.id || '',
-        driverId: f.driverId || drivers.find((d: any) => d.status === 'verified')?.id || drivers[0]?.id || '',
-      }))
       setLoading(false)
     })
 
@@ -378,7 +373,7 @@ export function TripCreatePage() {
                   disabled={loading}
                   className="input-field py-2.5 appearance-none pr-10"
                 >
-                  {vehiclesList.length === 0 && <option value="">No verified vehicles</option>}
+                  <option value="">Select a vehicle</option>
                   {vehiclesList.filter(v => v.status === 'verified').map(v => (
                     <option key={v.id} value={v.id}>
                       {v.plate} — {v.model} ({v.capacity} seats)
@@ -399,8 +394,8 @@ export function TripCreatePage() {
                   disabled={loading}
                   className="input-field py-2.5 appearance-none pr-10"
                 >
-                  {driversList.length === 0 && <option value="">No drivers available</option>}
-                  {driversList.map(d => (
+                  <option value="">Select a driver</option>
+                  {driversList.filter(d => d.status === 'verified').map(d => (
                     <option key={d.id} value={d.id}>
                       {d.name} ({d.phone})
                     </option>

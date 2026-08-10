@@ -136,18 +136,17 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
               {/* Name + status */}
               <div className="w-full min-w-0">
                 <p className="text-base font-semibold text-primary-500 leading-tight">{pass.name}</p>
-                <div className="mt-1">
-                  {isRefunded ? (
-                    <span className="px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-300 font-semibold text-xs inline-block">Refunded</span>
-                  ) : (
-                    <span className="px-2.5 py-0.5 rounded-full bg-primary-500 text-white font-bold text-xs inline-block shadow-xs">Paid</span>
-                  )}
-                </div>
+                <p className={clsx(
+                  'text-sm font-medium mt-0.5',
+                  isRefunded ? 'text-neutral-300' : 'text-secondary-300',
+                )}>
+                  {isRefunded ? 'Refunded' : 'Paid'}
+                </p>
                 {isBoarded && pass.boardedAt && (isBoarding || isCompleted) && (
-                  <p className="text-xs font-medium text-emerald-600 mt-1">Boarded {formatTime(pass.boardedAt)}</p>
+                  <p className="text-sm text-neutral-200 mt-0.5">Boarded {formatTime(pass.boardedAt)}</p>
                 )}
                 {isCompleted && isPaid && !isBoarded && !isRefunded && (
-                  <p className="text-xs font-medium text-orange-500 mt-1">Did not board</p>
+                  <p className="text-sm text-orange-400 mt-0.5">Did not board</p>
                 )}
               </div>
 
@@ -188,14 +187,13 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
                   <button
                     onClick={() => markBoarded(pass.id)}
                     disabled={boardingIds.has(pass.id)}
-                    className="px-3 py-1.5 rounded-xl border border-secondary-300 bg-secondary-50 text-secondary-400 text-xs font-semibold hover:bg-secondary-100 transition-colors active:scale-95 disabled:opacity-60 flex items-center gap-1.5 whitespace-nowrap"
+                    className="w-9 h-9 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:border-secondary-300 hover:bg-secondary-50 transition-colors active:scale-95 disabled:opacity-60"
                     aria-label={`Mark ${pass.name} as boarded`}
                   >
                     {boardingIds.has(pass.id)
-                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      : <CheckCircle2 className="w-4 h-4 text-secondary-300" strokeWidth={1.8} />
+                      ? <Loader2 className="w-4 h-4 text-neutral-300 animate-spin" />
+                      : <CheckCircle2 className="w-5 h-5 text-neutral-300" strokeWidth={1.2} />
                     }
-                    <span>{boardingIds.has(pass.id) ? 'Marking…' : 'Mark as picked'}</span>
                   </button>
                 ) : (
                   // Scheduled or in_progress — no action available

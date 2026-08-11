@@ -15,6 +15,7 @@ import { LiveTracker } from './components/LiveTracker'
 import { CommentsModal } from './components/CommentsModal'
 import { EditTripModal } from './components/EditTripModal'
 import { ReassignTripModal } from './components/ReassignTripModal'
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 
 /** Fleet-wide hard speed limit in km/h */
 const SPEED_LIMIT_KMH = 100
@@ -32,6 +33,8 @@ export function TripDetailPage() {
   const [showAllComments, setShowAllComments] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showReassignModal, setShowReassignModal] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
 
   const trip = rawTrip ? adaptTrip(rawTrip) : null
 
@@ -88,17 +91,26 @@ export function TripDetailPage() {
 
   const handleEdit = () => guardAction(undefined, () => setShowEditModal(true))
   const handleReassign = () => guardAction(undefined, () => setShowReassignModal(true))
-  const handleCancel = () => guardAction(undefined, async () => {
+  // Cancelling is destructive and irreversible - it cancels every paid
+  // passenger's booking and commits the org to refunding them - so it now
+  // goes through a confirmation step. It previously fired the API call the
+  // instant the button was pressed, with no way back from a mis-tap.
+  const handleCancel = () => guardAction(undefined, () => setShowCancelConfirm(true))
+
+  const confirmCancel = async () => {
     if (!orgUuid || !id) return
+    setCancelling(true)
     try {
       await organizationApi.cancelTrip(orgUuid, id)
       invalidateApiDataCache()
       toast.success('Trip cancelled')
+      setShowCancelConfirm(false)
       navigate('/trips')
     } catch (err: any) {
       toast.error(err?.message ?? 'Failed to cancel trip')
+      setCancelling(false)
     }
-  })
+  }
 
   const actions = [
     isLive && { icon: Navigation, label: 'View on Map', action: () => navigate('/live-map'), danger: false },
@@ -286,6 +298,21 @@ export function TripDetailPage() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={showCancelConfirm}
+        title="Cancel this trip?"
+        description={
+          paidPassengers.length > 0
+            ? `This cancels the trip and every booking on it. ${paidPassengers.length} passenger${paidPassengers.length === 1 ? ' has' : 's have'} already paid and will need to be refunded. This cannot be undone.`
+            : 'This cancels the trip and every booking on it. This cannot be undone.'
+        }
+        confirmLabel={cancelling ? 'Cancelling…' : 'Cancel trip'}
+        cancelLabel="Keep trip"
+        loading={cancelling}
+        onConfirm={confirmCancel}
+        onCancel={() => setShowCancelConfirm(false)}
+      />
     </div>
   )
 }

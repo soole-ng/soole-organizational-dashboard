@@ -121,8 +121,14 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
           const isPaid = pass.paymentStatus === 'paid'
           const isRefunded = pass.paymentStatus === 'refunded'
           const isBoarded = pass.boardingStatus === 'boarded'
-          // Green check shows if they've boarded, or if they paid and the trip is scheduled
-          const showCheck = isBoarded || (isScheduled && isPaid)
+          // Boarding is the only thing this tick represents. It previously
+          // also lit up for `isScheduled && isPaid`, so a passenger who had
+          // merely paid for a not-yet-departed trip showed a green
+          // "Boarded" check before anyone had set foot in the vehicle -
+          // contradicting the card's own "Boarding will open when the driver
+          // departs" note, and making the manifest unusable for its actual
+          // purpose. Payment already has its own separate status label.
+          const showCheck = isBoarded
           // Refundable: completed, paid, didn't board
           const canRefund = isCompleted && isPaid && !isBoarded
 

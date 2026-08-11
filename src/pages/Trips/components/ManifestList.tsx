@@ -111,7 +111,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
       )}
       {isBoarding && (
         <p className="text-sm text-neutral-200 mb-3 px-0.5">
-          Passengers confirmed from the system are shown below. Tap the circle to mark anyone not yet boarded.
+          Passengers confirmed from the system are shown below. Boarding is updated live by the driver on the mobile app.
         </p>
       )}
 
@@ -165,7 +165,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
 
                 {/* Status / action */}
                 {showCheck ? (
-                  <div className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50 border border-emerald-200">
+                  <div className="w-9 h-9 flex items-center justify-center rounded-full bg-emerald-50 border border-emerald-200" title="Boarded">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600" strokeWidth={1.8} />
                   </div>
                 ) : canRefund ? (
@@ -183,21 +183,10 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
                       {refunding === pass.id ? 'Sending…' : 'Refund'}
                     </span>
                   </button>
-                ) : isBoarding ? (
-                  <button
-                    onClick={() => markBoarded(pass.id)}
-                    disabled={boardingIds.has(pass.id)}
-                    className="w-9 h-9 rounded-full border border-neutral-200 bg-white flex items-center justify-center hover:border-secondary-300 hover:bg-secondary-50 transition-colors active:scale-95 disabled:opacity-60"
-                    aria-label={`Mark ${pass.name} as boarded`}
-                  >
-                    {boardingIds.has(pass.id)
-                      ? <Loader2 className="w-4 h-4 text-neutral-300 animate-spin" />
-                      : <CheckCircle2 className="w-5 h-5 text-neutral-300" strokeWidth={1.2} />
-                    }
-                  </button>
                 ) : (
-                  // Scheduled or in_progress — no action available
-                  <div className="w-9 h-9" />
+                  <div className="w-9 h-9 flex items-center justify-center rounded-full border border-neutral-200 bg-neutral-50" title="Awaiting driver pickup">
+                    <CheckCircle2 className="w-5 h-5 text-neutral-300" strokeWidth={1.2} />
+                  </div>
                 )}
               </div>
             </div>

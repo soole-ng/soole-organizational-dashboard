@@ -19,6 +19,10 @@ const config: Record<StatusVariant, { label: string; color: string }> = {
   rejected:    { label: 'Rejected',    color: '#FF5500' },
   failed:      { label: 'Failed',      color: '#FF5500' },
   cancelled:   { label: 'Cancelled',   color: '#9CA3AF' },
+  // A trip whose departure passed without it starting - the backend flips
+  // these two hours after departure. Grey like the other dead-end states,
+  // since nothing further happens to it.
+  expired:     { label: 'Expired',     color: '#9CA3AF' },
   suspended:   { label: 'Suspended',   color: '#9CA3AF' },
   inactive:    { label: 'Inactive',    color: '#9CA3AF' },
   draft:       { label: 'Draft',       color: '#9CA3AF' },

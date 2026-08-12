@@ -17,6 +17,12 @@ function toStatusVariant(status: string | null | undefined): StatusVariant {
   if (s === 'initiated') return 'pending'
   if ((known as string[]).includes(s)) return s as StatusVariant
   if (s === 'upcoming' || s === 'available') return 'scheduled'
+  // A trip whose departure passed by more than the backend's 2h grace period
+  // is flipped to 'expired' (rides/services/ride_trip/expiry.py). Without
+  // this it fell through to 'pending' below, which no Trips filter chip
+  // matches - so an expired trip was invisible on every filter except "All",
+  // looking like it had never been created.
+  if (s === 'expired') return 'expired'
   if (s === 'active') return 'active'
   return 'pending'
 }

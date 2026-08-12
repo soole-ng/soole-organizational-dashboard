@@ -2,6 +2,7 @@ export type StatusVariant =
   | 'verified' | 'pending' | 'rejected' | 'suspended' | 'active' | 'inactive'
   | 'scheduled' | 'boarding' | 'in_progress' | 'completed' | 'cancelled' | 'draft'
   | 'sent' | 'received' | 'failed' | 'retired' | 'processing' | 'reversed' | 'abandoned'
+  | 'expired'
 
 export interface DriverReview {
   id: string

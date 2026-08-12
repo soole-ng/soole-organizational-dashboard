@@ -26,6 +26,10 @@ const statusFilters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'Active', value: 'in_progress' },
   { label: 'Completed', value: 'completed' },
   { label: 'Cancelled', value: 'cancelled' },
+  // Trips whose departure passed without starting. The backend flips these
+  // to 'expired' after a 2h grace period, and with no chip for them they
+  // were only reachable via "All" - which reads as the trip having vanished.
+  { label: 'Expired', value: 'expired' },
 ]
 
 export function TripsListPage() {
@@ -44,7 +48,13 @@ export function TripsListPage() {
   // was just published ahead of time) was invisible on first load with no
   // indication why, since nothing highlighted "Today" as the culprit.
   const [activeTab, setActiveTab] = useState('All')
-  const [statusFilter, setStatusFilter] = useState<StatusVariant | 'all'>('in_progress')
+  // Defaults to 'all', not 'in_progress'. Landing on the Active filter meant
+  // a trip you had just published - which is 'scheduled', never
+  // 'in_progress' - was filtered out the moment you opened this page, with
+  // nothing on screen indicating a filter was hiding it. It looked like the
+  // trip had not been created, or that the list would not refresh, while the
+  // same trips showed fine on Home (which does not filter by status).
+  const [statusFilter, setStatusFilter] = useState<StatusVariant | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 12

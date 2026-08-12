@@ -106,6 +106,22 @@ function BusStopSearchInput({
   )
 }
 
+/**
+ * Now, formatted for a datetime-local input's `min`.
+ *
+ * Built from the local clock rather than toISOString(), which converts to
+ * UTC - that would shift the floor by the timezone offset and, west of UTC,
+ * still allow times earlier today.
+ */
+function minDepartureAt(): string {
+  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return (
+    `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
+    `T${pad(now.getHours())}:${pad(now.getMinutes())}`
+  )
+}
+
 export function TripCreatePage() {
   const navigate = useNavigate()
   const { orgUuid } = useOrg()
@@ -240,6 +256,15 @@ export function TripCreatePage() {
     }
     if (!form.departureAt) {
       toast.error('Select a departure date and time')
+      return
+    }
+    // The min= on the input only stops the picker offering earlier values -
+    // it does not stop a typed or pasted date, and it is not enforced at all
+    // once the form is submitted. A trip published in the past is
+    // immediately expired: passengers cannot book it and it lands straight
+    // in the expiry sweep.
+    if (new Date(form.departureAt).getTime() <= Date.now()) {
+      toast.error('Departure must be in the future')
       return
     }
     if (!form.fare || form.fare <= 0) {
@@ -412,6 +437,9 @@ export function TripCreatePage() {
             <input
               type="datetime-local"
               value={form.departureAt}
+              // Stops the picker offering a past date or time at all. Typed
+              // input can still bypass this, so submit re-checks it.
+              min={minDepartureAt()}
               onChange={e => set('departureAt', e.target.value)}
               className="input-field py-2.5"
             />

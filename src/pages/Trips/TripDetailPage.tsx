@@ -86,6 +86,10 @@ export function TripDetailPage() {
   const isLive = trip.status === 'boarding' || trip.status === 'in_progress'
   const isScheduled = trip.status === 'scheduled'
   const isCompleted = trip.status === 'completed'
+  // A trip whose departure passed without it starting. Still cancellable so
+  // one created by mistake - wrong date, or a departure already gone - can
+  // be cleared away rather than sitting in the list permanently.
+  const isExpired = trip.status === 'expired'
 
   const paidPassengers = passengers.filter(p => p.paymentStatus === 'paid')
 
@@ -116,7 +120,7 @@ export function TripDetailPage() {
     isLive && { icon: Navigation, label: 'View on Map', action: () => navigate('/live-map'), danger: false },
     isScheduled && { icon: Edit2, label: 'Edit', action: handleEdit, danger: false },
     isScheduled && { icon: User, label: 'Reassign', action: handleReassign, danger: false },
-    isScheduled && { icon: XCircle, label: 'Cancel', action: handleCancel, danger: true },
+    (isScheduled || isExpired) && { icon: XCircle, label: 'Cancel', action: handleCancel, danger: true },
   ].filter(Boolean) as { icon: any; label: string; action: () => void; danger: boolean }[]
 
   return (

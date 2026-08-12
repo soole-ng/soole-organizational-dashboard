@@ -61,14 +61,32 @@ export default function App() {
     return children
   }
 
+  /**
+   * The mirror of ProtectedRoute: keeps an already-signed-in user off the
+   * auth screens.
+   *
+   * /login, /signup and /join were reachable while authenticated - typing
+   * the path showed the login form over a live session. Signing in there as
+   * a second account swaps the token underneath cached org data loaded for
+   * the first, and abandoning the form leaves the user stranded on a screen
+   * with no way back into the app. Sends them to the dashboard instead.
+   */
+  const PublicOnlyRoute = ({ children }: { children: JSX.Element }) => {
+    const isAuth = !!localStorage.getItem('auth_token')
+    if (isAuth) {
+      return <Navigate to="/" replace />
+    }
+    return children
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <OrgProvider>
         <Suspense fallback={<RouteFallback />}>
         <Routes>
-      <Route path="/signup" element={<SignupChoicePage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/join" element={<JoinOrganizationPage />} />
+      <Route path="/signup" element={<PublicOnlyRoute><SignupChoicePage /></PublicOnlyRoute>} />
+      <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
+      <Route path="/join" element={<PublicOnlyRoute><JoinOrganizationPage /></PublicOnlyRoute>} />
 
       <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
         <Route path="/" element={<HomePage />} />

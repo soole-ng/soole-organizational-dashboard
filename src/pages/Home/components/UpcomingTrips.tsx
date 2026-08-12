@@ -39,8 +39,14 @@ export function UpcomingTrips() {
     )
   }
 
+  // Only trips that can still actually happen. 'expired' and 'inactive' were
+  // previously included - a trip whose departure had already passed (the
+  // backend expires these two hours after departure) sat at the top of Home
+  // as though it were still coming up, which is misleading and pushed real
+  // upcoming trips out of the three shown.
+  const hiddenStatuses = ['completed', 'cancelled', 'expired', 'inactive']
   const upcoming = trips
-    .filter((t: any) => t.status !== 'completed' && t.status !== 'cancelled')
+    .filter((t: any) => !hiddenStatuses.includes(t.status))
     .slice(0, 3)
 
   return (

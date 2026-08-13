@@ -8,7 +8,6 @@ import { vehiclesApi, fleetApi, driversApi, organizationApi, ridesApi } from '..
 import { adaptVehicle, adaptFleetDriver, adaptDriverIdentity } from '../../lib/adapters'
 import { invalidateApiDataCache } from '../../lib/useApiData'
 import { NIGERIAN_STATES } from '../../lib/constants'
-import { calculateSooleCommission } from '../../lib/commission'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
 
@@ -460,7 +459,7 @@ export function TripCreatePage() {
               </button>
             </div>
             <p className="text-[11px] text-neutral-200 mb-2 leading-relaxed">
-              Enter the amount you want to net per seat. Soole's commission (10% up to ₦20,000, a flat ₦2,500 above that) will be added on top to determine the final passenger fare.
+              Enter the amount you want to earn per seat. You are paid this in full — Soole's commission is charged to the passenger on top of it, and never comes out of your figure.
             </p>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-neutral-200">NGN</span>
@@ -483,34 +482,32 @@ export function TripCreatePage() {
             </div>
 
             {showCalc && (() => {
+              // Only the organisation's own money is shown here - the price
+              // they set and what a full vehicle earns them.
+              //
+              // The passenger's total is deliberately absent. It is the
+              // passenger's number, on the passenger's receipt; an
+              // organisation prices a seat by what they want to earn from
+              // it. Showing both invited the reading that the larger figure
+              // was theirs, and computing it meant this file carried its own
+              // copy of the commission formula - which drifted from the
+              // backend's and charged somebody NGN 246.92 for a NGN 200
+              // seat. There is no copy here now. The rule is stated above
+              // the input in words; the arithmetic happens once, on the
+              // server, at checkout.
               const capacity = selectedVehicle?.capacity || 14
               const netPerSeat = form.fare
-              // What the passenger is charged: the org's price plus Soole's
-              // commission, which the backend adds at checkout. This is a
-              // preview of that total - handlePublish sends netPerSeat
-              // itself, because sending this figure would have the
-              // commission applied to it twice.
-              const commissionPerSeat = calculateSooleCommission(netPerSeat)
-              const passengerFare = netPerSeat + commissionPerSeat
               const totalNet = netPerSeat * capacity
 
               return (
                 <div className="mt-3 p-4 bg-white border border-neutral-100 rounded-xl shadow-sm">
                   <p className="text-xs font-bold text-black mb-2">Estimated Earnings</p>
                   <div className="flex justify-between items-center text-xs py-1 gap-2">
-                    <span className="text-neutral-300 flex-1 min-w-0">Desired Net Payout (per seat)</span>
+                    <span className="text-neutral-300 flex-1 min-w-0">You earn (per seat)</span>
                     <span className="font-semibold text-black stat-number flex-shrink-0">{formatMoney(netPerSeat)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-xs py-1 gap-2">
-                    <span className="text-neutral-300 flex-1 min-w-0">Soole commission (added for the passenger)</span>
-                    <span className="font-semibold text-neutral-300 stat-number flex-shrink-0">+{formatMoney(commissionPerSeat)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs py-1.5 border-t border-neutral-50 mt-1 gap-2">
-                    <span className="font-semibold text-black flex-1 min-w-0">Final Passenger Fare (per seat)</span>
-                    <span className="font-bold text-secondary-300 stat-number flex-shrink-0">{formatMoney(passengerFare)}</span>
-                  </div>
                   <div className="flex justify-between items-start text-xs py-1 border-t border-neutral-100 mt-2 gap-2">
-                    <span className="text-neutral-300 flex-1 min-w-0">Total potential net payout (if full)</span>
+                    <span className="text-neutral-300 flex-1 min-w-0">Total if every seat sells ({capacity})</span>
                     <span className="font-bold text-primary-500 stat-number flex-shrink-0">
                       {formatMoney(totalNet)}
                     </span>

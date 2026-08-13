@@ -8,7 +8,7 @@ import { vehiclesApi, fleetApi, driversApi, organizationApi, ridesApi } from '..
 import { adaptVehicle, adaptFleetDriver, adaptDriverIdentity } from '../../lib/adapters'
 import { invalidateApiDataCache } from '../../lib/useApiData'
 import { NIGERIAN_STATES } from '../../lib/constants'
-import { calculateSooleCommission, grossFareForDesiredNet } from '../../lib/commission'
+import { calculateSooleCommission } from '../../lib/commission'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
 
@@ -272,13 +272,17 @@ export function TripCreatePage() {
       return
     }
 
-    // form.fare is the org's DESIRED NET PAYOUT per seat, not the amount to
-    // charge passengers - price_per_seat must be the fare grossed up so
-    // that, after Soole's commission is deducted, the org actually nets
-    // form.fare. Previously form.fare was sent as-is, so passengers were
-    // charged the net figure directly and the org received less than they
-    // intended.
-    const passengerFarePerSeat = grossFareForDesiredNet(form.fare)
+    // form.fare is the org's DESIRED NET PAYOUT per seat, and it is sent
+    // exactly as entered.
+    //
+    // It used to be grossed up before sending, which was right when the
+    // backend paid out fare - commission. The backend now pays the price in
+    // full and adds the commission to the passenger's bill at checkout, so
+    // sending a grossed-up figure charges the commission a SECOND time: an
+    // org asking to net 200 had 222.22 stored as the price, the passenger
+    // was billed 222.22 + commission on that = 246.91, and the org was paid
+    // 222.22 instead of the 200 they asked for. The gross-up is a display
+    // figure now and nothing else.
 
     setPublishing(true)
     try {
@@ -295,7 +299,7 @@ export function TripCreatePage() {
         destination_lng: form.destinationLng ?? undefined,
         departure_date: new Date(form.departureAt).toISOString(),
         total_seats: selectedVehicle?.capacity || 14,
-        price_per_seat: passengerFarePerSeat,
+        price_per_seat: form.fare,
         air_conditioning: form.airConditioning ?? undefined,
         smoking_allowed: form.smokingAllowed ?? undefined,
         allows_food_drinks: form.allowsFoodDrinks ?? undefined,
@@ -481,9 +485,13 @@ export function TripCreatePage() {
             {showCalc && (() => {
               const capacity = selectedVehicle?.capacity || 14
               const netPerSeat = form.fare
-              // Grossed up so that passengerFare - calculateSooleCommission(passengerFare)
-              // === netPerSeat - matches what handlePublish actually sends.
-              const passengerFare = grossFareForDesiredNet(netPerSeat)
+              // What the passenger is charged: the org's price plus Soole's
+              // commission, which the backend adds at checkout. This is a
+              // preview of that total - handlePublish sends netPerSeat
+              // itself, because sending this figure would have the
+              // commission applied to it twice.
+              const commissionPerSeat = calculateSooleCommission(netPerSeat)
+              const passengerFare = netPerSeat + commissionPerSeat
               const totalNet = netPerSeat * capacity
 
               return (
@@ -492,6 +500,10 @@ export function TripCreatePage() {
                   <div className="flex justify-between items-center text-xs py-1 gap-2">
                     <span className="text-neutral-300 flex-1 min-w-0">Desired Net Payout (per seat)</span>
                     <span className="font-semibold text-black stat-number flex-shrink-0">{formatMoney(netPerSeat)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs py-1 gap-2">
+                    <span className="text-neutral-300 flex-1 min-w-0">Soole commission (added for the passenger)</span>
+                    <span className="font-semibold text-neutral-300 stat-number flex-shrink-0">+{formatMoney(commissionPerSeat)}</span>
                   </div>
                   <div className="flex justify-between items-center text-xs py-1.5 border-t border-neutral-50 mt-1 gap-2">
                     <span className="font-semibold text-black flex-1 min-w-0">Final Passenger Fare (per seat)</span>

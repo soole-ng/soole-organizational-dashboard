@@ -81,6 +81,7 @@ export interface Trip {
   driverRating?: number
   departureAt: string
   capacity: number
+  preBookedSeats: number
   bookedSeats: number
   status: StatusVariant
   fare: number

@@ -170,6 +170,7 @@ export function adaptTrip(raw: any): Trip {
     driverRating: raw.driver_rating ?? undefined,
     departureAt: raw.departure_date,
     capacity: raw.total_seats,
+    preBookedSeats: raw.pre_booked_seats ?? 0,
     bookedSeats,
     status: toStatusVariant(raw.status),
     fare: pricePerSeat,

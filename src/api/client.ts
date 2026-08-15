@@ -160,7 +160,7 @@ export const organizationApi = {
     apiRequest(`/organizations/${orgUuid}/trips`, { method: 'POST', body: tripData }),
 
   updateTrip: async (orgUuid: string, tripUuid: string, tripData: any) =>
-    apiRequest(`/organizations/${orgUuid}/trips/${tripUuid}`, { method: 'PATCH', body: tripData }),
+    apiRequest(`/organizations/${orgUuid}/trips/${tripUuid}`, { method: 'PUT', body: tripData }),
 
   updateTripStatus: async (orgUuid: string, tripUuid: string, status: string) =>
     apiRequest(`/organizations/${orgUuid}/trips/${tripUuid}/status`, { method: 'PATCH', body: { status } }),

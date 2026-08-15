@@ -139,6 +139,7 @@ export function TripCreatePage() {
     driverId: '',
     departureAt: '',
     fare: 5000,
+    availableSeats: '' as string | number,
     // Optional - shown to passengers on the ride-details screen if set, but
     // a trip with none of these touched creates no preferences record at
     // all server-side (not a row of un-chosen defaults).
@@ -249,6 +250,17 @@ export function TripCreatePage() {
       toast.error('Select a vehicle')
       return
     }
+
+    const capacity = selectedVehicle?.capacity || 14
+    const availableSeatsRaw = form.availableSeats === '' ? capacity : Number(form.availableSeats)
+    
+    if (isNaN(availableSeatsRaw) || availableSeatsRaw < 1 || availableSeatsRaw > capacity) {
+      toast.error(`Available seats must be between 1 and the vehicle's capacity (${capacity})`)
+      return
+    }
+
+    const pre_booked_seats = capacity - availableSeatsRaw
+
     if (!form.driverId) {
       toast.error('Select a driver')
       return
@@ -297,7 +309,8 @@ export function TripCreatePage() {
         destination_lat: form.destinationLat ?? undefined,
         destination_lng: form.destinationLng ?? undefined,
         departure_date: new Date(form.departureAt).toISOString(),
-        total_seats: selectedVehicle?.capacity || 14,
+        total_seats: capacity,
+        pre_booked_seats: pre_booked_seats,
         price_per_seat: form.fare,
         air_conditioning: form.airConditioning ?? undefined,
         smoking_allowed: form.smokingAllowed ?? undefined,
@@ -434,18 +447,33 @@ export function TripCreatePage() {
             </div>
           </div>
 
-          {/* Departure */}
-          <div>
-            <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure Date & Time <span className="text-red-500">*</span></label>
-            <input
-              type="datetime-local"
-              value={form.departureAt}
-              // Stops the picker offering a past date or time at all. Typed
-              // input can still bypass this, so submit re-checks it.
-              min={minDepartureAt()}
-              onChange={e => set('departureAt', e.target.value)}
-              className="input-field py-2.5"
-            />
+          {/* Departure & Available Seats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure Date & Time <span className="text-red-500">*</span></label>
+              <input
+                type="datetime-local"
+                value={form.departureAt}
+                // Stops the picker offering a past date or time at all. Typed
+                // input can still bypass this, so submit re-checks it.
+                min={minDepartureAt()}
+                onChange={e => set('departureAt', e.target.value)}
+                className="input-field py-2.5"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Available Seats (Defaults to vehicle capacity)</label>
+              <input
+                type="number"
+                min="1"
+                max={selectedVehicle?.capacity || 14}
+                value={form.availableSeats}
+                onChange={e => set('availableSeats', e.target.value)}
+                placeholder={selectedVehicle ? String(selectedVehicle.capacity) : "14"}
+                className="input-field py-2.5"
+              />
+            </div>
           </div>
 
           <div>

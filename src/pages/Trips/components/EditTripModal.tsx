@@ -8,11 +8,14 @@ interface EditTripModalProps {
   tripId: string
   departureAt: string
   pricePerSeat: number
+  totalSeats: number
+  bookedSeats: number
+  preBookedSeats: number
   onClose: () => void
   onSaved: () => void
 }
 
-export function EditTripModal({ orgUuid, tripId, departureAt, pricePerSeat, onClose, onSaved }: EditTripModalProps) {
+export function EditTripModal({ orgUuid, tripId, departureAt, pricePerSeat, totalSeats, bookedSeats, preBookedSeats, onClose, onSaved }: EditTripModalProps) {
   const [departureDate, setDepartureDate] = useState(() => {
     const d = new Date(departureAt)
     // datetime-local input needs "YYYY-MM-DDTHH:mm" in local time
@@ -20,14 +23,42 @@ export function EditTripModal({ orgUuid, tripId, departureAt, pricePerSeat, onCl
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
   })
   const [price, setPrice] = useState(String(pricePerSeat))
+  const [tSeats, setTSeats] = useState(String(totalSeats))
+  const [aSeats, setASeats] = useState(String(Math.max(0, totalSeats - bookedSeats)))
   const [saving, setSaving] = useState(false)
 
   const handleSave = async () => {
     setSaving(true)
     try {
+      const newTotalSeats = parseInt(tSeats, 10)
+      const newAvailableSeats = parseInt(aSeats, 10)
+
+      if (isNaN(newTotalSeats) || newTotalSeats < 1) {
+        toast.error('Invalid total seats')
+        setSaving(false)
+        return
+      }
+
+      if (isNaN(newAvailableSeats) || newAvailableSeats < 0 || newAvailableSeats > newTotalSeats) {
+        toast.error('Invalid available seats')
+        setSaving(false)
+        return
+      }
+
+      const realPassengers = bookedSeats - preBookedSeats
+      const newPreBookedSeats = newTotalSeats - newAvailableSeats - realPassengers
+
+      if (newPreBookedSeats < 0) {
+        toast.error(`Cannot increase available seats beyond what is physically available (Real passengers: ${realPassengers})`)
+        setSaving(false)
+        return
+      }
+
       await organizationApi.updateTrip(orgUuid, tripId, {
         departure_date: new Date(departureDate).toISOString(),
         price_per_seat: parseFloat(price),
+        total_seats: newTotalSeats,
+        pre_booked_seats: newPreBookedSeats,
       })
       toast.success('Trip updated')
       onSaved()
@@ -77,6 +108,28 @@ export function EditTripModal({ orgUuid, tripId, departureAt, pricePerSeat, onCl
               onChange={e => setPrice(e.target.value)}
               className="w-full px-3 py-2 border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1.5">Total Seats</label>
+              <input
+                type="number"
+                min="1"
+                value={tSeats}
+                onChange={e => setTSeats(e.target.value)}
+                className="w-full px-3 py-2 border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-neutral-300 mb-1.5">Available Seats</label>
+              <input
+                type="number"
+                min="0"
+                value={aSeats}
+                onChange={e => setASeats(e.target.value)}
+                className="w-full px-3 py-2 border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300"
+              />
+            </div>
           </div>
         </div>
 

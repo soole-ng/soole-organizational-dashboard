@@ -255,6 +255,9 @@ export function AdminPage() {
           tripId={editingTrip.id}
           departureAt={editingTrip.departureAt}
           pricePerSeat={editingTrip.fare}
+          totalSeats={editingTrip.capacity}
+          bookedSeats={editingTrip.bookedSeats}
+          preBookedSeats={editingTrip.preBookedSeats}
           onClose={() => setEditingTripId(null)}
           onSaved={() => {
             setEditingTripId(null)

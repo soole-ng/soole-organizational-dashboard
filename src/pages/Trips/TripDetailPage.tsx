@@ -276,6 +276,9 @@ export function TripDetailPage() {
           tripId={id}
           departureAt={trip.departureAt}
           pricePerSeat={trip.fare}
+          totalSeats={trip.capacity}
+          bookedSeats={trip.bookedSeats}
+          preBookedSeats={trip.preBookedSeats}
           onClose={() => setShowEditModal(false)}
           onSaved={() => {
             setShowEditModal(false)

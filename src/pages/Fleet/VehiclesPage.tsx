@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, History, Car, CheckCircle2, Trash2 } from 'lucide-react'
+import { Plus, History, Car, CheckCircle2, Trash2, Pencil } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
@@ -12,6 +12,7 @@ import { clsx } from 'clsx'
 import type { StatusVariant } from '../../types'
 import { VehicleIcon, docStatusIcon } from '../../components/ui/VehicleIcons'
 import { VehicleHistoryModal } from './components/VehicleHistoryModal'
+import { EditVehicleModal } from './components/EditVehicleModal'
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'All', value: 'all' },
   { label: 'Verified', value: 'verified' },
@@ -28,6 +29,7 @@ export function VehiclesPage() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
+  const [editVehicle, setEditVehicle] = useState<any | null>(null)
   const [deletingVehicleId, setDeletingVehicleId] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; plate: string } | null>(null)
   // Caps rendered vehicle cards instead of rendering all of them at once -
@@ -215,6 +217,18 @@ export function VehiclesPage() {
                           <History className="w-3.5 h-3.5 text-neutral-200" /> History Unavailable
                         </div>
                       )}
+                      {/* Deliberately not gated on org.role. The server decides
+                          who may edit a vehicle, and OrgContext falls back to
+                          'viewer' whenever the membership fetch fails - so a
+                          role check here hides the button from owners it should
+                          never hide it from. A refusal comes back as a toast. */}
+                      <button
+                        onClick={() => guardAction(undefined, () => setEditVehicle(vehicle))}
+                        aria-label={`Edit vehicle ${vehicle.plate}`}
+                        className="flex-shrink-0 p-2 rounded-xl border border-neutral-100 text-primary-400 hover:bg-primary-75 transition-colors"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                       {canChangeVehicleStatus && (
                         <button
                           onClick={() => guardAction(undefined, () => handleDeleteVehicle(vehicle.id, vehicle.plate))}
@@ -252,6 +266,21 @@ export function VehiclesPage() {
       >
         <Plus className="w-6 h-6" />
       </Link>
+
+      {editVehicle && orgUuid && (
+        <EditVehicleModal
+          orgUuid={orgUuid}
+          vehicleId={editVehicle.id}
+          plate={editVehicle.plate}
+          color={editVehicle.color}
+          capacity={editVehicle.capacity}
+          onClose={() => setEditVehicle(null)}
+          onSaved={() => {
+            setEditVehicle(null)
+            refetch(['vehicles'])
+          }}
+        />
+      )}
 
       {/* Vehicle History Modal */}
       {historyVehicle && (

@@ -130,6 +130,7 @@ export function adaptVehicle(raw: any): Vehicle {
     model: `${raw.brand ?? ''} ${raw.model ?? ''}`.trim(),
     year: raw.year,
     capacity: raw.capacity,
+    color: raw.color ?? undefined,
     type: inferVehicleDisplayType(raw),
     fuelType: 'petrol',
     status: (raw.status === 'suspended' || raw.status === 'retired')

@@ -36,6 +36,8 @@ export interface Vehicle {
   model: string
   year: number
   capacity: number
+  /** Needed by the Edit Vehicle modal so the field opens with what is already set. */
+  color?: string
   type: 'Sienna' | 'Hiace' | 'Coaster' | 'Other'
   fuelType: 'petrol' | 'diesel'
   status: StatusVariant

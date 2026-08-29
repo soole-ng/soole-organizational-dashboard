@@ -259,7 +259,23 @@ export function TripCreatePage() {
       return
     }
 
-    const pre_booked_seats = capacity - availableSeatsRaw
+    // The trip offers what the dispatcher said it offers.
+    //
+    // This used to send total_seats = capacity and express the difference as
+    // pre_booked_seats: a 14-seater with 5 seats on sale went to the server
+    // as "14 seats, 9 already booked". Nothing downstream can tell that apart
+    // from a trip that really has sold nine seats, so the driver's screen
+    // read "1 of 14 booked" on a trip with five seats for sale, and every
+    // other place total_seats is shown was wrong in the same way.
+    //
+    // The backend has never required this. total_seats below the vehicle's
+    // capacity is explicitly supported - the vehicle is a ceiling, not a
+    // target - and it refuses only the reverse, a trip offering more seats
+    // than the vehicle holds. The check above already enforces that.
+    //
+    // pre_booked_seats goes back to meaning what it says: seats sold outside
+    // the app. Nothing here sells any, so it is zero.
+    const pre_booked_seats = 0
 
     if (!form.driverId) {
       toast.error('Select a driver')
@@ -309,7 +325,7 @@ export function TripCreatePage() {
         destination_lat: form.destinationLat ?? undefined,
         destination_lng: form.destinationLng ?? undefined,
         departure_date: new Date(form.departureAt).toISOString(),
-        total_seats: capacity,
+        total_seats: availableSeatsRaw,
         pre_booked_seats: pre_booked_seats,
         price_per_seat: form.fare,
         air_conditioning: form.airConditioning ?? undefined,
@@ -523,9 +539,14 @@ export function TripCreatePage() {
               // seat. There is no copy here now. The rule is stated above
               // the input in words; the arithmetic happens once, on the
               // server, at checkout.
+              // Seats on sale, not the vehicle's capacity. Quoting a
+              // 14-seater's takings for a trip selling five seats overstates
+              // it by nearly three times.
               const capacity = selectedVehicle?.capacity || 14
+              const seatsOnSale =
+                form.availableSeats === '' ? capacity : Number(form.availableSeats)
               const netPerSeat = form.fare
-              const totalNet = netPerSeat * capacity
+              const totalNet = netPerSeat * (seatsOnSale || capacity)
 
               return (
                 <div className="mt-3 p-4 bg-white border border-neutral-100 rounded-xl shadow-sm">
@@ -535,7 +556,7 @@ export function TripCreatePage() {
                     <span className="font-semibold text-black stat-number flex-shrink-0">{formatMoney(netPerSeat)}</span>
                   </div>
                   <div className="flex justify-between items-start text-xs py-1 border-t border-neutral-100 mt-2 gap-2">
-                    <span className="text-neutral-300 flex-1 min-w-0">Total if every seat sells ({capacity})</span>
+                    <span className="text-neutral-300 flex-1 min-w-0">Total if every seat sells ({seatsOnSale || capacity})</span>
                     <span className="font-bold text-primary-500 stat-number flex-shrink-0">
                       {formatMoney(totalNet)}
                     </span>

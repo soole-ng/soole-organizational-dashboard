@@ -524,8 +524,25 @@ export function TripCreatePage() {
               // the input in words; the arithmetic happens once, on the
               // server, at checkout.
               const capacity = selectedVehicle?.capacity || 14
+              // The seats actually being offered on this trip, not the
+              // vehicle's capacity.
+              //
+              // A 14-seater put out with 5 seats for sale quoted the fare
+              // times 14 - nearly three times what the trip can earn - so
+              // the figure a dispatcher priced against was wrong on every
+              // trip that held seats back. Mirrors the same resolution used
+              // when the trip is submitted a few lines up, including the
+              // blank-means-capacity default.
+              const seatsOnSale =
+                form.availableSeats === ''
+                  ? capacity
+                  : Number(form.availableSeats)
+              const seatsForEarnings =
+                Number.isFinite(seatsOnSale) && seatsOnSale > 0
+                  ? Math.min(seatsOnSale, capacity)
+                  : capacity
               const netPerSeat = form.fare
-              const totalNet = netPerSeat * capacity
+              const totalNet = netPerSeat * seatsForEarnings
 
               return (
                 <div className="mt-3 p-4 bg-white border border-neutral-100 rounded-xl shadow-sm">
@@ -535,7 +552,7 @@ export function TripCreatePage() {
                     <span className="font-semibold text-black stat-number flex-shrink-0">{formatMoney(netPerSeat)}</span>
                   </div>
                   <div className="flex justify-between items-start text-xs py-1 border-t border-neutral-100 mt-2 gap-2">
-                    <span className="text-neutral-300 flex-1 min-w-0">Total if every seat sells ({capacity})</span>
+                    <span className="text-neutral-300 flex-1 min-w-0">Total if every seat sells ({seatsForEarnings})</span>
                     <span className="font-bold text-primary-500 stat-number flex-shrink-0">
                       {formatMoney(totalNet)}
                     </span>

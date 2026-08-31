@@ -243,6 +243,22 @@ export const moneyApi = {
   changeWithdrawalPin: async (orgUuid: string, payload: { old_pin: string; new_pin: string; confirm_new_pin: string }) =>
     apiRequest(`/organizations/${orgUuid}/money/change-withdrawal-pin`, { method: 'POST', body: payload }),
   /**
+   * Reset a forgotten withdrawal PIN. Two legs: initiate texts a code to the
+   * acting user's registered number and returns their security question,
+   * confirm takes that code, the answer and the new PIN together.
+   *
+   * changeWithdrawalPin above needs the old PIN, and setWithdrawalPin
+   * refuses once one exists, so without these a forgotten PIN locked the
+   * organisation out of its own money for good.
+   */
+  initiateWithdrawalPinReset: async (orgUuid: string) =>
+    apiRequest(`/organizations/${orgUuid}/money/reset-withdrawal-pin/initiate`, { method: 'POST' }),
+  confirmWithdrawalPinReset: async (
+    orgUuid: string,
+    payload: { otp_code: string; security_answer: string; new_pin: string; confirm_new_pin: string },
+  ) =>
+    apiRequest(`/organizations/${orgUuid}/money/reset-withdrawal-pin/confirm`, { method: 'POST', body: payload }),
+  /**
    * Downloads the CSV export directly (not JSON, so this bypasses apiRequest
    * and drives the browser's native file-save via a temporary blob link).
    */

@@ -77,6 +77,76 @@ export function MoneyPage() {
   const [securityQuestion, setSecurityQuestion] = useState<string | null>(null)
   const [securityQuestionConfigured, setSecurityQuestionConfigured] = useState<boolean | null>(null)
 
+  // Forgot-PIN reset. 'send' asks for the SMS code, 'confirm' collects it
+  // along with the security answer and the new PIN.
+  const [resetStep, setResetStep] = useState<null | 'send' | 'confirm'>(null)
+  const [isResetting, setIsResetting] = useState(false)
+  // The question the *server* will check the answer against, taken from the
+  // initiate response rather than from getSecurityQuestionStatus. Reading it
+  // from anywhere else risks showing one question while the backend verifies
+  // a different one.
+  const [resetQuestion, setResetQuestion] = useState<string | null>(null)
+  const [resetOtp, setResetOtp] = useState('')
+  const [resetAnswer, setResetAnswer] = useState('')
+  const [resetNewPin, setResetNewPin] = useState('')
+  const [resetConfirmPin, setResetConfirmPin] = useState('')
+
+  const closeResetModal = () => {
+    setResetStep(null)
+    setResetQuestion(null)
+    setResetOtp('')
+    setResetAnswer('')
+    setResetNewPin('')
+    setResetConfirmPin('')
+  }
+
+  const handleSendResetCode = async () => {
+    if (!orgUuid) return
+    setIsResetting(true)
+    try {
+      const res: any = await moneyApi.initiateWithdrawalPinReset(orgUuid)
+      setResetQuestion(res?.security_question ?? res?.data?.security_question ?? null)
+      setResetStep('confirm')
+      toast.success('Code sent to your phone')
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Could not send the code')
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
+  const handleConfirmPinReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!orgUuid) return
+    if (resetNewPin.length !== 4) {
+      toast.error('PIN must be 4 digits')
+      return
+    }
+    if (resetNewPin !== resetConfirmPin) {
+      toast.error('PINs do not match')
+      return
+    }
+    setIsResetting(true)
+    try {
+      await moneyApi.confirmWithdrawalPinReset(orgUuid, {
+        otp_code: resetOtp,
+        security_answer: resetAnswer,
+        new_pin: resetNewPin,
+        confirm_new_pin: resetConfirmPin,
+      })
+      toast.success('Withdrawal PIN reset')
+      closeResetModal()
+      // Straight back into the withdrawal they were trying to make, with the
+      // PIN field empty for the new one.
+      setWithdrawPin('')
+      setShowModal(true)
+    } catch (err: any) {
+      toast.error(err?.message ?? 'Could not reset your PIN')
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
   // Filter states
   const [showFilterModal, setShowFilterModal] = useState(false)
   const [startDate, setStartDate] = useState('')
@@ -695,6 +765,26 @@ export function MoneyPage() {
                   placeholder="••••"
                   autoFocus
                 />
+                {/*
+                  Only offered when a security question is actually set. The
+                  reset needs the SMS code *and* the answer, and the backend
+                  refuses on both legs without a question - so showing this
+                  otherwise would walk someone through four fields to reach a
+                  rejection. Without a question they get the Settings card
+                  below instead, which is a route rather than a dead end.
+                */}
+                {securityQuestionConfigured && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false)
+                      setResetStep('send')
+                    }}
+                    className="mt-2 text-xs font-semibold text-secondary-600 underline"
+                  >
+                    Forgot your PIN?
+                  </button>
+                )}
               </div>
 
               {securityQuestionConfigured === false ? (
@@ -754,6 +844,143 @@ export function MoneyPage() {
           flow above until a dedicated PIN exists (withdrawals previously
           checked the login password instead, which mismatched this
           modal's old 8-character field against actual login PINs). */}
+      {/*
+        Resetting a forgotten withdrawal PIN.
+
+        Two steps, because the code has to be sent before it can be typed.
+        Both factors are submitted together on the second: the backend will
+        not take the SMS code on its own, so there is deliberately no screen
+        that verifies it alone - one would imply a step that does not exist
+        and let someone believe they were halfway through.
+      */}
+      {resetStep && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-card w-full max-w-md p-6 shadow-float relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={closeResetModal}
+              className="absolute right-4 top-4 text-neutral-200 hover:text-primary-500 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
+                <ShieldCheck className="w-6 h-6 text-accent-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-primary-500">Reset Withdrawal PIN</h3>
+                <p className="text-xs text-neutral-200">
+                  {resetStep === 'send'
+                    ? 'We will text a code to your registered number'
+                    : 'Enter the code and answer your security question'}
+                </p>
+              </div>
+            </div>
+
+            {resetStep === 'send' ? (
+              <div className="space-y-4">
+                <div className="bg-primary-75 border border-primary-100 rounded-xl p-3 text-xs text-primary-400">
+                  <p>
+                    You will need the code we text you and the answer to your
+                    security question. Both are required to set a new PIN.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={closeResetModal}
+                    className="flex-1 py-3 text-sm font-bold text-primary-400 border border-primary-100 rounded-xl"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendResetCode}
+                    disabled={isResetting}
+                    className="btn-primary flex-1 py-3 text-sm font-bold disabled:opacity-60"
+                  >
+                    {isResetting ? 'Sending…' : 'Send code'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleConfirmPinReset} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-primary-400 mb-1.5">
+                    Code from SMS
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={resetOtp}
+                    onChange={e => setResetOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="input-field bg-white text-center tracking-[0.3em] text-lg font-black"
+                    placeholder="•••••"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-primary-400 mb-1.5">
+                    {resetQuestion ?? 'Answer your security question'}
+                  </label>
+                  <input
+                    type="text"
+                    value={resetAnswer}
+                    onChange={e => setResetAnswer(e.target.value)}
+                    className="input-field bg-white"
+                    placeholder="Your answer"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-primary-400 mb-1.5">New PIN</label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={resetNewPin}
+                    onChange={e => setResetNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    className="input-field bg-white text-center tracking-[0.5em] text-lg font-black"
+                    placeholder="••••"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-primary-400 mb-1.5">
+                    Confirm new PIN
+                  </label>
+                  <input
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={resetConfirmPin}
+                    onChange={e => setResetConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    className="input-field bg-white text-center tracking-[0.5em] text-lg font-black"
+                    placeholder="••••"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={
+                    isResetting ||
+                    resetOtp.length < 4 ||
+                    !resetAnswer.trim() ||
+                    resetNewPin.length < 4 ||
+                    resetConfirmPin.length < 4
+                  }
+                  className="btn-primary w-full py-3 text-sm font-bold disabled:opacity-60"
+                >
+                  {isResetting ? 'Resetting…' : 'Reset PIN'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {showSetPinModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-card w-full max-w-md p-6 shadow-float relative animate-in fade-in zoom-in duration-200">

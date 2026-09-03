@@ -169,7 +169,11 @@ export function SettingsPage() {
     { icon: AlertTriangle, label: 'Alert Settings', desc: 'Speed limits and custom fleet safety alerts' },
     { icon: RefreshCw, label: 'Refund Policy', desc: 'Set your cancellation and refund rules' },
     { icon: HelpCircle, label: 'Help & Support', desc: 'FAQs, chat and contact Soole', to: '/help' },
-    { icon: FileText, label: 'Terms & Conditions', desc: 'Terms of service & user agreement', href: 'https://www.soole.ng/privacy-policy' },
+    // Was pointing at the privacy policy, which is a different document -
+    // and until recently the only one that existed. Terms now do, so the
+    // link goes to them.
+    { icon: FileText, label: 'Terms & Conditions', desc: 'Terms of service & user agreement', href: 'https://www.soole.ng/policy/terms' },
+    { icon: FileText, label: 'Privacy Policy', desc: 'How Soole handles your data', href: 'https://www.soole.ng/policy/privacy' },
   ]
 
   const navigate = useNavigate()

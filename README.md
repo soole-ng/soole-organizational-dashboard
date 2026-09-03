@@ -86,13 +86,23 @@ See `ENDPOINT_AUDIT_CHECKLIST.md` for complete mapping.
 - **Frontend**: React 18 + TypeScript
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
-- **State Management**: React Context API
+- **State Management**: React Context API + TanStack Query (server state)
 - **Routing**: React Router
-- **Maps**: Leaflet
+- **Maps**: Mapbox GL JS
 - **Notifications**: React Hot Toast
 - **Build**: Vite
 
 ## 📦 Installation
+
+### Environment
+
+Create `.env.local`:
+
+```bash
+# Backend API. Falls back to the hosted production API when unset, so a
+# missing value silently points local development at live data - set it.
+VITE_API_URL=http://127.0.0.1:8000/api
+```
 
 ```bash
 # Install dependencies
@@ -133,9 +143,19 @@ src/
 │   ├── Reports/       # Analytics
 │   ├── LiveMap/       # Real-time tracking
 │   └── Auth/          # Authentication flows
+├── api/               # Backend client
+│   ├── client.ts      # Fetch wrapper, auth headers, token refresh
+│   └── trips.ts       # Trip endpoints
+├── data/              # Static reference data
+├── types/             # Shared TypeScript types
 ├── lib/               # Utilities and contexts
-│   ├── useMockData.ts # Mock data generator
-│   └── OrgContext.tsx # Organization context
+│   ├── useApiData.ts  # Fetches the collections each page needs
+│   ├── OrgContext.tsx # Organization context
+│   ├── notificationsSocket.ts # Live notification websocket
+│   ├── refundApi.ts   # Passenger refund actions
+│   ├── reportExport.ts / reportExportPdf.ts # CSV and PDF report export
+│   ├── adapters.ts    # Backend payload -> UI shape
+│   └── formatters.ts  # Currency, date and number formatting
 ├── App.tsx            # Main app component
 └── main.tsx           # Entry point
 ```
@@ -203,14 +223,12 @@ See `BACKEND_API_IMPLEMENTATION.md` for complete API specifications.
 
 ### Development Tools:
 - React DevTools extension for Chrome/Firefox
-- Redux DevTools (if using Redux)
 - Network tab for API debugging
-- Mock data can be toggled via `useMockData()` hook
 
 ### Common Issues:
 - **Token not persisting**: Check localStorage in DevTools
 - **API calls failing**: Verify backend is running and token is valid
-- **Mock data showing instead of real data**: Check `useMockData()` in components
+- **Reading production data locally**: `VITE_API_URL` is unset — `src/api/client.ts` falls back to the hosted API
 
 ## 📞 Support
 
@@ -225,6 +243,6 @@ For issues or questions:
 
 ---
 
-**Last Updated**: 2026-06-30  
+**Last Updated**: 2026-09-03  
 **Dashboard Version**: 1.0.0  
 **Backend API Version**: v1

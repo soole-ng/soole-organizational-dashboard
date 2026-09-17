@@ -23,7 +23,19 @@ function toStatusVariant(status: string | null | undefined): StatusVariant {
   // matches - so an expired trip was invisible on every filter except "All",
   // looking like it had never been created.
   if (s === 'expired') return 'expired'
-  if (s === 'active') return 'active'
+  // DriverOrgStatus has three values and this knew one of them. The other
+  // two fell through to 'pending' below - so a driver the organisation had
+  // itself switched off read as "waiting for your approval", and a removed
+  // one read the same.
+  //
+  // Nothing renders these today: adaptOrgDriver is unused and
+  // driversApi.getSuspendedDrivers is never called, and the fleet list that
+  // IS used comes through fleet.api.helpers.get_driver_status, which maps
+  // suspended_by_org to 'suspended' server-side already. Mapped here anyway
+  // so that finishing the suspended-drivers screen does not inherit a
+  // wrong label that looks like a backend fault.
+  if (s === 'suspended_by_org') return 'suspended'
+  if (s === 'removed') return 'inactive'
   return 'pending'
 }
 

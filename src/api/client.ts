@@ -124,6 +124,25 @@ export const ridesApi = {
     apiRequest<{ items: Array<{ id: string; name: string; address: string | null; longitude: number | null; latitude: number | null; state: string | null }> }>(
       `/rides/retrieve-popular-stops?search=${encodeURIComponent(search)}${state ? `&state=${encodeURIComponent(state)}` : ''}&page=1&page_size=${pageSize}`,
     ),
+
+  /**
+   * The vehicle reference list - 94 brands, 851 models, shipped with the
+   * backend (verification/data/nigeria_vehicles_seed.csv).
+   *
+   * Register Vehicle used to read from a hardcoded list of ten brands in
+   * lib/constants.ts, which named Mercedes-Benz as "Benz". The mobile app
+   * reads these same two endpoints, so a vehicle registered from the
+   * dashboard and one registered from a phone now carry the same spelling -
+   * they did not, and a fleet list that says both is a fleet list nobody
+   * can filter.
+   */
+  getVehicleBrands: async () =>
+    apiRequest<{ data: string[] }>('/rides/vehicle-brands'),
+
+  getVehicleModels: async (brand: string) =>
+    apiRequest<{ data: string[] }>(
+      `/rides/vehicle-models?brand=${encodeURIComponent(brand)}`,
+    ),
 }
 
 /**

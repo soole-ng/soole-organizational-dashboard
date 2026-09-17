@@ -2,6 +2,12 @@ import { useState } from 'react'
 import { Edit2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { vehiclesApi } from '../../../api/client'
+import {
+  PLATE_EXPECTED_MESSAGE,
+  plateFormatAsTyped,
+  plateLooksValid,
+  plateNormalise,
+} from '../../../lib/nigerianPlate'
 
 interface EditVehicleModalProps {
   orgUuid: string
@@ -38,11 +44,19 @@ export function EditVehicleModal({ orgUuid, vehicleId, plate, color, capacity, o
       toast.error('Plate number is required')
       return
     }
+    // Same rule as Add Vehicle and as the server. Correcting a plate is
+    // exactly where a typo gets introduced, and this field accepted
+    // anything at all - the one edit a vehicle is allowed could be spent
+    // turning a real plate into a string that is not one.
+    if (!plateLooksValid(plateNumber)) {
+      toast.error(PLATE_EXPECTED_MESSAGE)
+      return
+    }
 
     setSaving(true)
     try {
       await vehiclesApi.updateVehicle(orgUuid, vehicleId, {
-        plate_number: plateNumber.trim(),
+        plate_number: plateNormalise(plateNumber),
         color: vehicleColor.trim() || undefined,
         capacity: newCapacity,
       })
@@ -83,7 +97,7 @@ export function EditVehicleModal({ orgUuid, vehicleId, plate, color, capacity, o
             <input
               type="text"
               value={plateNumber}
-              onChange={e => setPlateNumber(e.target.value)}
+              onChange={e => setPlateNumber(plateFormatAsTyped(e.target.value))}
               className="w-full px-3 py-2 border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300"
             />
           </div>

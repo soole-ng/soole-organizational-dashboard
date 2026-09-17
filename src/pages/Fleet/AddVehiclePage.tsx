@@ -1,12 +1,18 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle2, Camera, Trash2 } from 'lucide-react'
 import { TopBar } from '../../components/layout/TopBar'
-import { kVehicleMakeModels } from '../../lib/constants'
+import {
+  PLATE_EXPECTED_MESSAGE,
+  plateFormatAsTyped,
+  plateLooksValid,
+  plateNormalise,
+} from '../../lib/nigerianPlate'
+import { popularBrands, popularModels, theRest } from '../../lib/vehicleShortlist'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
-import { vehiclesApi, uploadApi } from '../../api/client'
+import { vehiclesApi, uploadApi, ridesApi } from '../../api/client'
 import { invalidateApiDataCache } from '../../lib/useApiData'
 import { compressImageIfNeeded } from '../../lib/imageCompression'
 
@@ -22,13 +28,6 @@ const DOC_TYPE_BY_KEY: Record<string, string> = {
 }
 
 const colors = ['White', 'Black', 'Silver', 'Grey', 'Blue', 'Red', 'Gold', 'Other']
-
-/** Nigerian plate format: 3 letters, dash, 3 digits, 2 letters (e.g. ABC-123DE). */
-function formatPlateNumber(raw: string): string {
-  const clean = raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8)
-  if (clean.length <= 3) return clean
-  return `${clean.slice(0, 3)}-${clean.slice(3)}`
-}
 
 const photoSteps = [
   {
@@ -98,8 +97,52 @@ export function AddVehiclePage() {
   const [submitProgress, setSubmitProgress] = useState('')
   const [submitProgressPct, setSubmitProgressPct] = useState(0)
 
-  const brands = Object.keys(kVehicleMakeModels).sort()
-  const models = brand && brand !== 'Other' ? kVehicleMakeModels[brand] || [] : []
+  // The reference list from the backend - the same 94 brands and 851
+  // models the mobile app offers. This was ten brands hardcoded in
+  // lib/constants.ts, which called Mercedes-Benz "Benz", so the same
+  // Sprinter landed in the fleet list under two different makes depending
+  // on where it was added from.
+  const [brands, setBrands] = useState<string[]>([])
+  const [models, setModels] = useState<string[]>([])
+  const [brandsLoading, setBrandsLoading] = useState(true)
+  const [modelsLoading, setModelsLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    ridesApi.getVehicleBrands()
+      .then(res => { if (!cancelled) setBrands(res.data || []) })
+      .catch(() => { if (!cancelled) setBrands([]) })
+      .finally(() => { if (!cancelled) setBrandsLoading(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    if (!brand || brand === 'Other') {
+      setModels([])
+      return
+    }
+    // `cancelled` is the point of this, not tidiness: changing the brand
+    // twice quickly could otherwise land the first brand's models under the
+    // second one, and a model saved against the wrong make is how a car
+    // gets registered as something it is not.
+    let cancelled = false
+    setModelsLoading(true)
+    setModels([])
+    ridesApi.getVehicleModels(brand)
+      .then(res => { if (!cancelled) setModels(res.data || []) })
+      .catch(() => { if (!cancelled) setModels([]) })
+      .finally(() => { if (!cancelled) setModelsLoading(false) })
+    return () => { cancelled = true }
+  }, [brand])
+
+  // Ninety-four brands is a lot to open a dropdown on, so the ones a
+  // Nigerian fleet actually runs are grouped first. Nothing is hidden - the
+  // rest are in the same select, and a native select is type-ahead
+  // searchable, so "vol" still reaches Volkswagen in the second group.
+  const commonBrands = popularBrands(brands)
+  const otherBrands = theRest(brands, commonBrands)
+  const commonModels = popularModels(brand, models)
+  const otherModels = theRest(models, commonModels)
 
   const handleFileUpload = async (key: string, rawFile: File) => {
     const file = await compressImageIfNeeded(rawFile)
@@ -160,8 +203,17 @@ export function AddVehiclePage() {
               <div>
                 <label className="block text-xs font-semibold text-black mb-1.5">Car Brand</label>
                 <select className="input-field" value={brand} onChange={e => { setBrand(e.target.value); setModel(''); }}>
-                  <option value="" disabled>Select Brand</option>
-                  {brands.map(b => <option key={b} value={b}>{b}</option>)}
+                  <option value="" disabled>{brandsLoading ? 'Loading brands...' : 'Select Brand'}</option>
+                  {commonBrands.length > 0 && (
+                    <optgroup label="Common">
+                      {commonBrands.map(b => <option key={b} value={b}>{b}</option>)}
+                    </optgroup>
+                  )}
+                  {otherBrands.length > 0 && (
+                    <optgroup label="All brands">
+                      {otherBrands.map(b => <option key={b} value={b}>{b}</option>)}
+                    </optgroup>
+                  )}
                   <option value="Other">Other</option>
                 </select>
                 {brand === 'Other' && (
@@ -171,9 +223,18 @@ export function AddVehiclePage() {
 
               <div>
                 <label className="block text-xs font-semibold text-black mb-1.5">Car Model</label>
-                <select className="input-field" value={model} onChange={e => setModel(e.target.value)} disabled={!brand}>
-                  <option value="" disabled>Select Model</option>
-                  {models.map(m => <option key={m} value={m}>{m}</option>)}
+                <select className="input-field" value={model} onChange={e => setModel(e.target.value)} disabled={!brand || modelsLoading}>
+                  <option value="" disabled>{modelsLoading ? 'Loading models...' : 'Select Model'}</option>
+                  {commonModels.length > 0 && (
+                    <optgroup label="Common">
+                      {commonModels.map(m => <option key={m} value={m}>{m}</option>)}
+                    </optgroup>
+                  )}
+                  {otherModels.length > 0 && (
+                    <optgroup label={commonModels.length > 0 ? 'All models' : 'Models'}>
+                      {otherModels.map(m => <option key={m} value={m}>{m}</option>)}
+                    </optgroup>
+                  )}
                   <option value="Other">Other</option>
                 </select>
                 {model === 'Other' && (
@@ -188,7 +249,7 @@ export function AddVehiclePage() {
                   placeholder="ABC-123DE"
                   maxLength={9}
                   value={plate}
-                  onChange={e => setPlate(formatPlateNumber(e.target.value))}
+                  onChange={e => setPlate(plateFormatAsTyped(e.target.value))}
                 />
               </div>
 
@@ -222,6 +283,15 @@ export function AddVehiclePage() {
                 onClick={() => {
                   if (!year || !finalBrand || !finalModel || !plate || !capacity) {
                     toast.error('Please fill in all details')
+                    return
+                  }
+                  // Checked here, not at submit: the plate is on this step,
+                  // and the server refuses a bad one three steps and four
+                  // photo uploads later. There was no check at all, so
+                  // "667-777" registered a vehicle that then carried
+                  // passengers untraceably.
+                  if (!plateLooksValid(plate)) {
+                    toast.error(PLATE_EXPECTED_MESSAGE)
                     return
                   }
                   setCurrentStep(2)
@@ -450,7 +520,11 @@ export function AddVehiclePage() {
                     setSubmitProgress('Registering vehicle...')
                     const vehicleTypeMap: Record<string, string> = { Hiace: 'bus', Coaster: 'bus', Sienna: 'van', Other: 'sedan' }
                     vehicle = await vehiclesApi.createVehicle(orgUuid, {
-                      plate_number: plate,
+                      // Canonical spelling. "ABC 123 DE" and "abc-123de"
+                      // are one vehicle, and the duplicate check - which
+                      // also covers independent drivers' own cars - runs on
+                      // what is stored.
+                      plate_number: plateNormalise(plate),
                       brand: finalBrand,
                       model: finalModel,
                       year: parseInt(year, 10),

@@ -121,6 +121,17 @@ function minDepartureAt(): string {
   )
 }
 
+/// Which of the three steps is on screen.
+type WizardStep = 1 | 2 | 3
+
+/// What each step is called, in order. Drives the header below, so the
+/// labels and the count cannot drift apart.
+const STEPS: readonly { readonly n: WizardStep; readonly label: string }[] = [
+  { n: 1, label: 'Route' },
+  { n: 2, label: 'Vehicle' },
+  { n: 3, label: 'Price' },
+]
+
 export function TripCreatePage() {
   const navigate = useNavigate()
   const { orgUuid } = useOrg()
@@ -152,6 +163,13 @@ export function TripCreatePage() {
     pickupGraceTimeMinutes: '',
     additionalNotes: '',
   })
+  // Three steps, not one long scroll. The form asks for a route, a vehicle
+  // and a price, and they are answered in that order - a dispatcher cannot
+  // pick a bus stop before a state, or seats before a vehicle, so the page
+  // was already a sequence pretending to be a single form. Product owner,
+  // 2026-09-19: "this is the dashiboaed for trip crestion i beleive we can
+  // make this page a theree page instea dof publish".
+  const [step, setStep] = useState<WizardStep>(1)
   const [showCalc, setShowCalc] = useState(true)
   const [showPreferences, setShowPreferences] = useState(false)
   const [publishing, setPublishing] = useState(false)
@@ -228,6 +246,48 @@ export function TripCreatePage() {
 
   const setDestinationState = (stateValue: string) =>
     setForm(p => ({ ...p, destinationState: stateValue, dropoffLocation: '', destinationLat: null, destinationLng: null }))
+
+  /// What each step will not let you leave without.
+  ///
+  /// The same rules handlePublish enforces, asked earlier so a dispatcher
+  /// is told on the step that can fix it rather than at the end. Publish
+  /// still checks everything itself - this is a courtesy, not the gate.
+  const stepIsComplete = (which: WizardStep): string | null => {
+    if (which === 1) {
+      if (!form.originState || !form.destinationState) {
+        return 'Select pickup and dropoff states'
+      }
+      if (!form.pickupLocation.trim() || !form.dropoffLocation.trim()) {
+        return 'Enter pickup and dropoff locations'
+      }
+      return null
+    }
+    if (which === 2) {
+      if (!form.vehicleId) return 'Select a vehicle'
+      if (!form.driverId) return 'Select a driver'
+      if (!form.departureAt) return 'Select a departure date and time'
+      const capacity = selectedVehicle?.capacity || 14
+      const seats =
+        form.availableSeats === '' ? capacity : Number(form.availableSeats)
+      if (isNaN(seats) || seats < 1 || seats > capacity) {
+        return `Available seats must be between 1 and the vehicle's capacity (${capacity})`
+      }
+      return null
+    }
+    return null
+  }
+
+  const goNext = () => {
+    const problem = stepIsComplete(step)
+    if (problem) {
+      toast.error(problem)
+      return
+    }
+    setStep((step + 1) as WizardStep)
+    // Back to the top, so the next step starts where the eye already is
+    // rather than halfway down the previous one.
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const handlePublish = async () => {
     if (!orgUuid) {
@@ -337,8 +397,61 @@ export function TripCreatePage() {
 
       <div className="flex-1 p-4 sm:p-5 space-y-4 lg:pt-8 lg:px-8 w-full max-w-2xl mx-auto">
         <div className="card p-4 sm:p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-primary-500 hidden lg:block">Create a trip</h2>
+          {/* Where they are, and how much is left. A wizard without this is
+              just a form that keeps changing under you. Completed steps are
+              tappable so a dispatcher can go back and correct something
+              without losing what they have typed - the form state is one
+              object and nothing is submitted until Publish. */}
+          <nav aria-label="Progress" className="flex items-center gap-2">
+            {STEPS.map(({ n, label }, i) => {
+              const done = n < step
+              const current = n === step
+              return (
+                <div key={n} className="flex items-center gap-2 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => { if (done) setStep(n) }}
+                    disabled={!done}
+                    aria-current={current ? 'step' : undefined}
+                    className={clsx(
+                      'flex items-center gap-2 text-xs font-semibold',
+                      done && 'cursor-pointer',
+                      !done && !current && 'cursor-default',
+                    )}
+                  >
+                    <span
+                      className={clsx(
+                        'w-6 h-6 rounded-full flex items-center justify-center text-[11px] flex-shrink-0',
+                        current && 'bg-primary-500 text-white',
+                        done && 'bg-primary-100 text-primary-500',
+                        !current && !done && 'bg-neutral-100 text-neutral-300',
+                      )}
+                    >
+                      {n}
+                    </span>
+                    <span
+                      className={clsx(
+                        'hidden sm:inline',
+                        current ? 'text-primary-500' : 'text-neutral-300',
+                      )}
+                    >
+                      {label}
+                    </span>
+                  </button>
+                  {i < STEPS.length - 1 && (
+                    <span
+                      className={clsx(
+                        'h-px flex-1',
+                        done ? 'bg-primary-100' : 'bg-neutral-100',
+                      )}
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </nav>
 
+          {step === 1 && (<>
           {/* Pickup & Dropoff state - picked first, since it scopes the bus
               stop search below to stops actually in that state */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -402,7 +515,9 @@ export function TripCreatePage() {
               />
             </div>
           </div>
+          </>)}
 
+          {step === 2 && (<>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Vehicle selection */}
             <div>
@@ -475,7 +590,9 @@ export function TripCreatePage() {
               />
             </div>
           </div>
+          </>)}
 
+          {step === 3 && (<>
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-semibold text-primary-400">Desired Net Payout per seat <span className="text-red-500">*</span></label>
@@ -561,8 +678,10 @@ export function TripCreatePage() {
               )
             })()}
           </div>
+          </>)}
         </div>
 
+        {step === 3 && (
         <div className="card p-4 sm:p-5 space-y-4">
           <button
             type="button"
@@ -679,23 +798,47 @@ export function TripCreatePage() {
             </div>
           )}
         </div>
+        )}
 
-        <div className="pt-2">
-          <button
-            onClick={handlePublish}
-            disabled={publishing}
-            className={clsx(
-              'btn-primary py-2.5 text-xs w-full flex items-center justify-center gap-2',
-              publishing && 'opacity-70',
-            )}
-          >
-            {publishing ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Publishing…
-              </>
-            ) : 'Publish Trip'}
-          </button>
+        {/* One row of controls for all three steps, so the primary action is
+            always in the same place. Publish appears only on the last one -
+            a Publish button visible on step 1 is an invitation to send out a
+            trip with no vehicle on it. */}
+        <div className="pt-2 flex items-center gap-3">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={() => setStep((step - 1) as WizardStep)}
+              className="btn-secondary py-2.5 text-xs flex-1"
+            >
+              Back
+            </button>
+          )}
+          {step < 3 ? (
+            <button
+              type="button"
+              onClick={goNext}
+              className="btn-primary py-2.5 text-xs flex-1"
+            >
+              Continue
+            </button>
+          ) : (
+            <button
+              onClick={handlePublish}
+              disabled={publishing}
+              className={clsx(
+                'btn-primary py-2.5 text-xs flex-1 flex items-center justify-center gap-2',
+                publishing && 'opacity-70',
+              )}
+            >
+              {publishing ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Publishing…
+                </>
+              ) : 'Publish Trip'}
+            </button>
+          )}
         </div>
       </div>
     </div>

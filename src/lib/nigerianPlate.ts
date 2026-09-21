@@ -83,5 +83,4 @@ export function plateFormatAsTyped(raw: string): string {
 
 /** What somebody reads when their plate does not match. */
 export const PLATE_EXPECTED_MESSAGE =
-  'Enter a Nigerian plate number, for example ABC-123DE ' +
-  '(three letters, three numbers, two letters) or an older AB123-CDE plate.'
+  'Enter a Nigerian plate number, like ABC-123DE or AB123-CDE.'

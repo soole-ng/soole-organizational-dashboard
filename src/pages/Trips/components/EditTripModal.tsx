@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Edit2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { organizationApi } from '../../../api/client'
+import { DateTimePicker } from '../../../components/ui/DateTimePicker'
 
 interface EditTripModalProps {
   orgUuid: string
@@ -91,11 +92,15 @@ export function EditTripModal({ orgUuid, tripId, departureAt, pricePerSeat, tota
         <div className="px-5 py-4 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-neutral-300 mb-1.5">Departure Date & Time</label>
-            <input
-              type="datetime-local"
+            {/* The same picker trip creation uses. Editing a departure and
+                setting one are the same decision, and having the two screens
+                disagree about how a date is chosen is how one of them ends
+                up being the one nobody trusts. No `min` here: a dispatcher
+                correcting the record of a trip that has already left is a
+                real thing, and this modal is where they do it. */}
+            <DateTimePicker
               value={departureDate}
-              onChange={e => setDepartureDate(e.target.value)}
-              className="w-full px-3 py-2 border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300"
+              onChange={setDepartureDate}
             />
           </div>
           <div>

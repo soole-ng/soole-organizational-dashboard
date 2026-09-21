@@ -10,6 +10,7 @@ import { invalidateApiDataCache } from '../../lib/useApiData'
 import { NIGERIAN_STATES } from '../../lib/constants'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
+import { DateTimePicker } from '../../components/ui/DateTimePicker'
 
 type BusStop = { id: string; name: string; address: string | null; longitude: number | null; latitude: number | null; state: string | null }
 
@@ -566,14 +567,13 @@ export function TripCreatePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure Date & Time <span className="text-red-500">*</span></label>
-              <input
-                type="datetime-local"
+              <DateTimePicker
                 value={form.departureAt}
-                // Stops the picker offering a past date or time at all. Typed
-                // input can still bypass this, so submit re-checks it.
+                // Days and times before now are not selectable. The picker
+                // has no text entry to bypass it, but submit re-checks
+                // anyway - the floor moves while the form is open.
                 min={minDepartureAt()}
-                onChange={e => set('departureAt', e.target.value)}
-                className="input-field py-2.5"
+                onChange={next => set('departureAt', next)}
               />
             </div>
             

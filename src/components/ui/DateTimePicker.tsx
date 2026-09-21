@@ -73,6 +73,28 @@ export function DateTimePicker({
   const commit = (date: Date, h: number, m: number) => {
     const next = new Date(date)
     next.setHours(h, m, 0, 0)
+
+    // Never hand back a moment already gone.
+    //
+    // Picking today carried the current time across - 06:00 by default -
+    // which on an evening shift is a departure eight hours in the past.
+    // The time column greys those out, but only after the day has already
+    // been committed, so the field showed an invalid value with Done
+    // enabled and left the trip to be refused at submit.
+    //
+    // Rounded up to the next five minutes, because that is the step the
+    // minute column offers; landing on 17:23 would show a time the user
+    // cannot then re-pick.
+    if (minDate && next < minDate) {
+      const floor = new Date(minDate)
+      const step = 5
+      const over = floor.getMinutes() % step
+      if (over !== 0) floor.setMinutes(floor.getMinutes() + (step - over))
+      floor.setSeconds(0, 0)
+      onChange(formatLocal(floor))
+      return
+    }
+
     onChange(formatLocal(next))
   }
 

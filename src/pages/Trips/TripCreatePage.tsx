@@ -177,14 +177,17 @@ export function TripCreatePage() {
   const [vehiclesList, setVehiclesList] = useState<ReturnType<typeof adaptVehicle>[]>([])
   const [driversList, setDriversList] = useState<ReturnType<typeof adaptFleetDriver>[]>([])
   const [loading, setLoading] = useState(true)
+  // Which of the three lists failed to load, so an empty dropdown can say
+  // "could not load" instead of looking like a fleet with nothing in it.
+  const [loadFailed, setLoadFailed] = useState(false)
 
   useEffect(() => {
     if (!orgUuid) return
     let cancelled = false
 
     Promise.all([
-      vehiclesApi.getVehicles(orgUuid).catch(() => ({ vehicles: [] })),
-      fleetApi.getDrivers(orgUuid, { limit: 100 }).catch(() => ({ drivers: [], pagination: { page: 1, limit: 100, total: 0, pages: 0 } })),
+      vehiclesApi.getVehicles(orgUuid).catch(() => { setLoadFailed(true); return { vehicles: [] } }),
+      fleetApi.getDrivers(orgUuid, { limit: 100 }).catch(() => { setLoadFailed(true); return { drivers: [], pagination: { page: 1, limit: 100, total: 0, pages: 0 } } }),
       driversApi.getDrivers(orgUuid).catch(() => []),
     ]).then(([vehiclesRes, fleetDriversRes, orgDriversRes]: [any, any, any]) => {
       if (cancelled) return
@@ -536,9 +539,25 @@ export function TripCreatePage() {
                       {v.plate} — {v.model} ({v.capacity} seats)
                     </option>
                   ))}
+                  {/* Listed but not choosable: the server refuses an
+                      unverified vehicle on a trip, and hiding them left an
+                      empty list with no reason (2026-10-14). */}
+                  {vehiclesList.filter(v => v.status !== 'verified').map(v => (
+                    <option key={v.id} value={v.id} disabled>
+                      {v.plate} — {v.model} (awaiting verification)
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
               </div>
+              <PickerHint
+                loading={loading}
+                failed={loadFailed}
+                total={vehiclesList.length}
+                usable={vehiclesList.filter(v => v.status === 'verified').length}
+                noun="vehicle"
+                onFix={() => navigate('/fleet/vehicles')}
+              />
             </div>
 
             {/* Driver selection */}
@@ -557,9 +576,25 @@ export function TripCreatePage() {
                       {d.name} ({d.phone})
                     </option>
                   ))}
+                  {/* A driver can be assigned only once their licence is
+                      approved - the server refuses otherwise. Shown, not
+                      hidden, so the dispatcher knows who is waiting. */}
+                  {driversList.filter(d => d.status !== 'verified').map(d => (
+                    <option key={d.id} value={d.id} disabled>
+                      {d.name} ({d.status === 'suspended' ? 'suspended' : 'licence awaiting approval'})
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
               </div>
+              <PickerHint
+                loading={loading}
+                failed={loadFailed}
+                total={driversList.length}
+                usable={driversList.filter(d => d.status === 'verified').length}
+                noun="driver"
+                onFix={() => navigate('/fleet/drivers')}
+              />
             </div>
           </div>
 
@@ -842,5 +877,42 @@ export function TripCreatePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * The line under a vehicle or driver picker when there is nothing to pick.
+ *
+ * Only verified vehicles and drivers can go on a trip, and the dropdowns used
+ * to show nothing else - so a fleet whose vehicles or licences were still
+ * under review, or a list that failed to load, both looked like an empty box
+ * nobody could explain. Product owner, 2026-10-14: "I cannot select driver or
+ * vehicle, I don't know why".
+ */
+function PickerHint({ loading, failed, total, usable, noun, onFix }: {
+  loading: boolean
+  failed: boolean
+  total: number
+  usable: number
+  noun: 'vehicle' | 'driver'
+  onFix: () => void
+}) {
+  if (loading || usable > 0) return null
+  const message = failed
+    ? `Could not load your ${noun}s. Check your connection and reload the page.`
+    : total === 0
+      ? `You have no ${noun}s yet.`
+      : noun === 'vehicle'
+        ? 'None of your vehicles is verified yet - only verified vehicles can be put on a trip.'
+        : "None of your drivers' licences is approved yet - only approved drivers can be assigned."
+  return (
+    <p className="mt-1.5 text-xs text-amber-700">
+      {message}{' '}
+      {!failed && (
+        <button type="button" onClick={onFix} className="font-semibold underline">
+          {total === 0 ? `Add a ${noun}` : `See ${noun}s`}
+        </button>
+      )}
+    </p>
   )
 }

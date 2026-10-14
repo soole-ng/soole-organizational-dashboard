@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { format, formatDistanceToNowStrict } from 'date-fns'
-import { LogOut, Search, ShieldCheck } from 'lucide-react'
+import { LogOut, Maximize2, Minimize2, Search, ShieldCheck } from 'lucide-react'
 import { clsx } from 'clsx'
 import { opsApi, opsSession, type LiveTrip, type RecentTrip } from './api'
 import { OpsMap, vehicleTone } from './OpsMap'
@@ -110,6 +110,19 @@ export function OpsBoard() {
     document.title = 'Soole Ops'
   }, [])
 
+  // Full screen for a wall display or a second monitor.
+  const [fullScreen, setFullScreen] = useState(false)
+  useEffect(() => {
+    const sync = () => setFullScreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', sync)
+    return () => document.removeEventListener('fullscreenchange', sync)
+  }, [])
+  const canFullScreen = typeof document !== 'undefined' && !!document.documentElement.requestFullscreen
+  function toggleFullScreen() {
+    if (document.fullscreenElement) void document.exitFullscreen()
+    else void document.documentElement.requestFullscreen().catch(() => {})
+  }
+
   const live = useQuery({
     queryKey: ['ops-live', kind, q],
     queryFn: () => opsApi.liveTrips({ kind, q }),
@@ -193,6 +206,15 @@ export function OpsBoard() {
 
         <div className="flex items-center gap-2 ml-auto">
           <span className="hidden sm:inline text-sm text-[#b9c9bf]">{staff?.name ?? staff?.email}</span>
+          {canFullScreen && (
+            <button
+              onClick={toggleFullScreen}
+              className="h-8 px-2.5 rounded-md text-sm inline-flex items-center gap-1.5 text-[#b9c9bf] hover:text-white hover:bg-[#172a20]"
+            >
+              {fullScreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+              {fullScreen ? 'Exit full screen' : 'Full screen'}
+            </button>
+          )}
           <button
             onClick={signOut}
             className="h-8 px-2.5 rounded-md text-sm inline-flex items-center gap-1.5 text-[#b9c9bf] hover:text-white hover:bg-[#172a20]"

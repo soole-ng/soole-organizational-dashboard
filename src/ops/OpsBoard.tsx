@@ -1,0 +1,300 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { format, formatDistanceToNowStrict } from 'date-fns'
+import { LogOut, Search, ShieldCheck } from 'lucide-react'
+import { clsx } from 'clsx'
+import { opsApi, opsSession, type LiveTrip, type RecentTrip } from './api'
+import { OpsMap, vehicleTone } from './OpsMap'
+import { TripPanel } from './TripPanel'
+
+type Tab = 'live' | 'past'
+type Kind = 'all' | 'company' | 'independent'
+
+const LIVE_EVERY = 15_000
+
+function useDebounced<T>(value: T, ms = 350) {
+  const [v, setV] = useState(value)
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), ms)
+    return () => clearTimeout(t)
+  }, [value, ms])
+  return v
+}
+
+const TONE_DOT: Record<string, string> = {
+  sos: 'bg-[#d92d20]',
+  nogps: 'bg-[#b7791f]',
+  company: 'bg-[#0e7c86]',
+  independent: 'bg-[#5e8c1f]',
+}
+
+function rank(t: LiveTrip) {
+  return t.flags.sos ? 0 : t.flags.no_gps ? 1 : 2
+}
+
+function LiveRow({ t, selected, onOpen }: { t: LiveTrip; selected: boolean; onOpen: () => void }) {
+  const tone = vehicleTone(t)
+  return (
+    <li>
+      <button
+        onClick={onOpen}
+        className={clsx(
+          'w-full text-left px-4 py-3 border-b border-[#e3e9e5] hover:bg-[#f4f6f3] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0e7c86]',
+          selected && 'bg-[#eaf2ee]',
+          t.flags.sos && 'border-l-4 border-l-[#d92d20]',
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <span className={clsx('w-2.5 h-2.5 rounded-full shrink-0', TONE_DOT[tone])} aria-hidden />
+          <span className="font-semibold text-[#13241b]">{t.vehicle.plate ?? 'No plate'}</span>
+          <span className="text-sm text-[#5e7266] truncate">{t.driver.name ?? ''}</span>
+          {t.flags.sos && <span className="ml-auto text-[11px] font-bold uppercase tracking-wide text-white bg-[#d92d20] rounded px-1.5 py-0.5">SOS</span>}
+          {!t.flags.sos && t.flags.no_gps && <span className="ml-auto text-[11px] font-semibold uppercase tracking-wide text-[#8a5a12] bg-[#fdf3e1] rounded px-1.5 py-0.5">No GPS</span>}
+        </div>
+        <p className="text-sm text-[#3d4f45] mt-1 truncate">
+          {t.origin ?? '?'} <span className="text-[#8a9b91]">→</span> {t.destination ?? '?'}
+        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-[#5e7266] tabular-nums">
+          <span>{t.kind === 'company' ? t.company ?? 'Company' : 'Independent'}</span>
+          <span>{t.passengers.waiting} waiting · {t.passengers.on_board} on board · {t.passengers.dropped_off} out</span>
+          {t.eta && <span>Arrives {format(new Date(t.eta), 'h:mm a')}</span>}
+        </div>
+      </button>
+    </li>
+  )
+}
+
+function PastRow({ t, selected, onOpen }: { t: RecentTrip; selected: boolean; onOpen: () => void }) {
+  return (
+    <li>
+      <button
+        onClick={onOpen}
+        className={clsx(
+          'w-full text-left px-4 py-3 border-b border-[#e3e9e5] hover:bg-[#f4f6f3] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#0e7c86]',
+          selected && 'bg-[#eaf2ee]',
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-[#13241b]">{t.vehicle.plate ?? 'No plate'}</span>
+          <span className="text-sm text-[#5e7266] truncate">{t.driver.name ?? ''}</span>
+          {t.has_unconfirmed_passengers && (
+            <span className="ml-auto text-[11px] font-semibold text-[#9a3412] bg-[#fff1e8] rounded px-1.5 py-0.5">
+              Unconfirmed arrival
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-[#3d4f45] mt-1 truncate">
+          {t.origin ?? '?'} <span className="text-[#8a9b91]">→</span> {t.destination ?? '?'}
+        </p>
+        <p className="text-xs text-[#5e7266] mt-1.5">
+          {t.kind === 'company' ? t.company ?? 'Company' : 'Independent'}
+          {t.ended_at && <> · ended {format(new Date(t.ended_at), 'EEE d MMM, h:mm a')}</>}
+        </p>
+      </button>
+    </li>
+  )
+}
+
+export function OpsBoard() {
+  const navigate = useNavigate()
+  const staff = opsSession.staff()
+  const [tab, setTab] = useState<Tab>('live')
+  const [kind, setKind] = useState<Kind>('all')
+  const [query, setQuery] = useState('')
+  const [days, setDays] = useState(7)
+  const [selected, setSelected] = useState<string | null>(null)
+  const q = useDebounced(query.trim())
+
+  useEffect(() => {
+    document.title = 'Soole Ops'
+  }, [])
+
+  const live = useQuery({
+    queryKey: ['ops-live', kind, q],
+    queryFn: () => opsApi.liveTrips({ kind, q }),
+    refetchInterval: LIVE_EVERY,
+    staleTime: 0,
+  })
+
+  const past = useQuery({
+    queryKey: ['ops-past', kind, q, days],
+    queryFn: () => opsApi.recentTrips({ kind, q, days }),
+    enabled: tab === 'past',
+    staleTime: 30_000,
+  })
+
+  const isLiveTrip = !!selected && !!live.data?.some(t => t.trip_uuid === selected)
+
+  const detail = useQuery({
+    queryKey: ['ops-trip', selected],
+    queryFn: () => opsApi.trip(selected!),
+    enabled: !!selected,
+    refetchInterval: isLiveTrip ? LIVE_EVERY : false,
+    staleTime: 0,
+  })
+
+  const trail = useQuery({
+    queryKey: ['ops-trail', selected],
+    queryFn: () => opsApi.trail(selected!),
+    enabled: !!selected,
+    refetchInterval: isLiveTrip ? 30_000 : false,
+    staleTime: 0,
+  })
+
+  const liveTrips = useMemo(
+    () => [...(live.data ?? [])].sort((a, b) => rank(a) - rank(b)),
+    [live.data],
+  )
+  const sos = liveTrips.filter(t => t.flags.sos).length
+  const noGps = liveTrips.filter(t => t.flags.no_gps).length
+
+  const open = useCallback((uuid: string) => setSelected(uuid), [])
+
+  function signOut() {
+    opsSession.clear()
+    navigate('/login', { replace: true })
+  }
+
+  const listError = (tab === 'live' ? live.error : past.error) as Error | null
+  const listLoading = tab === 'live' ? live.isLoading : past.isLoading
+
+  return (
+    <div className="h-[100dvh] flex flex-col bg-[#f4f6f3] text-[#13241b]">
+      <header className="bg-[#0f1d16] text-[#e8efe9] px-4 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex items-center gap-2 mr-2">
+          <span className="grid place-items-center w-8 h-8 rounded-lg bg-[#a7c957] text-[#0f1d16]">
+            <ShieldCheck size={18} />
+          </span>
+          <span className="font-semibold">Soole Ops</span>
+        </div>
+
+        <nav className="flex rounded-lg bg-[#172a20] p-0.5" aria-label="View">
+          {(['live', 'past'] as Tab[]).map(t => (
+            <button
+              key={t}
+              onClick={() => { setTab(t); setSelected(null) }}
+              aria-pressed={tab === t}
+              className={clsx(
+                'px-3 h-8 rounded-md text-sm font-medium',
+                tab === t ? 'bg-[#e8efe9] text-[#0f1d16]' : 'text-[#b9c9bf] hover:text-white',
+              )}
+            >
+              {t === 'live' ? 'Live' : 'Past trips'}
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2 text-xs tabular-nums">
+          <span className="rounded-full bg-[#172a20] px-2.5 py-1">{liveTrips.length} live</span>
+          {sos > 0 && <span className="rounded-full bg-[#d92d20] text-white font-semibold px-2.5 py-1">{sos} SOS</span>}
+          {noGps > 0 && <span className="rounded-full bg-[#5a4317] text-[#ffd98f] px-2.5 py-1">{noGps} no GPS</span>}
+        </div>
+
+        <div className="flex items-center gap-2 ml-auto">
+          <span className="hidden sm:inline text-sm text-[#b9c9bf]">{staff?.name ?? staff?.email}</span>
+          <button
+            onClick={signOut}
+            className="h-8 px-2.5 rounded-md text-sm inline-flex items-center gap-1.5 text-[#b9c9bf] hover:text-white hover:bg-[#172a20]"
+          >
+            <LogOut size={15} /> Sign out
+          </button>
+        </div>
+      </header>
+
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
+        <section className="lg:w-[360px] lg:shrink-0 flex flex-col min-h-0 h-[45%] lg:h-auto bg-white border-r border-[#dce3de] order-2 lg:order-1">
+          <div className="p-3 border-b border-[#e3e9e5] flex flex-col gap-2">
+            <label className="relative">
+              <span className="sr-only">Search</span>
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a9b91]" />
+              <input
+                id="ops-search"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="Plate, driver, passenger or place"
+                className="h-9 w-full rounded-lg border border-[#dce3de] pl-9 pr-3 text-sm outline-none focus:border-[#0e7c86] focus:ring-2 focus:ring-[#0e7c86]/20"
+              />
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex rounded-lg border border-[#dce3de] p-0.5 text-xs" role="group" aria-label="Trip type">
+                {(['all', 'company', 'independent'] as Kind[]).map(k => (
+                  <button
+                    key={k}
+                    onClick={() => setKind(k)}
+                    aria-pressed={kind === k}
+                    className={clsx(
+                      'px-2.5 h-7 rounded-md font-medium',
+                      kind === k ? 'bg-[#13241b] text-white' : 'text-[#3d4f45] hover:bg-[#f4f6f3]',
+                    )}
+                  >
+                    {k === 'all' ? 'All' : k === 'company' ? 'Company' : 'Independent'}
+                  </button>
+                ))}
+              </div>
+              {tab === 'past' && (
+                <select
+                  id="ops-days"
+                  value={days}
+                  onChange={e => setDays(Number(e.target.value))}
+                  aria-label="How far back"
+                  className="ml-auto h-8 rounded-lg border border-[#dce3de] text-xs px-2 bg-white"
+                >
+                  <option value={1}>Last 24 hours</option>
+                  <option value={7}>Last 7 days</option>
+                  <option value={30}>Last 30 days</option>
+                  <option value={90}>Last 90 days</option>
+                </select>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {listError && <p className="p-4 text-sm text-[#a8231a]">{listError.message}</p>}
+            {listLoading && <p className="p-4 text-sm text-[#5e7266]">Loading…</p>}
+            {tab === 'live' && !live.isLoading && liveTrips.length === 0 && !live.error && (
+              <p className="p-4 text-sm text-[#5e7266]">No trips are in progress right now.</p>
+            )}
+            {tab === 'past' && past.data && past.data.length === 0 && (
+              <p className="p-4 text-sm text-[#5e7266]">No trips ended in this period.</p>
+            )}
+            <ul>
+              {tab === 'live'
+                ? liveTrips.map(t => (
+                    <LiveRow key={t.trip_uuid} t={t} selected={t.trip_uuid === selected} onOpen={() => open(t.trip_uuid)} />
+                  ))
+                : (past.data ?? []).map(t => (
+                    <PastRow key={t.trip_uuid} t={t} selected={t.trip_uuid === selected} onOpen={() => open(t.trip_uuid)} />
+                  ))}
+            </ul>
+          </div>
+          {tab === 'live' && live.dataUpdatedAt > 0 && (
+            <p className="px-4 py-2 text-[11px] text-[#8a9b91] border-t border-[#e3e9e5]">
+              Updated {formatDistanceToNowStrict(live.dataUpdatedAt)} ago · refreshes every 15 seconds
+            </p>
+          )}
+        </section>
+
+        <section className="relative flex-1 min-h-0 order-1 lg:order-2">
+          <OpsMap
+            trips={tab === 'live' ? liveTrips : []}
+            selectedUuid={selected}
+            detail={detail.data ?? null}
+            trail={trail.data ?? []}
+            onSelect={open}
+          />
+          {selected && (
+            <div className="fixed inset-0 z-20 lg:absolute lg:inset-auto lg:top-0 lg:right-0 lg:bottom-0 lg:w-[420px] shadow-xl">
+              <TripPanel
+                trip={detail.data ?? null}
+                loading={detail.isLoading}
+                error={detail.error ? (detail.error as Error).message : null}
+                onClose={() => setSelected(null)}
+              />
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  )
+}

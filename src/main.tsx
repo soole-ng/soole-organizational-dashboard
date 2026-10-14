@@ -1,16 +1,28 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import App from './App'
 import './index.css'
 
+// admindashboard.soole.ng is this same code built with VITE_APP_MODE=admin
+// (its own Vercel project). Every other build is the company dashboard,
+// unchanged, and never downloads the staff app.
+const isAdminSite = (import.meta as any).env?.VITE_APP_MODE === 'admin'
+const OpsApp = lazy(() => import('./ops/OpsApp'))
+
 const isMobile = window.innerWidth < 768
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      {isAdminSite ? (
+        <Suspense fallback={null}>
+          <OpsApp />
+        </Suspense>
+      ) : (
+        <App />
+      )}
       <Toaster
         position={isMobile ? 'bottom-center' : 'bottom-right'}
         toastOptions={{

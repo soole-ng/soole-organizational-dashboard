@@ -1,0 +1,66 @@
+/* admindashboard.soole.ng - map markers. Everything else is Tailwind. */
+
+.ops-vehicle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgba(15, 29, 22, 0.45);
+  cursor: pointer;
+}
+.ops-company { background: #0e7c86; }
+.ops-independent { background: #5e8c1f; }
+.ops-nogps { background: #b7791f; }
+.ops-sos {
+  background: #d92d20;
+  animation: ops-pulse 1.4s ease-out infinite;
+}
+.ops-selected {
+  width: 24px;
+  height: 24px;
+  outline: 3px solid #0f1d16;
+  z-index: 2;
+}
+
+@keyframes ops-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(217, 45, 32, 0.6); }
+  100% { box-shadow: 0 0 0 14px rgba(217, 45, 32, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ops-sos { animation: none; }
+}
+
+.ops-end,
+.ops-pin {
+  display: grid;
+  place-items: center;
+  font: 700 11px/1 system-ui, sans-serif;
+}
+.ops-end {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: #fff;
+  background: #0f1d16;
+  border: 2px solid #fff;
+}
+.ops-finish { background: #13241b; }
+
+.ops-pin {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+/* Where they asked to get out: an open ring. */
+.ops-asked {
+  background: #fff;
+  color: #0b6e4f;
+  border: 2px dashed #0b6e4f;
+}
+/* Where they actually got out: solid. */
+.ops-actual {
+  background: #c2410c;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}

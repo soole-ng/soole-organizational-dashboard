@@ -33,8 +33,23 @@ export function SecurityVerification({
             {securityQuestion || 'Backup Security Question'}
           </span>
         </label>
+        {/* Not type="password". Chrome took a password field after the
+            sign-in password for a password change, and offered to replace
+            the saved Soole password with the security answer after every
+            login (product owner, 2026-10-14). A text field masked with
+            -webkit-text-security stays hidden on screen without being
+            mistaken for a password; autoComplete off keeps it out of the
+            browser's memory. */}
         <input
-          type="password"
+          type="text"
+          name="security-answer"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          data-lpignore="true"
+          data-1p-ignore="true"
+          style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties}
           value={secAnswer}
           onChange={e => setSecAnswer(e.target.value)}
           className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-base font-black text-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"

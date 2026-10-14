@@ -839,7 +839,9 @@ export function TripCreatePage() {
             always in the same place. Publish appears only on the last one -
             a Publish button visible on step 1 is an invitation to send out a
             trip with no vehicle on it. */}
-        <div className="pt-2 flex items-center gap-3">
+        {/* On a phone the row stays just above the bottom menu, where a
+            thumb already is, instead of floating halfway down the screen. */}
+        <div className="sticky z-10 bottom-[calc(4.75rem+var(--safe-bottom))] lg:static py-3 lg:pt-2 lg:pb-0 flex items-center gap-3 bg-white/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none">
           {step > 1 && (
             <button
               type="button"

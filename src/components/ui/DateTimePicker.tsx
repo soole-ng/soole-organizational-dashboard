@@ -133,8 +133,17 @@ export function DateTimePicker({
       </button>
 
       {open && (
+        // On a phone the dropdown ran down under the bottom menu and hid
+        // its own Clear and Done; there it opens as a sheet over everything.
         <div
-          className="absolute z-30 mt-2 w-full max-w-[22rem] rounded-2xl border border-neutral-100 bg-white p-3 shadow-xl"
+          className="fixed inset-0 z-[60] bg-black/30 sm:hidden"
+          aria-hidden
+          onClick={() => setOpen(false)}
+        />
+      )}
+      {open && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-[61] max-h-[88dvh] overflow-y-auto rounded-t-2xl bg-white p-4 pb-[calc(1rem+var(--safe-bottom))] shadow-xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:z-30 sm:mt-2 sm:w-full sm:max-w-[22rem] sm:max-h-none sm:overflow-visible sm:rounded-2xl sm:border sm:border-neutral-100 sm:p-3"
           role="dialog"
           aria-label="Choose a date and time"
         >

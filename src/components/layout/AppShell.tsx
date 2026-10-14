@@ -183,12 +183,14 @@ export function AppShell() {
       <main
         ref={mainRef}
         className={`flex-1 flex flex-col w-full lg-ml-76 ${
-          isFullscreen ? 'overflow-hidden h-screen' : 'min-h-screen overflow-y-auto overflow-x-hidden'
+          isFullscreen ? 'overflow-hidden h-[100dvh]' : 'min-h-screen overflow-y-auto overflow-x-hidden'
         }`}
       >
         {isFullscreen ? (
-          // Live Map: full-bleed, no padding, no max-width constraint
-          <div className="flex-1 w-full overflow-hidden flex flex-col">
+          // Live Map: full-bleed, no padding, no max-width constraint. On a
+          // phone it stops above the bottom menu - the AI page's message box
+          // was sitting underneath it.
+          <div className="flex-1 w-full overflow-hidden flex flex-col pb-[calc(4.75rem+var(--safe-bottom))] lg:pb-0">
             {org.approvalStatus === 'incomplete' && (
               <div className="bg-secondary-500 text-white px-4 py-3 flex items-center justify-between z-50">
                 <div className="flex items-center gap-2">

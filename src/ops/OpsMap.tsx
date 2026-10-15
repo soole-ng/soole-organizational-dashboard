@@ -106,7 +106,8 @@ export function OpsMap({ trips, selectedUuid, detail, trail, onSelect }: Props) 
       .then(ml => {
         if (cancelled || !box.current) return
         const m = new ml.Map({ container: box.current, style: styleFor(basemap), center: NIGERIA, zoom: 5.4 })
-        m.addControl(new ml.NavigationControl({ showCompass: false }), 'top-right')
+        // Bottom left, just above the key (product owner, 2026-10-15).
+        m.addControl(new ml.NavigationControl({ showCompass: false }), 'bottom-left')
         m.on('load', () => {
           m.addSource('trail', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
           m.addLayer({
@@ -233,8 +234,11 @@ export function OpsMap({ trips, selectedUuid, detail, trail, onSelect }: Props) 
   }, [detail, trail, ready])
 
   return (
-    <div className="relative h-full w-full bg-[#dfe6e1]">
-      <div ref={box} className="absolute inset-0" />
+    <div className="ops-map relative h-full w-full bg-[#dfe6e1]">
+      {/* Sized inline: MapLibre's stylesheet puts position: relative on
+          .maplibregl-map, which cancelled "absolute inset-0" and left the
+          map 0 px tall - no tiles, no zoom, no vehicles (2026-10-15). */}
+      <div ref={box} style={{ position: 'absolute', inset: 0 }} />
       {/* Map switcher, top left (product owner, 2026-10-15). */}
       <div className="absolute top-[10px] left-[10px] z-10">
         <button

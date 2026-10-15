@@ -399,7 +399,7 @@ export function TripCreatePage() {
     <div className="flex flex-col min-h-screen bg-white">
       <TopBar title="New Trip" backHref="/trips" />
 
-      <div className="flex-1 p-4 sm:p-5 space-y-4 lg:pt-8 lg:px-8 w-full max-w-2xl mx-auto">
+      <div className="flex-1 p-4 sm:p-5 space-y-4 lg:pt-8 lg:px-8 w-full max-w-2xl mx-auto max-lg:pb-28">
         <div className="card p-4 sm:p-5 space-y-4">
           {/* Where they are, and how much is left. A wizard without this is
               just a form that keeps changing under you. Completed steps are
@@ -841,7 +841,7 @@ export function TripCreatePage() {
             trip with no vehicle on it. */}
         {/* On a phone the row stays just above the bottom menu, where a
             thumb already is, instead of floating halfway down the screen. */}
-        <div className="sticky z-10 bottom-[calc(4.75rem+var(--safe-bottom))] lg:static py-3 lg:pt-2 lg:pb-0 flex items-center gap-3 bg-white/95 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none">
+        <div className="max-lg:fixed max-lg:inset-x-0 max-lg:z-30 max-lg:bottom-[calc(4.75rem+var(--safe-bottom))] max-lg:px-4 max-lg:py-3 max-lg:bg-white/95 max-lg:backdrop-blur-sm lg:pt-2 flex items-center gap-3">
           {step > 1 && (
             <button
               type="button"

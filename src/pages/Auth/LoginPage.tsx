@@ -110,11 +110,11 @@ export function LoginPage() {
         <AuthHeader step={step} securityQuestion={securityQuestion} type="mobile" />
 
         {/* Form card container */}
-        <div className="flex-1 flex items-start lg:items-center justify-center p-1 sm:p-6 lg:p-12 pt-12 sm:pt-6">
-          <div className={clsx("w-[85%] mx-auto sm:w-full transition-all duration-300", step === 'signup' ? "max-w-full lg:max-w-lg" : "max-w-full lg:max-w-md mt-6 sm:mt-0")}>
+        <div className="flex-1 flex items-start lg:items-center justify-center px-4 sm:p-6 lg:p-12 pt-6 sm:pt-6">
+          <div className={clsx("w-full mx-auto transition-all duration-300", step === 'signup' ? "max-w-full lg:max-w-lg" : "max-w-md lg:max-w-md mt-2 sm:mt-0")}>
             <AuthHeader step={step} securityQuestion={securityQuestion} type="desktop" />
 
-            <div className="bg-white rounded-3xl sm:rounded-card shadow-card p-6 sm:p-8 lg:p-10 relative z-10 w-full mb-8 sm:mb-0 mt-4 sm:mt-0">
+            <div className="bg-white rounded-3xl sm:rounded-card shadow-card p-5 sm:p-8 lg:p-10 relative z-10 w-full mb-8 sm:mb-0 mt-2 sm:mt-0">
               {step === 'login' ? (
                 <LoginForm
                   phone={phone}

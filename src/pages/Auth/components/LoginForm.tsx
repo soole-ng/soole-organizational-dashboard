@@ -43,10 +43,10 @@ export function LoginForm({
   const navigate = useNavigate()
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-5 sm:space-y-6">
       {/* Phone field */}
       <div className="space-y-2">
-        <label className="block text-sm sm:text-base font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+        <label className="block text-xs font-black uppercase tracking-wider text-black flex items-center gap-1.5">
           <Phone className="w-3.5 h-3.5 text-black" />
           Phone Number <span className="text-red-500">*</span>
         </label>
@@ -57,7 +57,7 @@ export function LoginForm({
               type="button"
               onClick={() => setShowCC(!showCC)}
               className={clsx(
-                'flex items-center gap-2 h-[52px] px-4 bg-white border rounded-xl text-base font-black text-black transition-colors',
+                'flex items-center gap-2 h-12 px-3.5 bg-white border rounded-xl text-sm font-bold text-black transition-colors',
                 getBorderClass('phone')
               )}
             >
@@ -99,7 +99,7 @@ export function LoginForm({
               setErrors(errors.filter(err => err !== 'phone'))
             }}
             className={clsx(
-              'w-full h-[52px] bg-white border rounded-xl px-5 py-0 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none transition-all',
+              'w-full h-12 bg-white border rounded-xl px-4 py-0 text-base text-black font-semibold placeholder:text-neutral-200 placeholder:font-medium focus:outline-none transition-all',
               getBorderClass('phone')
             )}
             placeholder="8031234567"
@@ -136,7 +136,7 @@ export function LoginForm({
               setErrors(errors.filter(err => err !== 'password'))
             }}
             className={clsx(
-              'w-full h-[52px] bg-white border rounded-xl px-5 py-0 pr-12 text-base text-black font-black placeholder:text-neutral-200 focus:outline-none transition-all',
+              'w-full h-12 bg-white border rounded-xl px-4 py-0 pr-12 text-base text-black font-semibold placeholder:text-neutral-200 placeholder:font-medium focus:outline-none transition-all',
               getBorderClass('password')
             )}
             placeholder="Password"
@@ -156,7 +156,7 @@ export function LoginForm({
       <button
         onClick={handleLogin}
         disabled={loading}
-        className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 h-[56px] text-lg active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4 mb-4 disabled:cursor-wait"
+        className="w-full bg-primary-500 text-white font-black rounded-xl px-6 h-12 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4 mb-4 disabled:cursor-wait"
       >
         {loading ? (
           <>
@@ -168,8 +168,8 @@ export function LoginForm({
         )}
       </button>
 
-      <div className="rounded-2xl bg-primary-75 p-5 border border-primary-100">
-        <p className="text-base text-primary-500 text-center leading-relaxed font-black">
+      <div className="rounded-xl bg-primary-75 p-4 border border-primary-100">
+        <p className="text-sm text-primary-500 text-center leading-relaxed font-bold">
           Don't have an account?{' '}
           <button
             onClick={() => navigate('/signup')}

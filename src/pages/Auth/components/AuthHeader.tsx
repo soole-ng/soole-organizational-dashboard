@@ -64,13 +64,13 @@ export function AuthHeader({ step, securityQuestion, type }: AuthHeaderProps) {
 
   if (type === 'mobile') {
     return (
-      <div className="bg-primary-500 px-6 pt-8 pb-6 text-white lg:hidden flex-shrink-0 flex flex-col items-center">
-        <img src="/soole-icon.png" alt="Soole logo" className="w-16 h-auto object-contain z-10" />
-        <h2 className="text-3xl font-extrabold text-white mb-4 -mt-1 font-display tracking-tight z-10">Soole</h2>
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 font-display text-center">
+      <div className="bg-primary-500 px-6 pt-6 pb-5 text-white lg:hidden flex-shrink-0 flex flex-col items-center">
+        <img src="/soole-icon.png" alt="Soole logo" className="w-12 h-auto object-contain z-10" />
+        <h2 className="text-2xl font-extrabold text-white mb-3 -mt-1 font-display tracking-tight z-10">Soole</h2>
+        <h1 className="text-3xl sm:text-4xl font-extrabold mb-1.5 font-display text-center text-balance">
           {title}
         </h1>
-        <p className="text-primary-200 text-base sm:text-lg text-center">
+        <p className="text-primary-200 text-sm sm:text-base text-center">
           {description}
         </p>
       </div>
@@ -79,7 +79,7 @@ export function AuthHeader({ step, securityQuestion, type }: AuthHeaderProps) {
 
   return (
     <div className="hidden lg:block mb-8">
-      <h1 className="text-5xl lg:text-6xl font-extrabold text-primary-500 mb-2 font-display">
+      <h1 className="text-4xl xl:text-5xl font-extrabold text-primary-500 mb-2 font-display">
         {title}
       </h1>
       <p className="text-neutral-300 text-base">

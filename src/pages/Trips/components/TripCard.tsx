@@ -41,11 +41,13 @@ export function TripCard({ trip, compact }: TripCardProps) {
               </div>
             </div>
           </div>
+          {/* A small tag in the same colours, not a headline-sized word
+              competing with the route (2026-10-15). */}
           <span
-            className="font-black uppercase tracking-wider font-sans"
+            className="shrink-0 font-semibold uppercase tracking-wide font-sans px-2 py-0.5 rounded-md bg-neutral-50"
             style={{
-              fontSize: '12px',
-              lineHeight: '1.2',
+              fontSize: '10.5px',
+              lineHeight: '1.3',
               color: trip.status === 'completed'
                 ? '#00C853'
                 : (trip.status === 'boarding' || trip.status === 'in_progress')
@@ -108,7 +110,7 @@ export function TripCard({ trip, compact }: TripCardProps) {
               'text-[10px] font-bold',
               seatsLeft === 0 ? 'text-secondary-300' : seatsLeft <= 2 ? 'text-warning' : 'text-neutral-200'
             )}>
-              {seatsLeft === 0 ? 'Fully booked' : `${seatsLeft} seats left`}
+              {seatsLeft === 0 ? 'Fully booked' : `${seatsLeft} seat${seatsLeft === 1 ? '' : 's'} left`}
             </span>
           </div>
         </div>

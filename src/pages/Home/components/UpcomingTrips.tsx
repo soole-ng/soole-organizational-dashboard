@@ -113,7 +113,7 @@ export function UpcomingTrips() {
 
                 <div className="flex items-center justify-end text-[10px] text-neutral-200">
                   <span className="font-semibold text-secondary-300">
-                    {trip.capacity - bookedSeats} seats left
+                    {trip.capacity - bookedSeats} seat{trip.capacity - bookedSeats === 1 ? '' : 's'} left
                   </span>
                 </div>
               </Link>

@@ -145,17 +145,23 @@ export function TripsListPage() {
                       aria-selected={activeTab === tab}
                       onClick={() => handleTabChange(tab)}
                       className={clsx(
-                        'flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition-colors pb-2.5',
+                        'relative flex-shrink-0 px-4 py-2 text-sm font-medium transition-colors pb-2.5',
                         activeTab === tab
-                          ? 'border-primary-500 text-primary-500'
-                          : 'border-transparent text-neutral-200 hover:text-primary-400',
+                          ? 'text-primary-500'
+                          : 'text-neutral-200 hover:text-primary-400',
                       )}
                     >
                       {tab}
+                      {/* A bar, not a border: the global rule that greys
+                          every border also greyed this one, so all three
+                          tabs looked selected (2026-10-15). */}
+                      {activeTab === tab && (
+                        <span aria-hidden className="absolute inset-x-2 -bottom-px h-0.5 rounded bg-primary-500" />
+                      )}
                     </button>
                   ))}
                 </div>
-                <div className="flex overflow-x-auto scrollbar-thin gap-2 -mx-4 px-4 sm:mx-0 sm:px-0 lg:flex-wrap lg:overflow-visible">
+                <div className="flex overflow-x-auto no-scrollbar gap-2 -mx-4 px-4 sm:mx-0 sm:px-0 lg:flex-wrap lg:overflow-visible">
                   {statusFilters.map(sf => (
                     <button
                       key={sf.value}

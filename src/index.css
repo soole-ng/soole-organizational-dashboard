@@ -222,3 +222,7 @@
   .roomy-on-phone .btn-primary, .roomy-on-phone .btn-secondary { padding-top: 1rem; padding-bottom: 1rem; font-size: 1.0625rem; }
 }
 .step-label { display: inline; }
+
+/* A sideways-scrolling row with no visible bar (trip filters on a phone). */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }

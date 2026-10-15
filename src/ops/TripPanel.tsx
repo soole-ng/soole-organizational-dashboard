@@ -14,11 +14,16 @@ const STATUS: Record<TripPassenger['status'], { label: string; cls: string }> = 
   cancelled: { label: 'Cancelled', cls: 'bg-[#fdeceb] text-[#a8231a]' },
 }
 
+// Passengers always pay the whole fare up front. What changes over the trip
+// is how much of it the driver has been paid: 70% at pickup, the rest at
+// drop-off.
 const PAYMENT: Record<TripPassenger['payment'], string> = {
   not_paid: 'Not paid',
-  held: 'Paid, held by Soole',
-  first_share_released: '70% released to driver',
-  fully_released: 'Fully released to driver',
+  held: 'Paid in full · driver not paid yet',
+  first_share_released: 'Paid in full · driver paid 70% (picked up)',
+  fully_released: 'Paid in full · driver paid in full (dropped off)',
+  refunded: 'Refunded',
+  cancelled: 'Booking cancelled',
 }
 
 const TRIP_STATUS: Record<string, string> = {

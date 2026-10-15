@@ -45,7 +45,7 @@ export type TripPassenger = {
   photo: string | null
   seats: number | null
   status: 'waiting' | 'on_board' | 'dropped_off' | 'cancelled'
-  payment: 'not_paid' | 'held' | 'first_share_released' | 'fully_released'
+  payment: 'not_paid' | 'held' | 'first_share_released' | 'fully_released' | 'refunded' | 'cancelled'
   requested_pickup: { point: Point | null; address: string | null }
   requested_dropoff: { point: Point | null; address: string | null }
   picked_up_at: string | null

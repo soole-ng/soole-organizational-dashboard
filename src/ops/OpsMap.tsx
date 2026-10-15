@@ -7,6 +7,7 @@
  * sites share the browser cache and neither bundles a map engine.
  */
 import { useEffect, useRef, useState } from 'react'
+import { Layers } from 'lucide-react'
 import type { LiveTrip, Point, TrailPoint, TripDetail } from './api'
 
 const MAPLIBRE = 'https://cdn.jsdelivr.net/npm/maplibre-gl@4.0.0/dist/maplibre-gl'
@@ -37,18 +38,32 @@ function loadMapLibre(): Promise<any> {
   return loading
 }
 
-const STYLE = {
-  version: 8,
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-      tileSize: 256,
-      attribution: '© OpenStreetMap contributors',
-    },
-  },
-  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+/** The company Live Map's five maps, the same tiles in the same order. */
+const BASEMAPS = {
+  osm: { name: 'OpenStreetMap', tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' },
+  'carto-light': { name: 'Carto Light', tiles: 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png' },
+  'carto-dark': { name: 'Carto Dark', tiles: 'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png' },
+  google: { name: 'Google Maps', tiles: 'https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}' },
+  'google-satellite': { name: 'Google Satellite', tiles: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}' },
+} as const
+type Basemap = keyof typeof BASEMAPS
+const BASEMAP_KEY = 'ops_basemap'
+
+function savedBasemap(): Basemap {
+  try {
+    const v = localStorage.getItem(BASEMAP_KEY)
+    if (v && v in BASEMAPS) return v as Basemap
+  } catch { /* private window */ }
+  return 'osm'
 }
+
+const baseSource = (b: Basemap) => ({ type: 'raster', tiles: [BASEMAPS[b].tiles], tileSize: 256 })
+
+const styleFor = (b: Basemap) => ({
+  version: 8,
+  sources: { base: baseSource(b) },
+  layers: [{ id: 'base', type: 'raster', source: 'base' }],
+})
 
 export function vehicleTone(t: { kind: string; flags: { sos: boolean; no_gps: boolean } }) {
   if (t.flags.sos) return 'sos'
@@ -82,13 +97,15 @@ export function OpsMap({ trips, selectedUuid, detail, trail, onSelect }: Props) 
   const [failed, setFailed] = useState(false)
   const [ready, setReady] = useState(false)
   const flownTo = useRef<string | null>(null)
+  const [basemap, setBasemap] = useState<Basemap>(savedBasemap)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
     loadMapLibre()
       .then(ml => {
         if (cancelled || !box.current) return
-        const m = new ml.Map({ container: box.current, style: STYLE, center: NIGERIA, zoom: 5.4 })
+        const m = new ml.Map({ container: box.current, style: styleFor(basemap), center: NIGERIA, zoom: 5.4 })
         m.addControl(new ml.NavigationControl({ showCompass: false }), 'top-right')
         m.on('load', () => {
           m.addSource('trail', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
@@ -113,6 +130,20 @@ export function OpsMap({ trips, selectedUuid, detail, trail, onSelect }: Props) 
       map.current = null
     }
   }, [])
+
+  // Basemap: only the tile layer is swapped, under the trail, so the trip's
+  // path and markers stay where they are (setStyle would wipe them).
+  const appliedBase = useRef<Basemap>(basemap)
+  useEffect(() => {
+    const m = map.current
+    try { localStorage.setItem(BASEMAP_KEY, basemap) } catch { /* private window */ }
+    if (!ready || !m || appliedBase.current === basemap) return
+    if (m.getLayer('base')) m.removeLayer('base')
+    if (m.getSource('base')) m.removeSource('base')
+    m.addSource('base', baseSource(basemap))
+    m.addLayer({ id: 'base', type: 'raster', source: 'base' }, m.getLayer('trail') ? 'trail' : undefined)
+    appliedBase.current = basemap
+  }, [basemap, ready])
 
   // Vehicles
   useEffect(() => {
@@ -204,6 +235,33 @@ export function OpsMap({ trips, selectedUuid, detail, trail, onSelect }: Props) 
   return (
     <div className="relative h-full w-full bg-[#dfe6e1]">
       <div ref={box} className="absolute inset-0" />
+      {/* Map switcher, as on the company Live Map. */}
+      <div className="absolute top-[10px] right-[50px] z-10">
+        <button
+          type="button"
+          onClick={() => setMenuOpen(o => !o)}
+          className="w-[29px] h-[29px] grid place-items-center rounded-[4px] bg-white shadow text-[#13241b] hover:bg-[#eef4f0]"
+          title="Switch map"
+          aria-label="Switch map"
+          aria-expanded={menuOpen}
+        >
+          <Layers className="w-4 h-4" />
+        </button>
+        {menuOpen && (
+          <div className="absolute right-0 mt-2 min-w-44 overflow-hidden rounded-xl bg-white shadow-lg">
+            {(Object.keys(BASEMAPS) as Basemap[]).map(key => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => { setBasemap(key); setMenuOpen(false) }}
+                className={`block w-full px-4 py-2.5 text-left text-sm ${basemap === key ? 'bg-[#eef4f0] font-semibold text-[#042011]' : 'text-[#45574d] hover:bg-[#f3f6f4]'}`}
+              >
+                {BASEMAPS[key].name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       {/* What the shapes mean - company and independent at a glance. */}
       <div className="absolute left-3 bottom-3 z-10 rounded-lg bg-white/95 shadow px-3 py-2 text-xs text-[#13241b] grid gap-1.5">
         <span className="flex items-center gap-2"><span className="ops-vehicle ops-company ops-co !w-3.5 !h-3.5 !border-2" /> Company vehicle (square)</span>

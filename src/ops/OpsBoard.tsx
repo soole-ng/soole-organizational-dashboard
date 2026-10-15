@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { format, formatDistanceToNowStrict } from 'date-fns'
-import { LogOut, Maximize2, Minimize2, Search, ShieldCheck } from 'lucide-react'
+import { Bell, LogOut, Maximize2, Minimize2, RefreshCw, Search } from 'lucide-react'
 import { clsx } from 'clsx'
 import { opsApi, opsSession, type LiveTrip, type RecentTrip } from './api'
 import { OpsMap, vehicleTone } from './OpsMap'
@@ -164,6 +164,16 @@ export function OpsBoard() {
 
   const open = useCallback((uuid: string) => setSelected(uuid), [])
 
+  const [menu, setMenu] = useState<'alerts' | 'me' | null>(null)
+  const alerts = liveTrips.filter(t => t.flags.sos || t.flags.no_gps)
+  const who = staff?.name || staff?.email || 'Soole staff'
+  const initials = who.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join('')
+  const refreshing = live.isFetching || past.isFetching
+  function refresh() {
+    void live.refetch()
+    void past.refetch()
+  }
+
   function signOut() {
     opsSession.clear()
     navigate('/login', { replace: true })
@@ -176,10 +186,8 @@ export function OpsBoard() {
     <div className="h-[100dvh] flex flex-col bg-[#f4f6f3] text-[#13241b]">
       <header className="bg-[#0f1d16] text-[#e8efe9] px-4 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="flex items-center gap-2 mr-2">
-          <span className="grid place-items-center w-8 h-8 rounded-lg bg-[#a7c957] text-[#0f1d16]">
-            <ShieldCheck size={18} />
-          </span>
-          <span className="font-semibold">Soole Ops</span>
+          <img src="/soole-icon.png" alt="" className="w-8 h-8 rounded-lg bg-[#254832] p-0.5 object-contain" />
+          <span className="font-semibold">Soole Live Map</span>
         </div>
 
         <nav className="flex rounded-lg bg-[#172a20] p-0.5" aria-label="View">
@@ -204,8 +212,30 @@ export function OpsBoard() {
           {noGps > 0 && <span className="rounded-full bg-[#5a4317] text-[#ffd98f] px-2.5 py-1">{noGps} no GPS</span>}
         </div>
 
-        <div className="flex items-center gap-2 ml-auto">
-          <span className="hidden sm:inline text-sm text-[#b9c9bf]">{staff?.name ?? staff?.email}</span>
+        <div className="relative flex items-center gap-2 ml-auto">
+          {/* As on the company dashboard: refresh, alerts, and you. */}
+          <button
+            onClick={refresh}
+            title="Refresh"
+            aria-label="Refresh"
+            className="w-8 h-8 grid place-items-center rounded-full text-[#b9c9bf] hover:text-white hover:bg-[#172a20]"
+          >
+            <RefreshCw size={16} className={refreshing ? 'animate-spin' : undefined} />
+          </button>
+          <button
+            onClick={() => setMenu(m => (m === 'alerts' ? null : 'alerts'))}
+            title="Alerts"
+            aria-label={`Alerts: ${alerts.length}`}
+            aria-expanded={menu === 'alerts'}
+            className="relative w-8 h-8 grid place-items-center rounded-full text-[#b9c9bf] hover:text-white hover:bg-[#172a20]"
+          >
+            <Bell size={16} />
+            {alerts.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-[#d92d20] text-white text-[10px] font-semibold grid place-items-center tabular-nums">
+                {alerts.length}
+              </span>
+            )}
+          </button>
           {canFullScreen && (
             <button
               onClick={toggleFullScreen}
@@ -216,11 +246,57 @@ export function OpsBoard() {
             </button>
           )}
           <button
-            onClick={signOut}
-            className="h-8 px-2.5 rounded-md text-sm inline-flex items-center gap-1.5 text-[#b9c9bf] hover:text-white hover:bg-[#172a20]"
+            onClick={() => setMenu(m => (m === 'me' ? null : 'me'))}
+            title={who}
+            aria-label="Your account"
+            aria-expanded={menu === 'me'}
+            className="w-8 h-8 grid place-items-center rounded-full bg-[#a7c957] text-[#0f1d16] text-xs font-semibold"
           >
-            <LogOut size={15} /> Sign out
+            {initials || 'S'}
           </button>
+
+          {menu === 'alerts' && (
+            <div className="absolute right-0 top-10 z-50 w-72 rounded-xl bg-white text-[#13241b] shadow-xl overflow-hidden">
+              <p className="px-4 py-2.5 text-xs font-semibold text-[#5e7266] border-b border-[#e3e9e5]">Alerts on live trips</p>
+              {alerts.length === 0 ? (
+                <p className="px-4 py-4 text-sm text-[#5e7266]">No SOS and no lost GPS right now.</p>
+              ) : (
+                <ul className="max-h-80 overflow-y-auto">
+                  {alerts.map(t => (
+                    <li key={t.trip_uuid}>
+                      <button
+                        onClick={() => { setTab('live'); open(t.trip_uuid); setMenu(null) }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-[#f3f6f4] flex items-start gap-2"
+                      >
+                        <span className={clsx('mt-1 w-2 h-2 rounded-full shrink-0', t.flags.sos ? 'bg-[#d92d20]' : 'bg-[#b7791f]')} />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium">{t.flags.sos ? 'SOS open' : 'No GPS 10+ min'}</span>
+                          <span className="block text-xs text-[#5e7266] truncate">
+                            {t.vehicle.plate ?? 'No plate'} · {t.driver.name ?? 'Driver'}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          {menu === 'me' && (
+            <div className="absolute right-0 top-10 z-50 w-64 rounded-xl bg-white text-[#13241b] shadow-xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-[#e3e9e5]">
+                <p className="text-sm font-semibold truncate">{staff?.name || 'Soole staff'}</p>
+                {staff?.email && <p className="text-xs text-[#5e7266] truncate">{staff.email}</p>}
+                <p className="text-xs text-[#5e7266] mt-0.5">{staff?.is_superuser ? 'Soole admin' : 'Soole staff'}</p>
+              </div>
+              <button
+                onClick={signOut}
+                className="w-full text-left px-4 py-2.5 text-sm inline-flex items-center gap-2 text-[#a8231a] hover:bg-[#fdf1f0]"
+              >
+                <LogOut size={15} /> Sign out
+              </button>
+            </div>
+          )}
         </div>
       </header>
 

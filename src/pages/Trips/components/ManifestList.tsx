@@ -146,7 +146,7 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
                   'text-sm font-medium mt-0.5',
                   isRefunded ? 'text-neutral-300' : 'text-secondary-300',
                 )}>
-                  {isRefunded ? 'Refunded' : 'Paid'}
+                  {isRefunded ? 'Refunded' : isPaid ? 'Paid' : 'Not paid'}
                 </p>
                 {isBoarded && pass.boardedAt && (isBoarding || isCompleted) && (
                   <p className="text-sm text-neutral-200 mt-0.5">Boarded {formatTime(pass.boardedAt)}</p>

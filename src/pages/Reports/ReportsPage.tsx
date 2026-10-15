@@ -5,7 +5,7 @@ import { useOrg } from '../../lib/OrgContext'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useApiData } from '../../lib/useApiData'
 import { reportsApi } from '../../api/client'
-import { formatMoneyCompact } from '../../lib/formatters'
+import { formatMoney, formatMoneyCompact } from '../../lib/formatters'
 import { downloadReportCsv } from '../../lib/reportExport'
 import toast from 'react-hot-toast'
 
@@ -299,7 +299,7 @@ export function ReportsPage() {
             <div>
               <p className="text-xs text-neutral-200">{revenueLabel}</p>
               <p className="text-3xl sm:text-4xl font-extrabold text-primary-500 stat-number">
-                NGN {totalNet.toLocaleString()}
+                {formatMoney(totalNet)}
               </p>
             </div>
             

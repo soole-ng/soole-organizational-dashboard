@@ -646,7 +646,7 @@ export function TripCreatePage() {
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-neutral-200">NGN</span>
               <input
                 type="text"
-                value={form.fare === 0 ? '' : form.fare.toLocaleString('en-US')}
+                value={form.fare.toLocaleString('en-US')}
                 onChange={e => {
                   const rawVal = e.target.value.replace(/,/g, '').replace(/[^0-9]/g, '')
                   if (rawVal === '') {

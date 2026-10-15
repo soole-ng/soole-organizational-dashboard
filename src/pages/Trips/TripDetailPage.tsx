@@ -7,7 +7,7 @@ import { ManifestList } from './components/ManifestList'
 import { useApiData, useTripDetail, invalidateApiDataCache } from '../../lib/useApiData'
 import { adaptTrip } from '../../lib/adapters'
 import { organizationApi } from '../../api/client'
-import { formatDate, formatTime } from '../../lib/formatters'
+import { formatDate, formatMoney, formatTime } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
@@ -167,7 +167,7 @@ export function TripDetailPage() {
 
               <div className="flex justify-between items-center text-xs mt-2 px-2">
                 <span className="text-neutral-200">Total Earnings</span>
-                <span className="font-bold text-secondary-300 text-sm stat-number">NGN {trip.grossRevenue.toLocaleString()}</span>
+                <span className="font-bold text-secondary-300 text-sm stat-number">{formatMoney(trip.grossRevenue)}</span>
               </div>
             </div>
 

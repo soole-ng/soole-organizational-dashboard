@@ -5,7 +5,7 @@ import { MoneyDisplay } from '../../components/ui/MoneyDisplay'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { useApiData } from '../../lib/useApiData'
 import { moneyApi, authApi } from '../../api/client'
-import { formatDate, formatDateTime, formatMoneyCompact } from '../../lib/formatters'
+import { formatAmount, formatDate, formatDateTime, formatMoney, formatMoneyCompact } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
@@ -318,7 +318,7 @@ export function MoneyPage() {
       return
     }
     if (amount > balance.withdrawable) {
-      toast.error(`You can withdraw up to NGN ${balance.withdrawable.toLocaleString()}`)
+      toast.error(`You can withdraw up to ${formatMoney(balance.withdrawable)}`)
       return
     }
     if (withdrawPin.length !== 4) {
@@ -338,7 +338,7 @@ export function MoneyPage() {
         pin: withdrawPin,
         security_answer: withdrawSecurityAnswer,
       })
-      toast.success(res.message ?? `Withdrawal of NGN ${amount.toLocaleString()} initiated`)
+      toast.success(res.message ?? `Withdrawal of ${formatMoney(amount)} initiated`)
       setShowModal(false)
       setWithdrawAmount('')
       setWithdrawPin('')
@@ -418,7 +418,7 @@ export function MoneyPage() {
             <span className="font-medium text-primary-100">Withdrawable Now</span>
           </div>
           <p className="text-2xl sm:text-3xl font-black text-white stat-number">
-            {isHidden ? '****' : `NGN ${balance.withdrawable.toLocaleString()}`}
+            {isHidden ? '****' : formatMoney(balance.withdrawable)}
           </p>
           <p className="text-[11px] text-primary-200 mt-1">
             {primaryAccount ? `Ready for withdrawal · ${primaryAccount.bank_name} ****${primaryAccount.account_number?.slice(-4)}` : 'Add a bank account in Settings to withdraw'}
@@ -526,10 +526,10 @@ export function MoneyPage() {
                             </div>
                             <div className="text-right flex-shrink-0">
                               <p className={clsx('font-semibold', tx.net > 0 ? 'text-secondary-300' : 'text-danger')}>
-                                {tx.net > 0 ? '+' : ''}NGN {tx.net.toLocaleString()}
+                                {tx.net > 0 ? '+' : ''}{formatMoney(tx.net)}
                               </p>
                               {tx.commission > 0 && (
-                                <p className="text-neutral-200">Commission: NGN {tx.commission.toLocaleString()}</p>
+                                <p className="text-neutral-200">Commission: {formatMoney(tx.commission)}</p>
                               )}
                             </div>
                           </div>
@@ -725,7 +725,7 @@ export function MoneyPage() {
                     onClick={() => setWithdrawAmount(String(balance.withdrawable))}
                     className="text-xs font-semibold text-secondary-300 hover:underline"
                   >
-                    Withdraw all (NGN {balance.withdrawable.toLocaleString()})
+                    Withdraw all ({formatMoney(balance.withdrawable)})
                   </button>
                 </div>
                 <div className="relative">
@@ -749,7 +749,7 @@ export function MoneyPage() {
 
               <div className="bg-primary-75 border border-primary-100 rounded-xl p-3 text-xs text-primary-400">
                 <p className="font-semibold text-primary-500">Payout details:</p>
-                <p className="mt-1">Amount: NGN {(Number(withdrawAmount) || 0).toLocaleString()}</p>
+                <p className="mt-1">Amount: {formatMoney(Number(withdrawAmount) || 0)}</p>
                 <p>Destination: {selectedAccount ? `${selectedAccount.bank_name} ****${selectedAccount.account_number?.slice(-4)}` : 'No account selected'}</p>
               </div>
 
@@ -1167,19 +1167,19 @@ export function MoneyPage() {
                   <tr key={tx.id} className="border-b border-neutral-200">
                     <td className="py-1.5">{formatDateTime(tx.date)}</td>
                     <td className="py-1.5">{tx.description}</td>
-                    <td className="text-right py-1.5">{tx.net.toLocaleString()}</td>
+                    <td className="text-right py-1.5">{formatAmount(tx.net)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="text-right font-bold mt-3">Total: NGN {printPayload.group.total.toLocaleString()}</p>
+            <p className="text-right font-bold mt-3">Total: {formatMoney(printPayload.group.total)}</p>
           </div>
         ) : (
           <div>
             <h1 className="text-xl font-bold mb-4">Soole — Payout Receipt</h1>
             <div className="space-y-1.5 text-sm">
               <p><strong>Reference:</strong> {printPayload.payout.reference}</p>
-              <p><strong>Amount:</strong> NGN {printPayload.payout.amount.toLocaleString()}</p>
+              <p><strong>Amount:</strong> {formatMoney(printPayload.payout.amount)}</p>
               <p><strong>Status:</strong> {printPayload.payout.status}</p>
               <p><strong>Initiated:</strong> {formatDateTime(printPayload.payout.dateInitiated)}</p>
               {printPayload.payout.dateCompleted && (

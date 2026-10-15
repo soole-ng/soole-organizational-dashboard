@@ -1,6 +1,6 @@
 import { TrendingUp, Bus, Users, Wallet, Eye, EyeOff } from 'lucide-react'
 import { MoneyDisplay } from '../../../components/ui/MoneyDisplay'
-import { formatMoneyCompact } from '../../../lib/formatters'
+import { formatMoney, formatMoneyCompact } from '../../../lib/formatters'
 import { useOrg } from '../../../lib/OrgContext'
 import { useHomeStats } from '../../../lib/useApiData'
 
@@ -12,8 +12,8 @@ export function HeroBand() {
   const stats = [
     { label: 'Trips Today',    value: `${homeStats.tripsToday}`, icon: Bus,        color: 'text-secondary-300' },
     { label: 'Bookings Today', value: `${homeStats.bookingsToday}`, icon: Users,      color: 'text-teal-300' },
-    { label: "Today's Revenue", value: isHidden ? '****' : `NGN ${homeStats.revenueToday.toLocaleString()}`, icon: TrendingUp, color: 'text-accent-300' },
-    { label: 'Wallet Balance', value: isHidden ? '****' : `NGN ${homeStats.walletBalance.toLocaleString()}`,   icon: Wallet,     color: 'text-accent-200' },
+    { label: "Today's Revenue", value: isHidden ? '****' : formatMoney(homeStats.revenueToday), icon: TrendingUp, color: 'text-accent-300' },
+    { label: 'Wallet Balance', value: isHidden ? '****' : formatMoney(homeStats.walletBalance),   icon: Wallet,     color: 'text-accent-200' },
   ]
 
   return (

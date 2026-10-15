@@ -1,11 +1,26 @@
-export function formatMoney(amount: number): string {
-  return `NGN ${amount.toLocaleString('en-NG')}`
+/**
+ * Money always carries kobo: "NGN 12,500.00", never "NGN 12,500" or
+ * "NGN 12.5K" (product owner, 2026-10-15: "always add .00 to our money").
+ * A column of figures only lines up when every row has the decimals.
+ */
+const NAIRA = new Intl.NumberFormat('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+/** The figure alone: "12,500.00". */
+export function formatAmount(amount: number): string {
+  return NAIRA.format(Number.isFinite(amount) ? amount : 0)
 }
 
+export function formatMoney(amount: number): string {
+  return `NGN ${formatAmount(amount)}`
+}
+
+/**
+ * For tight spaces. Below a million it is the full figure with kobo; from a
+ * million it shortens to "NGN 1.25M", still with two decimals.
+ */
 export function formatMoneyCompact(amount: number): string {
-  if (amount >= 1_000_000) return `NGN ${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1_000) return `NGN ${(amount / 1_000).toFixed(1)}K`
-  return `NGN ${amount.toLocaleString('en-NG')}`
+  if (Math.abs(amount) >= 1_000_000) return `NGN ${(amount / 1_000_000).toFixed(2)}M`
+  return formatMoney(amount)
 }
 
 export function formatDate(dateStr: string): string {

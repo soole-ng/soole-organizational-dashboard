@@ -130,7 +130,7 @@ export function LoginForm({
         <div className="relative">
           <input
             type={showPw ? 'text' : 'password'}
-            value={password}
+            value={password} maxLength={128}
             onChange={e => {
               setPassword(e.target.value)
               setErrors(errors.filter(err => err !== 'password'))

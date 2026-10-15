@@ -56,7 +56,7 @@ export function InviteDriverModal({ onClose }: InviteDriverModalProps) {
             <input
               className="input-field"
               placeholder="e.g. John Doe"
-              value={form.name}
+              value={form.name} maxLength={80}
               onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
             />
           </div>

@@ -50,7 +50,7 @@ export function SignupPasswordForm({
         <div className="relative">
           <input
             type={showSuPw ? 'text' : 'password'}
-            value={suPassword}
+            value={suPassword} maxLength={128}
             onChange={e => {
               setSuPassword(e.target.value)
               setErrors(errors.filter(err => err !== 'suPassword'))
@@ -147,7 +147,7 @@ export function SignupPasswordForm({
         <div className="relative">
           <input
             type={showSuConfirmPw ? 'text' : 'password'}
-            value={suConfirmPassword}
+            value={suConfirmPassword} maxLength={128}
             onChange={e => {
               setSuConfirmPassword(e.target.value)
               setErrors(errors.filter(err => err !== 'suConfirmPassword'))

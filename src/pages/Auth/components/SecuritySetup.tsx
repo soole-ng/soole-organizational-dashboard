@@ -56,7 +56,7 @@ export function SecuritySetup({
           <label className="block text-xs font-black uppercase tracking-wider text-black">Your Question</label>
           <input
             type="text"
-            value={suSecCustomQuestion}
+            value={suSecCustomQuestion} maxLength={120}
             onChange={e => setSuSecCustomQuestion(e.target.value)}
             className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-sm font-bold text-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
             placeholder="Write your own security question"
@@ -68,7 +68,7 @@ export function SecuritySetup({
         <label className="block text-xs font-black uppercase tracking-wider text-black">Answer</label>
         <input
           type="text"
-          value={suSecAnswer}
+          value={suSecAnswer} maxLength={100}
           onChange={e => setSuSecAnswer(e.target.value)}
           className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-sm font-bold text-black focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
           placeholder="Your answer"

@@ -69,7 +69,7 @@ export function BusinessProfile({ executeSecuredAction, onSave }: BusinessProfil
           <label className="block text-xs font-semibold text-primary-400 mb-1.5">Business Name</label>
           <input
             type="text"
-            value={org.name}
+            value={org.name} maxLength={100}
             onChange={(e) => updateOrg({ name: e.target.value })}
             className="input-field bg-white"
             placeholder="Speedway Transport"
@@ -101,7 +101,7 @@ export function BusinessProfile({ executeSecuredAction, onSave }: BusinessProfil
           </label>
           <input
             type="email"
-            value={org.email || ''}
+            value={org.email || ''} maxLength={254}
             onChange={(e) => updateOrg({ email: e.target.value })}
             className="input-field bg-white"
             placeholder="contact@speedway.ng"

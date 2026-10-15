@@ -348,7 +348,7 @@ export function DriversPage() {
 
             <label className="block text-xs font-semibold text-primary-400 mb-1.5">Why are you removing this driver?</label>
             <textarea
-              value={removeReason}
+              value={removeReason} maxLength={300}
               onChange={e => setRemoveReason(e.target.value)}
               rows={3}
               autoFocus

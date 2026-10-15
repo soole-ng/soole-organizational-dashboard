@@ -59,7 +59,7 @@ export function SignupForm({
           </label>
           <input
             type="text"
-            value={suOwnerFirstName}
+            value={suOwnerFirstName} maxLength={50}
             onChange={e => {
               setSuOwnerFirstName(e.target.value)
               setErrors(errors.filter(err => err !== 'suOwnerFirstName'))
@@ -77,7 +77,7 @@ export function SignupForm({
           </label>
           <input
             type="text"
-            value={suOwnerLastName}
+            value={suOwnerLastName} maxLength={50}
             onChange={e => {
               setSuOwnerLastName(e.target.value)
               setErrors(errors.filter(err => err !== 'suOwnerLastName'))
@@ -161,7 +161,7 @@ export function SignupForm({
         </label>
         <input
           type="text"
-          value={suOrgName}
+          value={suOrgName} maxLength={100}
           onChange={e => {
             setSuOrgName(e.target.value)
             setErrors(errors.filter(err => err !== 'suOrgName'))

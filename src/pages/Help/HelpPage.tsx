@@ -96,7 +96,7 @@ export function HelpPage() {
               <input
                 type="text"
                 placeholder="Search FAQs, guides, and articles..."
-                value={searchQuery}
+                value={searchQuery} maxLength={80}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white text-primary-500 rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-300 placeholder-neutral-200 shadow-inner"
               />

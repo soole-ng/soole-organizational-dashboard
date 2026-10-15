@@ -73,7 +73,7 @@ function BusStopSearchInput({
     <div className="relative" ref={containerRef}>
       <input
         type="text"
-        value={value}
+        value={value} maxLength={80}
         onChange={e => { onChange(e.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)}
         disabled={!state}
@@ -648,7 +648,7 @@ export function TripCreatePage() {
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-neutral-200">NGN</span>
               <input
                 type="text"
-                value={form.fare.toLocaleString('en-US')}
+                value={form.fare.toLocaleString('en-US')} maxLength={9} inputMode="numeric"
                 onChange={e => {
                   const rawVal = e.target.value.replace(/,/g, '').replace(/[^0-9]/g, '')
                   if (rawVal === '') {
@@ -804,7 +804,7 @@ export function TripCreatePage() {
                   <label className="block text-xs font-semibold text-primary-400 mb-1.5">Luggage Fee Per Item (NGN)</label>
                   <input
                     type="text"
-                    value={form.luggageFeePerItem}
+                    value={form.luggageFeePerItem} maxLength={7} inputMode="numeric"
                     onChange={e => set('luggageFeePerItem', e.target.value.replace(/[^0-9]/g, ''))}
                     placeholder="0"
                     className="input-field py-2.5"
@@ -814,7 +814,7 @@ export function TripCreatePage() {
                   <label className="block text-xs font-semibold text-primary-400 mb-1.5">Pickup Grace Time (minutes)</label>
                   <input
                     type="text"
-                    value={form.pickupGraceTimeMinutes}
+                    value={form.pickupGraceTimeMinutes} maxLength={3} inputMode="numeric"
                     onChange={e => set('pickupGraceTimeMinutes', e.target.value.replace(/[^0-9]/g, ''))}
                     placeholder="10"
                     className="input-field py-2.5"

@@ -96,7 +96,7 @@ export function EditVehicleModal({ orgUuid, vehicleId, plate, color, capacity, o
             <label className="block text-xs font-semibold text-neutral-300 mb-1.5">Plate Number</label>
             <input
               type="text"
-              value={plateNumber}
+              value={plateNumber} maxLength={10} placeholder="e.g. ABC-123DE"
               onChange={e => setPlateNumber(plateFormatAsTyped(e.target.value))}
               className="w-full px-3 py-2 border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300"
             />
@@ -106,7 +106,7 @@ export function EditVehicleModal({ orgUuid, vehicleId, plate, color, capacity, o
               <label className="block text-xs font-semibold text-neutral-300 mb-1.5">Colour</label>
               <input
                 type="text"
-                value={vehicleColor}
+                value={vehicleColor} maxLength={30} placeholder="e.g. White"
                 onChange={e => setVehicleColor(e.target.value)}
                 className="w-full px-3 py-2 border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300"
               />
@@ -116,7 +116,7 @@ export function EditVehicleModal({ orgUuid, vehicleId, plate, color, capacity, o
               <input
                 type="number"
                 min="1"
-                value={seats}
+                value={seats} placeholder="e.g. 14"
                 onChange={e => setSeats(e.target.value)}
                 className="w-full px-3 py-2 border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300"
               />

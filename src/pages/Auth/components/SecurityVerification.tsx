@@ -50,7 +50,7 @@ export function SecurityVerification({
           data-lpignore="true"
           data-1p-ignore="true"
           style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties}
-          value={secAnswer}
+          value={secAnswer} maxLength={100}
           onChange={e => setSecAnswer(e.target.value)}
           className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-base font-black text-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
           placeholder="Enter your secret answer"

@@ -100,7 +100,7 @@ export function AdminPage() {
             <input
               type="text"
               placeholder={`Search ${tab}...`}
-              value={search}
+              value={search} maxLength={60}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300"
             />

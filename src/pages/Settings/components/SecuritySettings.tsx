@@ -152,7 +152,7 @@ export function SecuritySettings() {
               <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">Your Question</label>
               <input
                 type="text"
-                value={customQuestion}
+                value={customQuestion} maxLength={120}
                 onChange={e => setCustomQuestion(e.target.value)}
                 className="input-field bg-white border border-neutral-200"
                 placeholder="Write your own security question"
@@ -164,7 +164,7 @@ export function SecuritySettings() {
             <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">Answer</label>
             <input
               type="text"
-              value={answer}
+              value={answer} maxLength={100}
               onChange={e => setAnswer(e.target.value)}
               className="input-field bg-white border border-neutral-200"
               placeholder="Your answer"
@@ -214,7 +214,7 @@ export function SecuritySettings() {
               <input
                 type="text"
                 autoFocus
-                value={reverifyAnswer}
+                value={reverifyAnswer} maxLength={100}
                 onChange={e => setReverifyAnswer(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleReverify()}
                 className="input-field bg-white border border-neutral-200"

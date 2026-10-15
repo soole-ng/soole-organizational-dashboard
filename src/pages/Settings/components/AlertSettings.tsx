@@ -18,7 +18,7 @@ export function AlertSettings({ speedLimit, setSpeedLimit, executeSecuredAction,
           <input
             type="number"
             className="input-field bg-white text-black font-semibold border border-neutral-200 focus:border-primary-500 w-32"
-            value={speedLimit}
+            value={speedLimit} min={20} max={200}
             onChange={e => setSpeedLimit(Number(e.target.value))}
             placeholder="e.g. 100"
           />

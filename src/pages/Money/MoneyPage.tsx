@@ -806,7 +806,7 @@ export function MoneyPage() {
                   </label>
                   <input
                     type="text"
-                    value={withdrawSecurityAnswer}
+                    value={withdrawSecurityAnswer} maxLength={100}
                     onChange={e => setWithdrawSecurityAnswer(e.target.value)}
                     className="input-field bg-white"
                     placeholder="Your answer"
@@ -927,7 +927,7 @@ export function MoneyPage() {
                   </label>
                   <input
                     type="text"
-                    value={resetAnswer}
+                    value={resetAnswer} maxLength={100}
                     onChange={e => setResetAnswer(e.target.value)}
                     className="input-field bg-white"
                     placeholder="Your answer"

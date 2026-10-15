@@ -155,7 +155,7 @@ export function OrganizationTeam({ members, setMembers, onInvitationsChanged, ex
                 type="text"
                 className="input-field bg-white"
                 placeholder="e.g. John Doe"
-                value={inviteForm.name}
+                value={inviteForm.name} maxLength={80}
                 onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))}
               />
             </div>
@@ -165,7 +165,7 @@ export function OrganizationTeam({ members, setMembers, onInvitationsChanged, ex
                 type="tel"
                 className="input-field bg-white"
                 placeholder="e.g. +234 803 111 2233"
-                value={inviteForm.phone}
+                value={inviteForm.phone} maxLength={16}
                 onChange={e => setInviteForm(p => ({ ...p, phone: e.target.value }))}
               />
               <span className="text-[10px] text-secondary-300 font-bold block mt-1">

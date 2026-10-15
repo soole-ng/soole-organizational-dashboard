@@ -232,7 +232,7 @@ export function OpsBoard() {
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a9b91]" />
               <input
                 id="ops-search"
-                value={query}
+                value={query} maxLength={60}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Plate, driver, passenger or place"
                 className="h-9 w-full rounded-lg border border-[#dce3de] pl-9 pr-3 text-sm outline-none focus:border-[#0e7c86] focus:ring-2 focus:ring-[#0e7c86]/20"

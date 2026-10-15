@@ -486,7 +486,7 @@ export function JoinOrganizationPage() {
                   <label className="block text-xs font-black uppercase tracking-wider text-black mb-2">First Name *</label>
                   <input
                     type="text"
-                    value={firstName}
+                    value={firstName} maxLength={50}
                     onChange={e => setFirstName(e.target.value)}
                     className="w-full h-[40px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none"
                     placeholder="John"
@@ -496,7 +496,7 @@ export function JoinOrganizationPage() {
                   <label className="block text-xs font-black uppercase tracking-wider text-black mb-2">Last Name *</label>
                   <input
                     type="text"
-                    value={lastName}
+                    value={lastName} maxLength={50}
                     onChange={e => setLastName(e.target.value)}
                     className="w-full h-[40px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none"
                     placeholder="Doe"
@@ -547,7 +547,7 @@ export function JoinOrganizationPage() {
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
-                    value={password}
+                    value={password} maxLength={128}
                     onChange={e => setPassword(e.target.value)}
                     className="w-full h-[44px] bg-white border border-neutral-100 rounded-xl px-4 pr-12 text-sm font-black focus:outline-none"
                     placeholder="Create strong password"
@@ -587,7 +587,7 @@ export function JoinOrganizationPage() {
                 <label className="block text-xs font-black uppercase tracking-wider text-black mb-2">Confirm Password *</label>
                 <input
                   type="password"
-                  value={confirmPassword}
+                  value={confirmPassword} maxLength={128}
                   onChange={e => setConfirmPassword(e.target.value)}
                   className="w-full h-[44px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-black focus:outline-none"
                   placeholder="Confirm password"
@@ -628,7 +628,7 @@ export function JoinOrganizationPage() {
                   <label className="block text-xs font-black uppercase tracking-wider text-black mb-2">Your Question *</label>
                   <input
                     type="text"
-                    value={secCustomQuestion}
+                    value={secCustomQuestion} maxLength={120}
                     onChange={e => setSecCustomQuestion(e.target.value)}
                     className="w-full bg-white border border-neutral-100 rounded-xl px-4 py-3 text-sm font-bold text-black focus:outline-none"
                     placeholder="Create your own security question"
@@ -640,7 +640,7 @@ export function JoinOrganizationPage() {
                 <label className="block text-xs font-black uppercase tracking-wider text-black mb-2">Answer *</label>
                 <input
                   type="text"
-                  value={secAnswer}
+                  value={secAnswer} maxLength={100}
                   onChange={e => setSecAnswer(e.target.value)}
                   className="w-full bg-white border border-neutral-100 rounded-xl px-4 py-3 text-sm font-bold text-black focus:outline-none"
                   placeholder="Your answer"

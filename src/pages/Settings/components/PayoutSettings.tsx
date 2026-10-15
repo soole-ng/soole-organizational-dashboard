@@ -297,7 +297,7 @@ export function PayoutSettings() {
                   <label className="block text-[10px] font-bold text-primary-400 mb-1.5 uppercase">Account Name</label>
                   <input
                     type="text"
-                    value={tempDetails.accountName}
+                    value={tempDetails.accountName} maxLength={100} placeholder="As it appears at the bank"
                     disabled
                     className="input-field bg-white border border-neutral-100 cursor-not-allowed font-semibold text-neutral-300"
                   />

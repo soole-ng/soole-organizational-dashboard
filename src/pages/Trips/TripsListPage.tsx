@@ -179,7 +179,7 @@ export function TripsListPage() {
                   id="trips-search"
                   type="text"
                   placeholder="Search origin, driver, or plate..."
-                  value={searchQuery}
+                  value={searchQuery} maxLength={80}
                   onChange={handleSearchChange}
                   className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300 transition-all"
                 />

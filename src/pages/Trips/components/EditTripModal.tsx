@@ -109,7 +109,7 @@ export function EditTripModal({ orgUuid, tripId, departureAt, pricePerSeat, tota
               type="number"
               min="0"
               step="0.01"
-              value={price}
+              value={price} placeholder="e.g. 3500"
               onChange={e => setPrice(e.target.value)}
               className="w-full px-3 py-2 border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300"
             />

@@ -172,7 +172,7 @@ export function ForgotPasswordFlow({
           <div className="relative">
             <input
               type={showNewPw ? 'text' : 'password'}
-              value={newPassword}
+              value={newPassword} maxLength={128}
               onChange={e => {
                 setNewPassword(e.target.value)
                 setErrors(errors.filter(err => err !== 'password'))
@@ -276,7 +276,7 @@ export function ForgotPasswordFlow({
           <div className="relative">
             <input
               type={showConfirmNewPw ? 'text' : 'password'}
-              value={confirmNewPassword}
+              value={confirmNewPassword} maxLength={128}
               onChange={e => {
                 setConfirmNewPassword(e.target.value)
                 setErrors(errors.filter(err => err !== 'confirmPassword'))

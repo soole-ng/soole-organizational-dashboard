@@ -217,7 +217,7 @@ export function AddVehiclePage() {
                   <option value="Other">Other</option>
                 </select>
                 {brand === 'Other' && (
-                  <input className="input-field mt-2" placeholder="Enter custom brand" value={otherBrand} onChange={e => setOtherBrand(e.target.value)} />
+                  <input className="input-field mt-2" placeholder="Enter custom brand" value={otherBrand} maxLength={40} onChange={e => setOtherBrand(e.target.value)} />
                 )}
               </div>
 
@@ -238,7 +238,7 @@ export function AddVehiclePage() {
                   <option value="Other">Other</option>
                 </select>
                 {model === 'Other' && (
-                  <input className="input-field mt-2" placeholder="Enter custom model" value={otherModel} onChange={e => setOtherModel(e.target.value)} />
+                  <input className="input-field mt-2" placeholder="Enter custom model" value={otherModel} maxLength={40} onChange={e => setOtherModel(e.target.value)} />
                 )}
               </div>
 
@@ -272,7 +272,7 @@ export function AddVehiclePage() {
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-semibold text-black mb-1.5">Seating Capacity</label>
-                  <input className="input-field" type="number" placeholder="e.g. 14" value={capacity} onChange={e => setCapacity(e.target.value)} />
+                  <input className="input-field" type="number" placeholder="e.g. 14" value={capacity} min={1} max={99} onChange={e => setCapacity(e.target.value)} />
                 </div>
               </div>
             </div>
@@ -332,7 +332,7 @@ export function AddVehiclePage() {
                 </label>
               ))}
               {color === 'Other' && (
-                 <input className="input-field mt-4" placeholder="Enter custom color" value={otherColor} onChange={e => setOtherColor(e.target.value)} />
+                 <input className="input-field mt-4" placeholder="Enter custom color" value={otherColor} maxLength={30} onChange={e => setOtherColor(e.target.value)} />
               )}
             </div>
 

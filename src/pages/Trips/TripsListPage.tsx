@@ -119,55 +119,72 @@ export function TripsListPage() {
 
       {!isLoading && (
         <>
-          <div className="bg-white border-b border-neutral-50">
-        <div className="flex overflow-x-auto scrollbar-thin px-4 gap-1 pt-3">
-          {tabs.map(tab => (
-            <button
-              key={tab}
-              onClick={() => handleTabChange(tab)}
-              className={clsx(
-                'flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition-colors pb-2.5',
-                activeTab === tab
-                  ? 'border-primary-500 text-primary-500'
-                  : 'border-transparent text-neutral-200 hover:text-primary-400',
-              )}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-        <div className="flex overflow-x-auto scrollbar-thin px-4 py-2 gap-2">
-          {statusFilters.map(sf => (
-            <button
-              key={sf.value}
-              onClick={() => handleStatusChange(sf.value)}
-              className={clsx(
-                'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border',
-                statusFilter === sf.value
-                  ? 'bg-primary-500 text-white border-primary-500'
-                  : 'bg-white text-neutral-200 border-neutral-50 hover:border-primary-100',
-              )}
-            >
-              {sf.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex-1 p-4 space-y-4 lg:pt-8 lg:px-8 w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <DesktopPageHeader title="Trips" subtitle={`${filtered.length} trips`} />
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200" />
-            <input
-              type="text"
-              placeholder="Search origin, driver, or plate..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300 transition-all"
+          <div className="flex-1 p-4 space-y-4 lg:pt-8 lg:px-8 w-full">
+            <DesktopPageHeader
+              title="Trips"
+              subtitle={`${filtered.length} ${filtered.length === 1 ? 'trip' : 'trips'}`}
+              actions={
+                <Link
+                  to="/trips/new"
+                  onClick={guardAction as any}
+                  className="btn-primary py-2.5 px-4 text-sm inline-flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" /> New Trip
+                </Link>
+              }
             />
-          </div>
-        </div>
+
+            {/* When, then which status, then search - one toolbar. */}
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center min-w-0">
+                <div className="flex shrink-0 gap-1 border-b border-neutral-50" role="tablist" aria-label="When">
+                  {tabs.map(tab => (
+                    <button
+                      key={tab}
+                      role="tab"
+                      aria-selected={activeTab === tab}
+                      onClick={() => handleTabChange(tab)}
+                      className={clsx(
+                        'flex-shrink-0 px-4 py-2 text-sm font-medium border-b-2 transition-colors pb-2.5',
+                        activeTab === tab
+                          ? 'border-primary-500 text-primary-500'
+                          : 'border-transparent text-neutral-200 hover:text-primary-400',
+                      )}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex overflow-x-auto scrollbar-thin gap-2 -mx-4 px-4 sm:mx-0 sm:px-0 lg:flex-wrap lg:overflow-visible">
+                  {statusFilters.map(sf => (
+                    <button
+                      key={sf.value}
+                      onClick={() => handleStatusChange(sf.value)}
+                      aria-pressed={statusFilter === sf.value}
+                      className={clsx(
+                        'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border',
+                        statusFilter === sf.value
+                          ? 'bg-primary-500 text-white border-primary-500'
+                          : 'bg-white text-neutral-200 border-neutral-50 hover:border-primary-100',
+                      )}
+                    >
+                      {sf.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="relative w-full lg:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200" />
+                <input
+                  id="trips-search"
+                  type="text"
+                  placeholder="Search origin, driver, or plate..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-100 rounded-xl text-sm focus:outline-none focus:border-primary-300 focus:ring-1 focus:ring-primary-300 transition-all"
+                />
+              </div>
+            </div>
 
         {filtered.length === 0 ? (
           <EmptyState
@@ -235,15 +252,6 @@ export function TripsListPage() {
         <Plus className="w-6 h-6" />
       </Link>
 
-      <div className="hidden lg:block">
-        <Link
-          to="/trips/new"
-          onClick={guardAction as any}
-          className="fixed bottom-8 right-8 flex items-center gap-2 bg-primary-500 text-white font-semibold rounded-btn px-5 py-3 shadow-float hover:bg-primary-400 transition-colors"
-        >
-          <Plus className="w-4 h-4" /> New Trip
-        </Link>
-      </div>
       </>
       )}
     </div>

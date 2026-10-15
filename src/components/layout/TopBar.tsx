@@ -161,7 +161,7 @@ export function TopBar({
         )}
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5">
         {actions}
 
         {/* PWA Install button — only shows when installable */}
@@ -179,19 +179,19 @@ export function TopBar({
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-primary-500 disabled:opacity-60"
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-primary-500 disabled:opacity-60"
           aria-label="Refresh dashboard data"
         >
-          <RefreshCw className={clsx('w-5 h-5', refreshing && 'animate-spin')} strokeWidth={1.8} />
+          <RefreshCw className={clsx('w-4 h-4', refreshing && 'animate-spin')} strokeWidth={1.8} />
         </button>
 
         {/* Alerts (Bell) Button */}
         <button
           onClick={handleOpenAlerts}
-          className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-primary-500"
+          className="relative w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-primary-500"
           aria-label="Notifications"
         >
-          <Bell className="w-5 h-5" strokeWidth={1.8} />
+          <Bell className="w-4 h-4" strokeWidth={1.8} />
           {resolvedUnreadCount > 0 && (
             <span className="absolute top-1.5 right-1.5 min-w-[13px] h-[13px] bg-danger text-white text-[8px] font-bold rounded-full flex items-center justify-center px-0.5 border border-white">
               {resolvedUnreadCount > 9 ? '9+' : resolvedUnreadCount}
@@ -202,19 +202,19 @@ export function TopBar({
         {/* Tour (Sparkles) Button */}
         <button
           onClick={handleTriggerTour}
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-accent-400"
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-accent-400"
           aria-label="Start Website Tour"
         >
-          <Sparkles className="w-5 h-5" strokeWidth={1.8} />
+          <Sparkles className="w-4 h-4" strokeWidth={1.8} />
         </button>
 
         {/* Sign Out Button */}
         <button
           onClick={() => setConfirmSignOut(true)}
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-danger-300 animate-pulse-subtle"
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-50 active:scale-95 transition-all text-danger-300 animate-pulse-subtle"
           aria-label="Sign out"
         >
-          <Power className="w-5 h-5" strokeWidth={1.8} />
+          <Power className="w-4 h-4" strokeWidth={1.8} />
         </button>
       </div>
     </header>

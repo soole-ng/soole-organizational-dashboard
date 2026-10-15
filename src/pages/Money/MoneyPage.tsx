@@ -5,7 +5,7 @@ import { MoneyDisplay } from '../../components/ui/MoneyDisplay'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { useApiData } from '../../lib/useApiData'
 import { moneyApi, authApi } from '../../api/client'
-import { formatDate, formatDateTime } from '../../lib/formatters'
+import { formatDate, formatDateTime, formatMoneyCompact } from '../../lib/formatters'
 import { clsx } from 'clsx'
 import toast from 'react-hot-toast'
 import { useOrg } from '../../lib/OrgContext'
@@ -430,8 +430,8 @@ export function MoneyPage() {
           <div className="grid grid-cols-3 gap-4 text-center">
             {[
               { label: 'Bookings', value: `${bookingsThisWeekCount}` },
-              { label: 'Total Earnings', value: `NGN ${(totalEarningsThisWeek / 1000).toFixed(1)}K` },
-              { label: 'Available Balance', value: `NGN ${(balance.available / 1000).toFixed(1)}K` },
+              { label: 'Total Earnings', value: formatMoneyCompact(totalEarningsThisWeek) },
+              { label: 'Available Balance', value: formatMoneyCompact(balance.available) },
             ].map(s => (
               <div key={s.label}>
                 <p className="text-xl sm:text-3xl font-black text-white stat-number">

@@ -13,7 +13,7 @@ export function LeftIllustration() {
         <div className="w-24 h-24 flex items-center justify-center mx-auto mb-6">
           <img src="/soole-icon.png" alt="Soole logo" className="w-full h-full object-contain" />
         </div>
-        <h2 className="text-4xl lg:text-5xl font-black text-white mb-3 tracking-tight font-display">Soole</h2>
+        <h2 className="text-4xl lg:text-5xl font-bold text-white mb-3 tracking-tight font-display">Soole</h2>
         <p className="text-primary-100 text-sm leading-relaxed mb-12 max-w-xs mx-auto">
           Organization Dashboard by Soole.
           Manage your fleet, dispatch trips, and track revenue — all in one place.

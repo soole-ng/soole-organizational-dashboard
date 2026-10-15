@@ -46,7 +46,7 @@ export function LoginForm({
     <div className="space-y-5 sm:space-y-6">
       {/* Phone field */}
       <div className="space-y-2">
-        <label className="block text-xs font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+        <label className="block text-xs font-medium text-black flex items-center gap-1.5">
           <Phone className="w-3.5 h-3.5 text-black" />
           Phone Number <span className="text-red-500">*</span>
         </label>
@@ -57,12 +57,12 @@ export function LoginForm({
               type="button"
               onClick={() => setShowCC(!showCC)}
               className={clsx(
-                'flex items-center gap-2 h-12 px-3.5 bg-white border rounded-xl text-sm font-bold text-black transition-colors',
+                'flex items-center gap-2 h-12 px-3.5 bg-white border rounded-xl text-sm font-normal text-black transition-colors',
                 getBorderClass('phone')
               )}
             >
               <img src={country.flag} alt={country.name} className="w-6 h-4 object-cover rounded-sm" />
-              <span className="text-sm font-black text-black">{country.code}</span>
+              <span className="text-sm font-normal text-black">{country.code}</span>
               <ChevronDown className={clsx('w-4 h-4 text-black transition-transform', showCC && 'rotate-180')} />
             </button>
 
@@ -78,12 +78,12 @@ export function LoginForm({
                     }}
                     className={clsx(
                       'w-full flex items-center gap-2.5 px-4 py-3 text-sm transition-colors hover:bg-primary-75 text-left',
-                      country.code === c.code ? 'bg-primary-75 font-black text-black' : 'text-neutral-400'
+                      country.code === c.code ? 'bg-primary-75 font-medium text-black' : 'text-neutral-400'
                     )}
                   >
                     <img src={c.flag} alt={c.name} className="w-6 h-4 object-cover rounded-sm flex-shrink-0" />
-                    <span className="font-black text-xs text-black">{c.code}</span>
-                    <span className="flex-1 text-xs font-black text-black">{c.name}</span>
+                    <span className="font-medium text-xs text-black">{c.code}</span>
+                    <span className="flex-1 text-xs font-medium text-black">{c.name}</span>
                   </button>
                 ))}
               </div>
@@ -113,7 +113,7 @@ export function LoginForm({
       {/* Password field */}
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <label className="text-xs font-black uppercase tracking-wider text-black">
+          <label className="text-xs font-medium text-black">
             Password <span className="text-red-500">*</span>
           </label>
           <button
@@ -122,7 +122,7 @@ export function LoginForm({
               setStep('forgot_password')
               setErrors([])
             }}
-            className="text-xs font-black text-primary-500 hover:underline"
+            className="text-xs font-medium text-primary-500 hover:underline"
           >
             Forgot password?
           </button>
@@ -156,7 +156,7 @@ export function LoginForm({
       <button
         onClick={handleLogin}
         disabled={loading}
-        className="w-full bg-primary-500 text-white font-black rounded-xl px-6 h-12 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4 mb-4 disabled:cursor-wait"
+        className="w-full bg-primary-500 text-white font-semibold rounded-xl px-6 h-12 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4 mb-4 disabled:cursor-wait"
       >
         {loading ? (
           <>
@@ -169,11 +169,11 @@ export function LoginForm({
       </button>
 
       <div className="rounded-xl bg-primary-75 p-4 border border-primary-100">
-        <p className="text-sm text-primary-500 text-center leading-relaxed font-bold">
+        <p className="text-sm text-primary-500 text-center leading-relaxed font-medium">
           Don't have an account?{' '}
           <button
             onClick={() => navigate('/signup')}
-            className="text-teal-300 font-black underline hover:text-teal-200 transition-colors inline"
+            className="text-teal-300 font-medium underline hover:text-teal-200 transition-colors inline"
           >
             Sign up your organization
           </button>

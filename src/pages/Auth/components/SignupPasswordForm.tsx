@@ -38,13 +38,13 @@ export function SignupPasswordForm({
     <div className="space-y-6">
       <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
         <Shield className="w-5 h-5 text-black flex-shrink-0" />
-        <p className="text-xs text-black leading-relaxed font-black">
+        <p className="text-xs text-black leading-relaxed font-normal">
           Create a strong password to secure your organization account.
         </p>
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs font-black uppercase tracking-wider text-black">
+        <label className="block text-xs font-medium text-black">
           Password <span className="text-red-500">*</span>
         </label>
         <div className="relative">
@@ -56,7 +56,7 @@ export function SignupPasswordForm({
               setErrors(errors.filter(err => err !== 'suPassword'))
             }}
             className={clsx(
-              'w-full h-[44px] bg-white border rounded-xl px-4 pr-12 text-sm font-black focus:outline-none transition-all',
+              'w-full h-[44px] bg-white border rounded-xl px-4 pr-12 text-sm font-normal focus:outline-none transition-all',
               getBorderClass('suPassword')
             )}
             placeholder="Create a strong password"
@@ -80,7 +80,7 @@ export function SignupPasswordForm({
               >
                 {suPassword.length === 8 && <div className="w-2 h-2 bg-white rounded-full" />}
               </div>
-              <span className={clsx('text-xs font-black', suPassword.length === 8 ? 'text-green-600' : 'text-neutral-400')}>
+              <span className={clsx('text-xs font-medium', suPassword.length === 8 ? 'text-green-600' : 'text-neutral-400')}>
                 Exactly 8 characters
               </span>
             </div>
@@ -93,7 +93,7 @@ export function SignupPasswordForm({
               >
                 {/[A-Z]/.test(suPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
               </div>
-              <span className={clsx('text-xs font-black', /[A-Z]/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
+              <span className={clsx('text-xs font-medium', /[A-Z]/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
                 Uppercase letter
               </span>
             </div>
@@ -106,7 +106,7 @@ export function SignupPasswordForm({
               >
                 {/[a-z]/.test(suPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
               </div>
-              <span className={clsx('text-xs font-black', /[a-z]/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
+              <span className={clsx('text-xs font-medium', /[a-z]/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
                 Lowercase letter
               </span>
             </div>
@@ -119,7 +119,7 @@ export function SignupPasswordForm({
               >
                 {/\d/.test(suPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
               </div>
-              <span className={clsx('text-xs font-black', /\d/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
+              <span className={clsx('text-xs font-medium', /\d/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
                 Number
               </span>
             </div>
@@ -132,7 +132,7 @@ export function SignupPasswordForm({
               >
                 {/[!@#$%^&*]/.test(suPassword) && <div className="w-2 h-2 bg-white rounded-full" />}
               </div>
-              <span className={clsx('text-xs font-black', /[!@#$%^&*]/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
+              <span className={clsx('text-xs font-medium', /[!@#$%^&*]/.test(suPassword) ? 'text-green-600' : 'text-neutral-400')}>
                 Special character (!@#$%^&*)
               </span>
             </div>
@@ -141,7 +141,7 @@ export function SignupPasswordForm({
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs font-black uppercase tracking-wider text-black">
+        <label className="block text-xs font-medium text-black">
           Confirm Password <span className="text-red-500">*</span>
         </label>
         <div className="relative">
@@ -153,7 +153,7 @@ export function SignupPasswordForm({
               setErrors(errors.filter(err => err !== 'suConfirmPassword'))
             }}
             className={clsx(
-              'w-full h-[44px] bg-white border rounded-xl px-4 pr-12 text-sm font-black focus:outline-none transition-all',
+              'w-full h-[44px] bg-white border rounded-xl px-4 pr-12 text-sm font-normal focus:outline-none transition-all',
               getBorderClass('suConfirmPassword')
             )}
             placeholder="Confirm password"
@@ -167,7 +167,7 @@ export function SignupPasswordForm({
           </button>
         </div>
         {suConfirmPassword && suPassword !== suConfirmPassword && (
-          <p className="text-xs text-red-500 font-black">Passwords do not match</p>
+          <p className="text-xs text-red-500 font-medium">Passwords do not match</p>
         )}
       </div>
 
@@ -184,7 +184,7 @@ export function SignupPasswordForm({
           !/\d/.test(suPassword) ||
           !/[!@#$%^&*]/.test(suPassword)
         }
-        className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500"
+        className="w-full bg-primary-500 text-white font-semibold rounded-2xl px-6 py-3 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500"
       >
         {loading ? (
           <>
@@ -200,7 +200,7 @@ export function SignupPasswordForm({
           setStep('signup_otp')
           setErrors([])
         }}
-        className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm"
+        className="w-full text-black font-medium rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm"
       >
         ← Back
       </button>

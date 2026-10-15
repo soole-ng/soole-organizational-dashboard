@@ -22,14 +22,14 @@ export function SecurityVerification({
     <div className="space-y-7">
       <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
         <HelpCircle className="w-5 h-5 text-black flex-shrink-0" />
-        <p className="text-xs text-black leading-relaxed font-black">
+        <p className="text-xs text-black leading-relaxed font-normal">
           Please answer your backup security question to complete signing in.
         </p>
       </div>
       <div className="space-y-3">
-        <label className="block text-sm font-black text-black">
+        <label className="block text-sm font-medium text-black">
           Question:{' '}
-          <span className="font-extrabold text-primary-500">
+          <span className="font-medium text-primary-500">
             {securityQuestion || 'Backup Security Question'}
           </span>
         </label>
@@ -52,7 +52,7 @@ export function SecurityVerification({
           style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties}
           value={secAnswer} maxLength={100}
           onChange={e => setSecAnswer(e.target.value)}
-          className="w-full bg-white border border-neutral-100 rounded-2xl px-5 py-4 text-base font-black text-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
+          className="w-full bg-white border border-neutral-100 rounded-2xl px-4 py-3 text-base font-normal text-black placeholder:text-neutral-200 focus:outline-none focus:border-secondary-300 focus:ring-4 focus:ring-secondary-300/10 transition-all"
           placeholder="Enter your secret answer"
           onKeyDown={e => e.key === 'Enter' && handleSecurityQuestion()}
           autoFocus
@@ -61,7 +61,7 @@ export function SecurityVerification({
       <button
         onClick={handleSecurityQuestion}
         disabled={!secAnswer || loading}
-        className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-primary-500 text-white font-semibold rounded-2xl px-6 py-3 text-base active:scale-98 hover:bg-primary-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? (
           <>
@@ -77,7 +77,7 @@ export function SecurityVerification({
           setStep('login')
           setSecAnswer('')
         }}
-        className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm"
+        className="w-full text-black font-medium rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm"
       >
         ← Back to login
       </button>

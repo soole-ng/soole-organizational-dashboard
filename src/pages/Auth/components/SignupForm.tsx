@@ -47,14 +47,14 @@ export function SignupForm({
     <div className="space-y-6">
       <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
         <Shield className="w-5 h-5 text-black flex-shrink-0" />
-        <p className="text-xs text-black leading-relaxed font-black">
+        <p className="text-xs text-black leading-relaxed font-normal">
           Quick signup. You'll complete additional verification later to unlock all features.
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         <div className="space-y-2">
-          <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
+          <label className="block text-xs sm:text-sm font-medium text-black">
             First Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -65,14 +65,14 @@ export function SignupForm({
               setErrors(errors.filter(err => err !== 'suOwnerFirstName'))
             }}
             className={clsx(
-              'w-full h-10 sm:h-11 bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all',
+              'w-full h-10 sm:h-11 bg-white border rounded-xl px-4 text-sm font-normal focus:outline-none transition-all',
               getBorderClass('suOwnerFirstName')
             )}
             placeholder="Adekemi"
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
+          <label className="block text-xs sm:text-sm font-medium text-black">
             Last Name (Surname) <span className="text-red-500">*</span>
           </label>
           <input
@@ -83,7 +83,7 @@ export function SignupForm({
               setErrors(errors.filter(err => err !== 'suOwnerLastName'))
             }}
             className={clsx(
-              'w-full h-10 sm:h-11 bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all',
+              'w-full h-10 sm:h-11 bg-white border rounded-xl px-4 text-sm font-normal focus:outline-none transition-all',
               getBorderClass('suOwnerLastName')
             )}
             placeholder="Chukuma"
@@ -92,7 +92,7 @@ export function SignupForm({
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
+        <label className="block text-xs sm:text-sm font-medium text-black">
           Phone Number <span className="text-red-500">*</span>
         </label>
         <div className="flex gap-2 items-center">
@@ -105,7 +105,7 @@ export function SignupForm({
               type="button"
               onClick={() => setShowCC(!showCC)}
               className={clsx(
-                'flex items-center gap-2 h-10 sm:h-11 px-3 bg-white border rounded-xl text-sm font-black text-black transition-colors',
+                'flex items-center gap-2 h-10 sm:h-11 px-3 bg-white border rounded-xl text-sm font-normal text-black transition-colors',
                 getBorderClass('suPhone')
               )}
             >
@@ -126,12 +126,12 @@ export function SignupForm({
                     }}
                     className={clsx(
                       'w-full flex items-center gap-2.5 px-4 py-3 text-sm transition-colors hover:bg-primary-75 text-left',
-                      country.code === c.code ? 'bg-primary-75 font-black text-black' : 'text-neutral-400'
+                      country.code === c.code ? 'bg-primary-75 font-medium text-black' : 'text-neutral-400'
                     )}
                   >
                     <img src={c.flag} alt={c.name} className="w-6 h-4 object-cover rounded-sm flex-shrink-0" />
-                    <span className="font-black text-xs text-black">{c.code}</span>
-                    <span className="flex-1 text-xs font-black text-black">{c.name}</span>
+                    <span className="font-medium text-xs text-black">{c.code}</span>
+                    <span className="flex-1 text-xs font-medium text-black">{c.name}</span>
                   </button>
                 ))}
               </div>
@@ -147,7 +147,7 @@ export function SignupForm({
               setErrors(errors.filter(err => err !== 'suPhone'))
             }}
             className={clsx(
-              'w-full h-10 sm:h-11 bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all',
+              'w-full h-10 sm:h-11 bg-white border rounded-xl px-4 text-sm font-normal focus:outline-none transition-all',
               getBorderClass('suPhone')
             )}
             placeholder="8031234567"
@@ -156,7 +156,7 @@ export function SignupForm({
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs sm:text-sm font-black uppercase tracking-wider text-black">
+        <label className="block text-xs sm:text-sm font-medium text-black">
           Company Name <span className="text-red-500">*</span>
         </label>
         <input
@@ -167,7 +167,7 @@ export function SignupForm({
             setErrors(errors.filter(err => err !== 'suOrgName'))
           }}
           className={clsx(
-            'w-full h-10 sm:h-11 bg-white border rounded-xl px-4 text-sm font-black focus:outline-none transition-all',
+            'w-full h-10 sm:h-11 bg-white border rounded-xl px-4 text-sm font-normal focus:outline-none transition-all',
             getBorderClass('suOrgName')
           )}
           placeholder="E.g., Speedway Transport Ltd."
@@ -177,7 +177,7 @@ export function SignupForm({
       <button
         onClick={handleSignupInitiate}
         disabled={loading || !suOrgName || !suOwnerFirstName || !suOwnerLastName || !suPhone}
-        className="w-full bg-primary-500 text-white font-black rounded-2xl px-6 py-4 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500"
+        className="w-full bg-primary-500 text-white font-semibold rounded-2xl px-6 py-3 text-base active:scale-98 hover:bg-primary-400 transition-all duration-150 flex items-center justify-center gap-2 shadow-sm mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500"
       >
         {loading ? (
           <>
@@ -193,7 +193,7 @@ export function SignupForm({
           setStep('login')
           setErrors([])
         }}
-        className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm"
+        className="w-full text-black font-medium rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm"
       >
         ← Back to login
       </button>

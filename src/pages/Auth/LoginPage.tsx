@@ -169,7 +169,7 @@ export function LoginPage() {
                     canResend={true}
                     description="We've sent a 5-digit code via SMS to verify your phone number. Please enter it below."
                   />
-                  <button onClick={() => { setStep('signup'); setOtp('') }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
+                  <button onClick={() => { setStep('signup'); setOtp('') }} className="w-full text-black font-medium rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
                     ← Back
                   </button>
                 </div>
@@ -203,7 +203,7 @@ export function LoginPage() {
                     secondsUntilNextResend={loginOtpCooldown}
                     canResend={true}
                   />
-                  <button onClick={() => { setStep('login'); setOtp('') }} className="w-full text-black font-black rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
+                  <button onClick={() => { setStep('login'); setOtp('') }} className="w-full text-black font-medium rounded-2xl px-4 py-2 hover:bg-primary-75 transition-all text-sm">
                     ← Back to login
                   </button>
                 </div>

@@ -11,7 +11,7 @@ export function SignupChoicePage() {
           <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-secondary-500 rounded-2xl shadow-sm">
             <img src="/soole-icon.png" alt="Soole" className="w-10 h-10 object-contain" />
           </div>
-          <h1 className="text-3xl lg:text-4xl font-extrabold text-primary-500 mb-3 font-display">
+          <h1 className="text-3xl lg:text-3xl font-semibold text-primary-500 mb-3 font-display">
             Get Started with Soole
           </h1>
           <p className="text-neutral-300 text-base">
@@ -31,7 +31,7 @@ export function SignupChoicePage() {
                   <Building2 className="w-6 h-6 text-primary-500" strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-black mb-1">
+                  <h3 className="text-lg font-semibold text-black mb-1">
                     Signup Organization
                   </h3>
                   <p className="text-sm text-neutral-300 leading-relaxed">
@@ -54,7 +54,7 @@ export function SignupChoicePage() {
                   <UserPlus className="w-6 h-6 text-secondary-500" strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-black mb-1">
+                  <h3 className="text-lg font-semibold text-black mb-1">
                     Join Organization Team
                   </h3>
                   <p className="text-sm text-neutral-300 leading-relaxed">
@@ -72,7 +72,7 @@ export function SignupChoicePage() {
             Already have an account?{' '}
             <button
               onClick={() => navigate('/login')}
-              className="text-teal-300 font-black hover:text-teal-200 transition-colors underline"
+              className="text-teal-300 font-medium hover:text-teal-200 transition-colors underline"
             >
               Sign in here
             </button>

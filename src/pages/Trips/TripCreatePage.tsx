@@ -11,6 +11,7 @@ import { NIGERIAN_STATES } from '../../lib/constants'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
 import { DateTimePicker } from '../../components/ui/DateTimePicker'
+import { ChoicePicker } from '../../components/ui/ChoicePicker'
 
 type BusStop = { id: string; name: string; address: string | null; longitude: number | null; latitude: number | null; state: string | null }
 
@@ -527,30 +528,24 @@ export function TripCreatePage() {
             {/* Vehicle selection */}
             <div>
               <label className="block text-xs font-semibold text-primary-400 mb-1.5">Vehicle <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <select
-                  value={form.vehicleId}
-                  onChange={e => set('vehicleId', e.target.value)}
-                  disabled={loading}
-                  className="input-field py-2.5 appearance-none pr-10"
-                >
-                  <option value="">Select a vehicle</option>
-                  {vehiclesList.filter(v => v.status === 'verified').map(v => (
-                    <option key={v.id} value={v.id}>
-                      {v.plate} — {v.model} ({v.capacity} seats)
-                    </option>
-                  ))}
-                  {/* Listed but not choosable: the server refuses an
-                      unverified vehicle on a trip, and hiding them left an
-                      empty list with no reason (2026-10-14). */}
-                  {vehiclesList.filter(v => v.status !== 'verified').map(v => (
-                    <option key={v.id} value={v.id} disabled>
-                      {v.plate} — {v.model} (awaiting verification)
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
-              </div>
+              {/* Unverified vehicles are listed but not choosable: the server
+                  refuses them on a trip, and hiding them left an empty list
+                  with no reason (2026-10-14). */}
+              <ChoicePicker
+                title="Choose a vehicle"
+                placeholder="Select a vehicle"
+                value={form.vehicleId}
+                onChange={next => set('vehicleId', next)}
+                disabled={loading}
+                choices={[
+                  ...vehiclesList.filter(v => v.status === 'verified').map(v => ({
+                    value: v.id, label: v.plate, detail: `${v.model} · ${v.capacity} seats`,
+                  })),
+                  ...vehiclesList.filter(v => v.status !== 'verified').map(v => ({
+                    value: v.id, label: v.plate, disabledReason: `${v.model} · awaiting verification`,
+                  })),
+                ]}
+              />
               <PickerHint
                 loading={loading}
                 failed={loadFailed}
@@ -564,30 +559,25 @@ export function TripCreatePage() {
             {/* Driver selection */}
             <div>
               <label className="block text-xs font-semibold text-primary-400 mb-1.5">Driver <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <select
-                  value={form.driverId}
-                  onChange={e => set('driverId', e.target.value)}
-                  disabled={loading}
-                  className="input-field py-2.5 appearance-none pr-10"
-                >
-                  <option value="">Select a driver</option>
-                  {driversList.filter(d => d.status === 'verified').map(d => (
-                    <option key={d.id} value={d.id}>
-                      {d.name} ({d.phone})
-                    </option>
-                  ))}
-                  {/* A driver can be assigned only once their licence is
-                      approved - the server refuses otherwise. Shown, not
-                      hidden, so the dispatcher knows who is waiting. */}
-                  {driversList.filter(d => d.status !== 'verified').map(d => (
-                    <option key={d.id} value={d.id} disabled>
-                      {d.name} ({d.status === 'suspended' ? 'suspended' : 'licence awaiting approval'})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
-              </div>
+              {/* A driver can be assigned only once their licence is
+                  approved - the server refuses otherwise. Shown, not
+                  hidden, so the dispatcher knows who is waiting. */}
+              <ChoicePicker
+                title="Choose a driver"
+                placeholder="Select a driver"
+                value={form.driverId}
+                onChange={next => set('driverId', next)}
+                disabled={loading}
+                choices={[
+                  ...driversList.filter(d => d.status === 'verified').map(d => ({
+                    value: d.id, label: d.name, detail: d.phone,
+                  })),
+                  ...driversList.filter(d => d.status !== 'verified').map(d => ({
+                    value: d.id, label: d.name,
+                    disabledReason: d.status === 'suspended' ? 'Suspended' : 'Licence awaiting approval',
+                  })),
+                ]}
+              />
               <PickerHint
                 loading={loading}
                 failed={loadFailed}
@@ -601,16 +591,28 @@ export function TripCreatePage() {
 
           {/* Departure & Available Seats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure Date & Time <span className="text-red-500">*</span></label>
-              <DateTimePicker
-                value={form.departureAt}
-                // Days and times before now are not selectable. The picker
-                // has no text entry to bypass it, but submit re-checks
-                // anyway - the floor moves while the form is open.
-                min={minDepartureAt()}
-                onChange={next => set('departureAt', next)}
-              />
+            {/* Date and time as two fields (product owner, 2026-10-15).
+                Days and times before now are not selectable; submit
+                re-checks anyway - the floor moves while the form is open. */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure date <span className="text-red-500">*</span></label>
+                <DateTimePicker
+                  part="date"
+                  value={form.departureAt}
+                  min={minDepartureAt()}
+                  onChange={next => set('departureAt', next)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-primary-400 mb-1.5">Departure time <span className="text-red-500">*</span></label>
+                <DateTimePicker
+                  part="time"
+                  value={form.departureAt}
+                  min={minDepartureAt()}
+                  onChange={next => set('departureAt', next)}
+                />
+              </div>
             </div>
             
             <div>

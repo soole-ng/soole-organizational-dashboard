@@ -29,13 +29,22 @@ export function DateTimePicker({
   onChange,
   min,
   id,
+  part = 'both',
 }: {
   value: string
   onChange: (next: string) => void
   /** Earliest allowed, same format. Days before it are not selectable. */
   min?: string
   id?: string
+  /**
+   * 'date' shows only the calendar and closes on a tap; 'time' only the
+   * 24-hour clock. Two fields side by side on New Trip (product owner,
+   * 2026-10-15: "separate the date and time"). Same value either way.
+   */
+  part?: 'both' | 'date' | 'time'
 }) {
+  const showDate = part !== 'time'
+  const showTime = part !== 'date'
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
@@ -100,6 +109,7 @@ export function DateTimePicker({
 
   const pickDay = (day: Date) => {
     commit(day, hour, minute)
+    if (part === 'date') setOpen(false)
   }
 
   const dayIsBlocked = (day: Date) =>
@@ -119,7 +129,8 @@ export function DateTimePicker({
         id={id}
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="input-field py-2.5 w-full flex items-center justify-between gap-2 text-left"
+        disabled={part === 'time' && !selected}
+        className="input-field py-2.5 w-full flex items-center justify-between gap-2 text-left disabled:bg-neutral-50 disabled:cursor-not-allowed"
       >
         <span
           className={clsx(
@@ -127,9 +138,15 @@ export function DateTimePicker({
             !selected && 'text-neutral-200',
           )}
         >
-          {selected ? longLabel(selected) : 'Choose a date and time'}
+          {part === 'date'
+            ? selected ? dateLabel(selected) : 'e.g. Sat, 25 Oct 2026'
+            : part === 'time'
+            ? selected ? timeLabel(selected) : 'Pick the date first'
+            : selected ? longLabel(selected) : 'Choose a date and time'}
         </span>
-        <Calendar className="w-4 h-4 text-neutral-300 flex-shrink-0" />
+        {part === 'time'
+          ? <Clock className="w-4 h-4 text-neutral-300 flex-shrink-0" />
+          : <Calendar className="w-4 h-4 text-neutral-300 flex-shrink-0" />}
       </button>
 
       {open && (
@@ -147,6 +164,7 @@ export function DateTimePicker({
           role="dialog"
           aria-label="Choose a date and time"
         >
+          {showDate && (<>
           {/* Month, and the way through the months. */}
           <div className="flex items-center justify-between mb-2">
             <button
@@ -212,7 +230,10 @@ export function DateTimePicker({
             })}
           </div>
 
-          <div className="mt-3 pt-3 border-t border-neutral-100">
+          </>)}
+
+          {showTime && (
+          <div className={clsx(showDate && 'mt-3 pt-3 border-t border-neutral-100')}>
             <div className="flex items-center gap-1.5 mb-2">
               <Clock className="w-3.5 h-3.5 text-neutral-300" />
               <p className="text-[11px] font-semibold text-primary-400">
@@ -247,7 +268,9 @@ export function DateTimePicker({
               </p>
             )}
           </div>
+          )}
 
+          {part !== 'date' && (
           <div className="mt-3 flex items-center gap-2">
             <button
               type="button"
@@ -271,6 +294,7 @@ export function DateTimePicker({
               Done
             </button>
           </div>
+          )}
         </div>
       )}
     </div>
@@ -374,6 +398,20 @@ function longLabel(date: Date): string {
   })
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${day}, ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function dateLabel(date: Date): string {
+  return date.toLocaleDateString(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function timeLabel(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 function startOfMonth(d: Date): Date {

@@ -77,7 +77,7 @@ export function OpsLogin() {
         </p>
       </section>
 
-      <section className="flex-1 grid justify-items-center content-start lg:place-items-center px-4 pt-8 pb-10 lg:py-10">
+      <section className="flex-1 grid justify-items-center content-start lg:content-center lg:place-items-center px-4 pt-8 pb-10 lg:py-10">
         <div className="w-full max-w-sm">
           <h1 className="text-2xl font-semibold mb-1">Sign in</h1>
           <p className="text-sm text-[#5e7266] mb-6">

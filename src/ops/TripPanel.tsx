@@ -175,6 +175,18 @@ export function TripPanel({ trip, loading, error, onClose }: {
                     {trip.minutes_left != null && <span className="text-[#5e7266]"> · {trip.minutes_left} min left</span>}
                     {trip.distance_left_km != null && <span className="text-[#5e7266]"> · {trip.distance_left_km} km</span>}
                   </Row>
+                  <Row label="Speed">
+                    {trip.speed_kmh != null ? `${Math.round(trip.speed_kmh)} km/h now` : 'Not moving or no reading'}
+                    {trip.recent_average_speed_kmh != null && (
+                      <span className="text-[#5e7266]"> · {Math.round(trip.recent_average_speed_kmh)} km/h last 5 min</span>
+                    )}
+                  </Row>
+                  <Row label="Trip average">
+                    {trip.trip_average_speed_kmh != null ? `${Math.round(trip.trip_average_speed_kmh)} km/h` : '-'}
+                    {trip.distance_travelled_km != null && (
+                      <span className="text-[#5e7266]"> · {trip.distance_travelled_km} km travelled</span>
+                    )}
+                  </Row>
                   <Row label="Last GPS">{ago(trip.last_seen_at)}</Row>
                   {trip.end_trip_available_at && (
                     <Row label="Can end from">{dayTime(trip.end_trip_available_at)}</Row>

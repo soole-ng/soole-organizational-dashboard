@@ -46,7 +46,7 @@ function LiveRow({ t, selected, onOpen }: { t: LiveTrip; selected: boolean; onOp
         )}
       >
         <div className="flex items-center gap-2">
-          <span className={clsx('w-2.5 h-2.5 rounded-full shrink-0', TONE_DOT[tone])} aria-hidden />
+          <span className={clsx('w-2.5 h-2.5 shrink-0', t.kind === 'company' ? 'rounded-[2px]' : 'rounded-full', TONE_DOT[tone])} aria-hidden />
           <span className="font-semibold text-[#13241b]">{t.vehicle.plate ?? 'No plate'}</span>
           <span className="text-sm text-[#5e7266] truncate">{t.driver.name ?? ''}</span>
           {t.flags.sos && <span className="ml-auto text-[11px] font-bold uppercase tracking-wide text-white bg-[#d92d20] rounded px-1.5 py-0.5">SOS</span>}

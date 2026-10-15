@@ -76,6 +76,10 @@ export type TripDetail = {
   eta: string | null
   minutes_left: number | null
   distance_left_km: number | null
+  speed_kmh: number | null
+  recent_average_speed_kmh: number | null
+  trip_average_speed_kmh: number | null
+  distance_travelled_km: number | null
   end_trip_available_at: string | null
   flags: { sos: boolean; no_gps: boolean }
   passengers: TripPassenger[]

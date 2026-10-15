@@ -123,7 +123,7 @@ export function OpsMap({ trips, selectedUuid, detail, trail, onSelect }: Props) 
     for (const t of trips) {
       if (!t.position) continue
       seen.add(t.trip_uuid)
-      const cls = `ops-vehicle ops-${vehicleTone(t)}${t.trip_uuid === selectedUuid ? ' ops-selected' : ''}`
+      const cls = `ops-vehicle ops-${vehicleTone(t)}${t.kind === 'company' ? ' ops-co' : ''}${t.trip_uuid === selectedUuid ? ' ops-selected' : ''}`
       const label = `${t.vehicle.plate ?? 'No plate'} · ${t.driver.name ?? 'Driver'}`
       let marker = vehicleMarkers.current[t.trip_uuid]
       if (!marker) {
@@ -204,6 +204,13 @@ export function OpsMap({ trips, selectedUuid, detail, trail, onSelect }: Props) 
   return (
     <div className="relative h-full w-full bg-[#dfe6e1]">
       <div ref={box} className="absolute inset-0" />
+      {/* What the shapes mean - company and independent at a glance. */}
+      <div className="absolute left-3 bottom-3 z-10 rounded-lg bg-white/95 shadow px-3 py-2 text-xs text-[#13241b] grid gap-1.5">
+        <span className="flex items-center gap-2"><span className="ops-vehicle ops-company ops-co !w-3.5 !h-3.5 !border-2" /> Company vehicle (square)</span>
+        <span className="flex items-center gap-2"><span className="ops-vehicle ops-independent !w-3.5 !h-3.5 !border-2" /> Independent driver (round)</span>
+        <span className="flex items-center gap-2"><span className="ops-vehicle ops-sos !w-3.5 !h-3.5 !border-2 !animate-none" /> SOS open</span>
+        <span className="flex items-center gap-2"><span className="ops-vehicle ops-nogps !w-3.5 !h-3.5 !border-2" /> No GPS 10+ min</span>
+      </div>
       {failed && (
         <div className="absolute inset-0 grid place-items-center text-sm text-[#45574d]">
           The map could not load. Check the internet and reload the page.

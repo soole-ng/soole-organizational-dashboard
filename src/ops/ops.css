@@ -9,6 +9,16 @@
   cursor: pointer;
 }
 .ops-company { background: #0e7c86; }
+/* Shape says company or independent; colour says SOS / no GPS / fine. */
+.ops-co { border-radius: 5px; }
+.ops-co::after {
+  content: 'C';
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font: 800 9px/1 system-ui, sans-serif;
+  color: #fff;
+}
 .ops-independent { background: #5e8c1f; }
 .ops-nogps { background: #b7791f; }
 .ops-sos {

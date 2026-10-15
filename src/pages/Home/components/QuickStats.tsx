@@ -36,10 +36,10 @@ export function QuickStats() {
   return (
     <div className="px-4">
       <div className="card">
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 mb-4">
           <div>
             <p className="text-xs text-neutral-200 font-medium">This week</p>
-            <p className="text-3xl sm:text-4xl font-black text-primary-500 stat-number">{formatMoneyCompact(totalRevenue)}</p>
+            <p className="text-2xl sm:text-3xl lg:text-2xl xl:text-3xl font-black text-primary-500 stat-number whitespace-nowrap">{formatMoneyCompact(totalRevenue)}</p>
             {changePercent != null && (
               <p className={`text-xs font-semibold mt-1 ${changePercent >= 0 ? 'text-accent-400' : 'text-danger'}`}>
                 {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(0)}% vs last week
@@ -48,7 +48,7 @@ export function QuickStats() {
           </div>
           <div className="text-right">
             <p className="text-xs text-neutral-200 font-medium">Last week</p>
-            <p className="text-xl font-bold text-neutral-200 stat-number">{formatMoneyCompact(previousWeekRevenue)}</p>
+            <p className="text-lg font-bold text-neutral-200 stat-number whitespace-nowrap">{formatMoneyCompact(previousWeekRevenue)}</p>
           </div>
         </div>
 

@@ -1,3 +1,4 @@
+import { QuickActions } from './components/QuickActions'
 import { Plus, Eye, EyeOff } from 'lucide-react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { TopBar } from '../../components/layout/TopBar'
@@ -58,6 +59,7 @@ export function HomePage() {
       </div>
 
       <div className="flex-1 lg:px-8 w-full">
+        <div className="lg:hidden px-4 pt-4"><QuickActions /></div>
         <div className="pt-4 lg:pt-8">
           <AlertsBanner notifications={notifications} setNotifications={setNotifications} />
         </div>
@@ -66,20 +68,14 @@ export function HomePage() {
             <UpcomingTrips />
           </div>
           <div className="space-y-4">
+            <div className="hidden lg:block"><QuickActions /></div>
             <QuickStats />
           </div>
         </div>
       </div>
 
-      <Link
-        to="/trips/new"
-        onClick={guardAction as any}
-        id="tour-new-trip-mobile"
-        className="lg:hidden fixed bottom-28 right-4 w-14 h-14 bg-primary-500 rounded-full flex items-center justify-center shadow-float text-white z-30"
-        aria-label="New trip"
-      >
-        <Plus className="w-6 h-6" />
-      </Link>
+      {/* No floating + on Home: Quick actions has New trip, and the button
+          sat over the weekly card on a phone (2026-10-15). */}
     </div>
   )
 }

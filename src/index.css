@@ -209,3 +209,16 @@
 .unread-dot {
   border: none !important;
 }
+
+/* New Trip on a phone: bigger fields, labels and buttons so the form fills
+   the screen (2026-10-15). A named class, not utility variants: the global
+   pill-border rule matches any class containing "btn-". */
+@media (max-width: 1023px) {
+  .roomy-on-phone .input-field { padding-top: 1.05rem; padding-bottom: 1.05rem; font-size: 1.0625rem; }
+  .roomy-on-phone label { font-size: 0.95rem; }
+  .roomy-on-phone .card { padding: 1.25rem; }
+  .roomy-on-phone .card > * + * { margin-top: 1.5rem; }
+  .roomy-on-phone .step-dot { width: 2rem; height: 2rem; font-size: 0.875rem; }
+  .roomy-on-phone .btn-primary, .roomy-on-phone .btn-secondary { padding-top: 1rem; padding-bottom: 1rem; font-size: 1.0625rem; }
+}
+.step-label { display: inline; }

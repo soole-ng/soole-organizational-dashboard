@@ -173,7 +173,8 @@ export function TripCreatePage() {
   // make this page a theree page instea dof publish".
   const [step, setStep] = useState<WizardStep>(1)
   const [showCalc, setShowCalc] = useState(true)
-  const [showPreferences, setShowPreferences] = useState(false)
+  // Always open (product owner, 2026-10-15): optional, but not hidden.
+  const showPreferences = true
   const [publishing, setPublishing] = useState(false)
   const [vehiclesList, setVehiclesList] = useState<ReturnType<typeof adaptVehicle>[]>([])
   const [driversList, setDriversList] = useState<ReturnType<typeof adaptFleetDriver>[]>([])
@@ -400,7 +401,7 @@ export function TripCreatePage() {
     <div className="flex flex-col min-h-screen bg-white">
       <TopBar title="New Trip" backHref="/trips" />
 
-      <div className="flex-1 p-4 sm:p-5 space-y-4 lg:pt-8 lg:px-8 w-full max-w-2xl mx-auto max-lg:pb-28">
+      <div className="flex-1 p-4 sm:p-5 space-y-4 lg:pt-8 lg:px-8 w-full max-w-2xl mx-auto max-lg:pb-28 roomy-on-phone">
         <DesktopPageHeader title="New Trip" subtitle="Route, vehicle and price, in three steps" />
         <div className="card p-4 sm:p-5 space-y-4">
           {/* Where they are, and how much is left. A wizard without this is
@@ -427,7 +428,7 @@ export function TripCreatePage() {
                   >
                     <span
                       className={clsx(
-                        'w-6 h-6 rounded-full flex items-center justify-center text-[11px] flex-shrink-0',
+                        'step-dot w-6 h-6 rounded-full flex items-center justify-center text-[11px] flex-shrink-0',
                         current && 'bg-primary-500 text-white',
                         done && 'bg-primary-100 text-primary-500',
                         !current && !done && 'bg-neutral-100 text-neutral-300',
@@ -437,7 +438,7 @@ export function TripCreatePage() {
                     </span>
                     <span
                       className={clsx(
-                        'hidden sm:inline',
+                        'step-label',
                         current ? 'text-primary-500' : 'text-neutral-300',
                       )}
                     >
@@ -463,32 +464,24 @@ export function TripCreatePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-primary-400 mb-1.5">Pickup State <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <select
-                  value={form.originState}
-                  onChange={e => setOriginState(e.target.value)}
-                  className="input-field py-2.5 appearance-none pr-10"
-                >
-                  <option value="">Select state</option>
-                  {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
-              </div>
+              <ChoicePicker
+                title="Pickup state"
+                placeholder="Select state"
+                value={form.originState}
+                onChange={setOriginState}
+                choices={NIGERIAN_STATES.map(s => ({ value: s, label: s }))}
+              />
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-primary-400 mb-1.5">Dropoff State <span className="text-red-500">*</span></label>
-              <div className="relative">
-                <select
-                  value={form.destinationState}
-                  onChange={e => setDestinationState(e.target.value)}
-                  className="input-field py-2.5 appearance-none pr-10"
-                >
-                  <option value="">Select state</option>
-                  {NIGERIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-200 pointer-events-none" />
-              </div>
+              <ChoicePicker
+                title="Dropoff state"
+                placeholder="Select state"
+                value={form.destinationState}
+                onChange={setDestinationState}
+                choices={NIGERIAN_STATES.map(s => ({ value: s, label: s }))}
+              />
             </div>
           </div>
 
@@ -721,19 +714,12 @@ export function TripCreatePage() {
 
         {step === 3 && (
         <div className="card p-4 sm:p-5 space-y-4">
-          <button
-            type="button"
-            onClick={() => setShowPreferences(!showPreferences)}
-            className="w-full flex items-center justify-between text-left"
-          >
-            <div>
-              <h2 className="text-sm font-semibold text-primary-500">Trip Preferences (optional)</h2>
-              <p className="text-[11px] text-neutral-200 mt-0.5">
-                Shown to passengers on the ride details screen. Leave blank if not applicable.
-              </p>
-            </div>
-            <ChevronDown className={clsx('w-4 h-4 text-neutral-200 transition-transform flex-shrink-0', showPreferences && 'rotate-180')} />
-          </button>
+          <div>
+            <h2 className="text-sm font-semibold text-primary-500">Trip Preferences (optional)</h2>
+            <p className="text-[11px] text-neutral-200 mt-0.5">
+              Shown to passengers on the ride details screen. Leave blank if not applicable.
+            </p>
+          </div>
 
           {showPreferences && (
             <div className="space-y-4 pt-1">

@@ -235,8 +235,8 @@ export function OpsMap({ trips, selectedUuid, detail, trail, onSelect }: Props) 
   return (
     <div className="relative h-full w-full bg-[#dfe6e1]">
       <div ref={box} className="absolute inset-0" />
-      {/* Map switcher, as on the company Live Map. */}
-      <div className="absolute top-[10px] right-[50px] z-10">
+      {/* Map switcher, top left (product owner, 2026-10-15). */}
+      <div className="absolute top-[10px] left-[10px] z-10">
         <button
           type="button"
           onClick={() => setMenuOpen(o => !o)}
@@ -248,7 +248,7 @@ export function OpsMap({ trips, selectedUuid, detail, trail, onSelect }: Props) 
           <Layers className="w-4 h-4" />
         </button>
         {menuOpen && (
-          <div className="absolute right-0 mt-2 min-w-44 overflow-hidden rounded-xl bg-white shadow-lg">
+          <div className="absolute left-0 mt-2 min-w-44 overflow-hidden rounded-xl bg-white shadow-lg">
             {(Object.keys(BASEMAPS) as Basemap[]).map(key => (
               <button
                 key={key}

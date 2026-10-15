@@ -77,8 +77,8 @@ export function OpsLogin() {
         </p>
       </section>
 
-      <section className="flex-1 grid justify-items-center content-start lg:content-center lg:place-items-center px-4 pt-8 pb-10 lg:py-10">
-        <div className="w-full max-w-sm">
+      <section className="flex-1 grid justify-items-center content-start lg:content-center lg:place-items-center lg:bg-[#f3f6f4] px-4 pt-8 pb-10 lg:py-10">
+        <div className="w-full max-w-sm lg:max-w-md lg:bg-white lg:rounded-2xl lg:border lg:border-[#dfe6e1] lg:shadow-sm lg:p-9">
           <h1 className="text-2xl font-semibold mb-1">Sign in</h1>
           <p className="text-sm text-[#5e7266] mb-6">
             Use your Soole admin email or phone number and password.

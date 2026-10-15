@@ -54,7 +54,8 @@ function savedBasemap(): Basemap {
     const v = localStorage.getItem(BASEMAP_KEY)
     if (v && v in BASEMAPS) return v as Basemap
   } catch { /* private window */ }
-  return 'osm'
+  // Google Maps first (product owner, 2026-10-15).
+  return 'google'
 }
 
 const baseSource = (b: Basemap) => ({ type: 'raster', tiles: [BASEMAPS[b].tiles], tileSize: 256 })
@@ -272,6 +273,15 @@ export function OpsMap({ trips, selectedUuid, detail, trail, onSelect }: Props) 
         <span className="flex items-center gap-2"><span className="ops-vehicle ops-independent !w-3.5 !h-3.5 !border-2" /> Independent driver (round)</span>
         <span className="flex items-center gap-2"><span className="ops-vehicle ops-sos !w-3.5 !h-3.5 !border-2 !animate-none" /> SOS open</span>
         <span className="flex items-center gap-2"><span className="ops-vehicle ops-nogps !w-3.5 !h-3.5 !border-2" /> No GPS 10+ min</span>
+        {/* The lines, drawn as on the map: same colour, width and dash. */}
+        <span className="flex items-center gap-2">
+          <svg width="14" height="6" aria-hidden><line x1="0" y1="3" x2="14" y2="3" stroke="#0B6E4F" strokeWidth="4" strokeLinecap="round" /></svg>
+          Route driven
+        </span>
+        <span className="flex items-center gap-2">
+          <svg width="14" height="6" aria-hidden><line x1="0" y1="3" x2="14" y2="3" stroke="#C2410C" strokeWidth="2" strokeDasharray="4 4" /></svg>
+          Got out 2 km+ from their stop
+        </span>
       </div>
       {failed && (
         <div className="absolute inset-0 grid place-items-center text-sm text-[#45574d]">

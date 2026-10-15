@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { format, formatDistanceToNowStrict } from 'date-fns'
-import { Bell, LogOut, Maximize2, Minimize2, RefreshCw, Search } from 'lucide-react'
+import { addDays, format, formatDistanceToNowStrict, subDays } from 'date-fns'
+import { Bell, CalendarClock, CheckCircle2, Clock3, LogOut, Maximize2, Minimize2, RefreshCw, Search, XCircle } from 'lucide-react'
 import { clsx } from 'clsx'
-import { opsApi, opsSession, type LiveTrip, type RecentTrip } from './api'
+import { opsApi, opsSession, type LiveTrip, type RecentTrip, type TripStatusFilter } from './api'
 import { OpsMap, vehicleTone } from './OpsMap'
 import { TripPanel } from './TripPanel'
 
@@ -65,7 +65,28 @@ function LiveRow({ t, selected, onOpen }: { t: LiveTrip; selected: boolean; onOp
   )
 }
 
+// How each past trip ended, at a glance - so a trip can be traced back
+// (product owner, 2026-10-15).
+const TRIP_STATE: Record<string, { label: string; icon: typeof CheckCircle2; tone: string }> = {
+  completed: { label: 'Completed', icon: CheckCircle2, tone: 'text-[#1d754c]' },
+  cancelled: { label: 'Cancelled', icon: XCircle, tone: 'text-[#c0392b]' },
+  expired: { label: 'Expired', icon: Clock3, tone: 'text-[#b7791f]' },
+  upcoming: { label: 'Booked', icon: CalendarClock, tone: 'text-[#0e7c86]' },
+  available: { label: 'Booked', icon: CalendarClock, tone: 'text-[#0e7c86]' },
+  full: { label: 'Booked', icon: CalendarClock, tone: 'text-[#0e7c86]' },
+}
+
+const STATUS_CHIPS: { value: TripStatusFilter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'expired', label: 'Expired' },
+  { value: 'booked', label: 'Booked' },
+]
+
 function PastRow({ t, selected, onOpen }: { t: RecentTrip; selected: boolean; onOpen: () => void }) {
+  const state = TRIP_STATE[t.status] ?? { label: t.status, icon: Clock3, tone: 'text-[#5e7266]' }
+  const Icon = state.icon
   return (
     <li>
       <button
@@ -76,8 +97,12 @@ function PastRow({ t, selected, onOpen }: { t: RecentTrip; selected: boolean; on
         )}
       >
         <div className="flex items-center gap-2">
+          <Icon size={16} className={clsx('shrink-0', state.tone)} aria-label={state.label} />
           <span className="font-semibold text-[#13241b]">{t.vehicle.plate ?? 'No plate'}</span>
           <span className="text-sm text-[#5e7266] truncate">{t.driver.name ?? ''}</span>
+          {!t.has_unconfirmed_passengers && (
+            <span className={clsx('ml-auto text-[11px] font-semibold', state.tone)}>{state.label}</span>
+          )}
           {t.has_unconfirmed_passengers && (
             <span className="ml-auto text-[11px] font-semibold text-[#9a3412] bg-[#fff1e8] rounded px-1.5 py-0.5">
               Unconfirmed arrival
@@ -89,7 +114,10 @@ function PastRow({ t, selected, onOpen }: { t: RecentTrip; selected: boolean; on
         </p>
         <p className="text-xs text-[#5e7266] mt-1.5">
           {t.kind === 'company' ? t.company ?? 'Company' : 'Independent'}
-          {t.ended_at && <> · ended {format(new Date(t.ended_at), 'EEE d MMM, h:mm a')}</>}
+          {t.ended_at
+            ? <> · ended {format(new Date(t.ended_at), 'EEE d MMM, h:mm a')}</>
+            : t.departure_at && <> · leaves {format(new Date(t.departure_at), 'EEE d MMM, h:mm a')}</>}
+          {typeof t.booked_seats === 'number' && <> · {t.booked_seats} booked</>}
         </p>
       </button>
     </li>
@@ -102,7 +130,16 @@ export function OpsBoard() {
   const [tab, setTab] = useState<Tab>('live')
   const [kind, setKind] = useState<Kind>('all')
   const [query, setQuery] = useState('')
-  const [days, setDays] = useState(7)
+  const [days, setDays] = useState<number | 'custom'>(7)
+  const [status, setStatus] = useState<TripStatusFilter>('all')
+  // A picked range: 30 days at most, nothing older than 90 days back - the
+  // backend refuses wider, so the list stays quick (2026-10-15).
+  const today = format(new Date(), 'yyyy-MM-dd')
+  const [from, setFrom] = useState(format(subDays(new Date(), 6), 'yyyy-MM-dd'))
+  const [to, setTo] = useState(today)
+  const earliest = format(subDays(new Date(), 90), 'yyyy-MM-dd')
+  const latest = format(addDays(new Date(), 30), 'yyyy-MM-dd')
+  const custom = days === 'custom'
   const [selected, setSelected] = useState<string | null>(null)
   const q = useDebounced(query.trim())
 
@@ -131,8 +168,16 @@ export function OpsBoard() {
   })
 
   const past = useQuery({
-    queryKey: ['ops-past', kind, q, days],
-    queryFn: () => opsApi.recentTrips({ kind, q, days }),
+    queryKey: ['ops-past', kind, q, days, status, custom ? from : '', custom ? to : ''],
+    queryFn: () =>
+      opsApi.recentTrips({
+        kind,
+        q,
+        status,
+        days: custom ? undefined : days,
+        from: custom ? from : undefined,
+        to: custom ? to : undefined,
+      }),
     enabled: tab === 'past',
     staleTime: 30_000,
   })
@@ -334,17 +379,69 @@ export function OpsBoard() {
                 <select
                   id="ops-days"
                   value={days}
-                  onChange={e => setDays(Number(e.target.value))}
+                  onChange={e => setDays(e.target.value === 'custom' ? 'custom' : Number(e.target.value))}
                   aria-label="How far back"
                   className="ml-auto h-8 rounded-lg border border-[#dce3de] text-xs px-2 bg-white"
                 >
                   <option value={1}>Last 24 hours</option>
                   <option value={7}>Last 7 days</option>
+                  <option value={14}>Last 14 days</option>
                   <option value={30}>Last 30 days</option>
                   <option value={90}>Last 90 days</option>
+                  <option value="custom">Pick dates…</option>
                 </select>
               )}
             </div>
+            {tab === 'past' && (
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Trip status">
+                {STATUS_CHIPS.map(c => (
+                  <button
+                    key={c.value}
+                    onClick={() => setStatus(c.value)}
+                    aria-pressed={status === c.value}
+                    className={clsx(
+                      'h-7 px-2.5 rounded-md text-xs font-medium border',
+                      status === c.value
+                        ? 'bg-[#13241b] text-white border-[#13241b]'
+                        : 'bg-white text-[#3d4f45] border-[#dce3de] hover:bg-[#f4f6f3]',
+                    )}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {tab === 'past' && custom && (
+              <div className="flex items-end gap-2 text-xs">
+                <label className="flex flex-col gap-1 flex-1">
+                  <span className="text-[#5e7266]">From</span>
+                  <input
+                    id="ops-from"
+                    type="date"
+                    value={from}
+                    min={[earliest, format(subDays(new Date(to), 29), 'yyyy-MM-dd')].sort().pop()}
+                    max={to}
+                    onChange={e => e.target.value && setFrom(e.target.value)}
+                    className="h-8 rounded-lg border border-[#dce3de] px-2 bg-white"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 flex-1">
+                  <span className="text-[#5e7266]">To</span>
+                  <input
+                    id="ops-to"
+                    type="date"
+                    value={to}
+                    min={from}
+                    max={[latest, format(addDays(new Date(from), 29), 'yyyy-MM-dd')].sort()[0]}
+                    onChange={e => e.target.value && setTo(e.target.value)}
+                    className="h-8 rounded-lg border border-[#dce3de] px-2 bg-white"
+                  />
+                </label>
+              </div>
+            )}
+            {tab === 'past' && custom && (
+              <p className="text-[11px] text-[#8a9b91] -mt-1">Up to 30 days at a time, back to {format(new Date(earliest), 'd MMM')}.</p>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -354,7 +451,7 @@ export function OpsBoard() {
               <p className="p-4 text-sm text-[#5e7266]">No trips are in progress right now.</p>
             )}
             {tab === 'past' && past.data && past.data.length === 0 && (
-              <p className="p-4 text-sm text-[#5e7266]">No trips ended in this period.</p>
+              <p className="p-4 text-sm text-[#5e7266]">No trips match these filters.</p>
             )}
             <ul>
               {tab === 'live'

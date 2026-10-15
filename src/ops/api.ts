@@ -94,10 +94,14 @@ export type RecentTrip = {
   vehicle: Vehicle
   origin: string | null
   destination: string | null
+  departure_at: string | null
+  booked_seats: number | null
   started_at: string | null
   ended_at: string | null
   has_unconfirmed_passengers: boolean
 }
+
+export type TripStatusFilter = 'all' | 'completed' | 'cancelled' | 'expired' | 'booked'
 
 export type TrailPoint = Point & { at: string }
 
@@ -201,11 +205,24 @@ export const opsApi = {
     return request<LiveTrip[]>(`/live/trips?${qs}`)
   },
 
-  recentTrips(params: { kind?: string; q?: string; days?: number }) {
+  recentTrips(params: {
+    kind?: string
+    q?: string
+    days?: number
+    status?: TripStatusFilter
+    from?: string
+    to?: string
+  }) {
     const qs = new URLSearchParams()
     if (params.kind && params.kind !== 'all') qs.set('kind', params.kind)
     if (params.q) qs.set('q', params.q)
-    qs.set('days', String(params.days ?? 7))
+    if (params.status && params.status !== 'all') qs.set('status', params.status)
+    if (params.from && params.to) {
+      qs.set('date_from', params.from)
+      qs.set('date_to', params.to)
+    } else {
+      qs.set('days', String(params.days ?? 7))
+    }
     return request<RecentTrip[]>(`/trips/recent?${qs}`)
   },
 

@@ -1,4 +1,4 @@
-import { MessageSquare, User } from 'lucide-react'
+import { MessageSquare, Star, User } from 'lucide-react'
 import { formatDate, formatTime } from '../../../lib/formatters'
 
 interface TripComment {
@@ -7,6 +7,8 @@ interface TripComment {
   author_name: string
   text: string
   created_at: string
+  /** Stars the passenger gave, 1-5. */
+  rating?: number | null
 }
 
 interface CommentsModalProps {
@@ -28,8 +30,8 @@ export function CommentsModal({ tripRouteName, comments, onClose }: CommentsModa
         <div className="flex items-center gap-3 px-5 py-4 border-b border-neutral-100 flex-shrink-0">
           <MessageSquare className="w-5 h-5 text-primary-400" />
           <div>
-            <h2 className="text-sm font-bold text-primary-500">Comments</h2>
-            <p className="text-[11px] text-neutral-200">{tripRouteName} &middot; Trip Chat</p>
+            <h2 className="text-sm font-bold text-primary-500">Comments &amp; Ratings</h2>
+            <p className="text-[11px] text-neutral-200">{tripRouteName} &middot; From passengers</p>
           </div>
           <button
             onClick={onClose}
@@ -42,8 +44,8 @@ export function CommentsModal({ tripRouteName, comments, onClose }: CommentsModa
           {comments.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-2xl border border-neutral-100">
               <MessageSquare className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-black">No comments yet</p>
-              <p className="text-xs text-neutral-200 mt-1">Messages sent during this trip will appear here.</p>
+              <p className="text-sm font-semibold text-black">No ratings yet</p>
+              <p className="text-xs text-neutral-200 mt-1">Passengers' ratings and comments appear here after the trip.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -54,8 +56,18 @@ export function CommentsModal({ tripRouteName, comments, onClose }: CommentsModa
                       <User className="w-4 h-4 text-primary-400" />
                     </div>
                     <p className="text-sm font-bold text-black">{comment.author_name}</p>
+                    {comment.rating != null && (
+                      <span className="ml-auto flex items-center gap-0.5" aria-label={`${comment.rating} of 5 stars`}>
+                        {[1, 2, 3, 4, 5].map(n => (
+                          <Star
+                            key={n}
+                            className={n <= comment.rating! ? 'w-3.5 h-3.5 text-amber-400 fill-amber-400' : 'w-3.5 h-3.5 text-neutral-100'}
+                          />
+                        ))}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-xs text-black leading-relaxed">{comment.text}</p>
+                  {comment.text && <p className="text-xs text-black leading-relaxed">{comment.text}</p>}
                   <p className="text-[9px] text-neutral-200 text-right mt-2">
                     {formatDate(comment.created_at)} &middot; {formatTime(comment.created_at)}
                   </p>

@@ -151,7 +151,9 @@ export function TripCreatePage() {
     vehicleId: '',
     driverId: '',
     departureAt: '',
-    fare: 5000,
+    // No made-up price: the company types its own (2026-10-15). Publish
+    // stays off until it is above zero.
+    fare: 0,
     availableSeats: '' as string | number,
     // Optional - shown to passengers on the ride-details screen if set, but
     // a trip with none of these touched creates no preferences record at
@@ -641,7 +643,7 @@ export function TripCreatePage() {
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-neutral-200">NGN</span>
               <input
                 type="text"
-                value={form.fare.toLocaleString('en-US')} maxLength={9} inputMode="numeric"
+                value={form.fare ? form.fare.toLocaleString('en-US') : ''} placeholder="0.00" maxLength={9} inputMode="numeric"
                 onChange={e => {
                   const rawVal = e.target.value.replace(/,/g, '').replace(/[^0-9]/g, '')
                   if (rawVal === '') {
@@ -851,7 +853,7 @@ export function TripCreatePage() {
           ) : (
             <button
               onClick={handlePublish}
-              disabled={publishing}
+              disabled={publishing || form.fare <= 0}
               className={clsx(
                 'btn-primary py-2.5 text-sm flex-1 lg:flex-none lg:px-10 flex items-center justify-center gap-2',
                 publishing && 'opacity-70',

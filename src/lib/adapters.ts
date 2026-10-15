@@ -207,7 +207,13 @@ export function adaptPassenger(raw: any): Passenger {
     photo: raw.picture ?? undefined,
     paymentStatus: raw.payment_status === 'paid' || raw.payment_status === 'confirmed' ? 'paid'
       : raw.payment_status === 'refunded' ? 'refunded' : 'pending',
-    boardingStatus: raw.status === 'onboard' ? 'boarded' : raw.status === 'no_show' ? 'no_show' : 'waiting',
+    // 'completed' is a passenger who rode and got off (since 2026-08-13); a
+    // pickup time means they were picked up whatever came after. Both are
+    // boarded - reading only 'onboard' showed everyone on a finished trip as
+    // "did not board" and offered Refund on them.
+    boardingStatus: raw.status === 'onboard' || raw.status === 'completed' || raw.boarded_at
+      ? 'boarded'
+      : raw.status === 'no_show' ? 'no_show' : 'waiting',
     boardedAt: raw.boarded_at ?? undefined,
     fare: parseFloat(raw.fare ?? '0'),
   }

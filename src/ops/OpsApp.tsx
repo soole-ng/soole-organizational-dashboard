@@ -1,5 +1,5 @@
 /**
- * admindashboard.soole.ng - Soole staff only.
+ * map.soole.ng - Soole staff only.
  *
  * Built from this repo with VITE_APP_MODE=admin (a second Vercel project);
  * without it main.tsx renders the company dashboard exactly as before, and

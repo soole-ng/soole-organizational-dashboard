@@ -5,7 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import App from './App'
 import './index.css'
 
-// admindashboard.soole.ng is this same code built with VITE_APP_MODE=admin
+// map.soole.ng is this same code built with VITE_APP_MODE=admin
 // (its own Vercel project). Every other build is the company dashboard,
 // unchanged, and never downloads the staff app.
 const isAdminSite = (import.meta as any).env?.VITE_APP_MODE === 'admin'

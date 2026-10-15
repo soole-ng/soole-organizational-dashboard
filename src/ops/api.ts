@@ -1,5 +1,5 @@
 /**
- * API client for admindashboard.soole.ng (Soole staff only).
+ * API client for map.soole.ng (Soole staff only).
  *
  * Its own storage keys, so a staff session and a company session in the same
  * browser never overwrite each other - the company dashboard keeps

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Calculator, ChevronDown, MapPin } from 'lucide-react'
-import { TopBar } from '../../components/layout/TopBar'
+import { TopBar, DesktopPageHeader } from '../../components/layout/TopBar'
 import { formatMoney } from '../../lib/formatters'
 import { useOrg } from '../../lib/OrgContext'
 import { vehiclesApi, fleetApi, driversApi, organizationApi, ridesApi } from '../../api/client'
@@ -400,6 +400,7 @@ export function TripCreatePage() {
       <TopBar title="New Trip" backHref="/trips" />
 
       <div className="flex-1 p-4 sm:p-5 space-y-4 lg:pt-8 lg:px-8 w-full max-w-2xl mx-auto max-lg:pb-28">
+        <DesktopPageHeader title="New Trip" subtitle="Route, vehicle and price, in three steps" />
         <div className="card p-4 sm:p-5 space-y-4">
           {/* Where they are, and how much is left. A wizard without this is
               just a form that keeps changing under you. Completed steps are
@@ -841,12 +842,12 @@ export function TripCreatePage() {
             trip with no vehicle on it. */}
         {/* On a phone the row stays just above the bottom menu, where a
             thumb already is, instead of floating halfway down the screen. */}
-        <div className="max-lg:fixed max-lg:inset-x-0 max-lg:z-30 max-lg:bottom-[calc(4.75rem+var(--safe-bottom))] max-lg:px-4 max-lg:py-3 max-lg:bg-white/95 max-lg:backdrop-blur-sm lg:pt-2 flex items-center gap-3">
+        <div className="max-lg:fixed max-lg:inset-x-0 max-lg:z-30 max-lg:bottom-[calc(4.75rem+var(--safe-bottom))] max-lg:px-4 max-lg:py-3 max-lg:bg-white/95 max-lg:backdrop-blur-sm lg:pt-2 lg:justify-end flex items-center gap-3">
           {step > 1 && (
             <button
               type="button"
               onClick={() => setStep((step - 1) as WizardStep)}
-              className="btn-secondary py-2.5 text-xs flex-1"
+              className="btn-secondary py-2.5 text-sm flex-1 lg:flex-none lg:px-8"
             >
               Back
             </button>
@@ -855,7 +856,7 @@ export function TripCreatePage() {
             <button
               type="button"
               onClick={goNext}
-              className="btn-primary py-2.5 text-xs flex-1"
+              className="btn-primary py-2.5 text-sm flex-1 lg:flex-none lg:px-10"
             >
               Continue
             </button>
@@ -864,7 +865,7 @@ export function TripCreatePage() {
               onClick={handlePublish}
               disabled={publishing}
               className={clsx(
-                'btn-primary py-2.5 text-xs flex-1 flex items-center justify-center gap-2',
+                'btn-primary py-2.5 text-sm flex-1 lg:flex-none lg:px-10 flex items-center justify-center gap-2',
                 publishing && 'opacity-70',
               )}
             >

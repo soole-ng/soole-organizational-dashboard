@@ -683,8 +683,10 @@ export const authApi = {
     }),
 
   resetPassword: async (phoneNumber: string, pin: string, confirmPin: string) =>
+    // Signed in with the token verifyResetOtp saved to localStorage:
+    // create-pin only sets the signed-in account's own PIN (2026-10-16).
     apiRequest<LoginEnvelope<LoginTokenData>>('/accounts/login/create-pin', {
-      method: 'POST', body: { phone_number: phoneNumber, pin, confirm_pin: confirmPin }, token: null
+      method: 'POST', body: { phone_number: phoneNumber, pin, confirm_pin: confirmPin },
     }),
 
   joinOrganization: async (payload: {

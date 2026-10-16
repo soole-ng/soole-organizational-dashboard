@@ -4,6 +4,21 @@ import { useNavigate } from 'react-router-dom'
 import { useApiData } from '../../../lib/useApiData'
 import { trackingApi } from '../../../api/client'
 
+/**
+ * Text from the backend (a driver's name, a plate, a route) goes into the
+ * popup's HTML. Escaped, or a driver whose name is a <script>-bearing tag
+ * runs code in the company owner's browser - where the sign-in token lives
+ * (found 2026-10-16).
+ */
+function esc(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 type VehicleLoc = {
   id: string
   plate: string
@@ -307,17 +322,17 @@ export const MapContainer = forwardRef<any, MapContainerProps>(
         popupDiv.className = 'p-3 bg-white text-black rounded-xl min-w-[200px] shadow-lg border border-neutral-100 cursor-pointer hover:bg-neutral-50 transition-colors'
         popupDiv.innerHTML = `
           <div class="flex items-center justify-between">
-            <p class="text-sm font-bold text-black">${vehicle.plate}</p>
+            <p class="text-sm font-bold text-black">${esc(vehicle.plate)}</p>
             ${activeTrip ? `<span class="text-[9px] bg-secondary-50 text-secondary-300 font-bold px-1.5 py-0.5 rounded-full border border-secondary-100/50">ON GOING</span>` : ''}
           </div>
-          <p class="text-xs text-neutral-400 font-medium">${vehicle.driver}</p>
+          <p class="text-xs text-neutral-400 font-medium">${esc(vehicle.driver)}</p>
           <div class="mt-2 pt-2 border-t border-neutral-100 text-xs space-y-1">
             <p class="flex items-center gap-1.5 font-bold text-primary-500">
               <span class="w-2 h-2 rounded-full bg-secondary-300"></span>
-              ${vehicle.trip ?? 'Idle'}
+              ${esc(vehicle.trip ?? 'Idle')}
             </p>
-            ${vehicle.eta ? `<p class="text-neutral-500 font-medium">ETA: ${vehicle.eta}</p>` : ''}
-            <p class="text-neutral-500 font-bold">${vehicle.speed} km/h</p>
+            ${vehicle.eta ? `<p class="text-neutral-500 font-medium">ETA: ${esc(vehicle.eta)}</p>` : ''}
+            <p class="text-neutral-500 font-bold">${esc(vehicle.speed)} km/h</p>
             ${activeTrip ? `<p class="text-[10px] text-secondary-300 font-bold mt-2 pt-1 border-t border-dashed border-neutral-100/50 flex items-center gap-1">Click to view trip details →</p>` : ''}
           </div>
         `

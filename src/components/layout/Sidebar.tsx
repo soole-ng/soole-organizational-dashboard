@@ -272,10 +272,6 @@ export function Sidebar({ unreadCount = 0, onOpenNotifications }: SidebarProps) 
 
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-primary-500 truncate leading-tight">{org.name}</p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary-300 animate-pulse" />
-              <p className="text-[11px] text-secondary-300 font-medium">{org.role} · Active</p>
-            </div>
           </div>
 
           <button

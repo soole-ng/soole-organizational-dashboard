@@ -203,12 +203,12 @@ export function TripCreatePage() {
       
       const fleetDrivers = (fleetDriversRes?.drivers || [])
         .map(adaptFleetDriver)
-        .filter((d: any) => !d.isPendingInvite && d.status !== 'suspended' && d.status !== 'rejected')
+        .filter((d: any) => !d.isPendingInvite && d.status !== 'suspended' && d.status !== 'rejected' && d.status !== 'deleted')
       
       // Fallback/merge orgDrivers if fleetDrivers is empty or incomplete
       const orgDrivers = (Array.isArray(orgDriversRes) ? orgDriversRes : [])
         .map(adaptDriverIdentity)
-        .filter((d: any) => d.status !== 'suspended' && d.status !== 'rejected')
+        .filter((d: any) => d.status !== 'suspended' && d.status !== 'rejected' && d.status !== 'deleted')
       
       const driverMap = new Map<string, any>()
       for (const d of [...fleetDrivers, ...orgDrivers]) {

@@ -101,7 +101,11 @@ export function ChoicePicker({
             </label>
           )}
           <div className="overflow-y-auto">
-            {shown.length === 0 && <p className="text-sm text-neutral-300 px-3 py-4">Nothing matches.</p>}
+            {shown.length === 0 && (
+              <p className="text-sm text-neutral-300 px-3 py-4">
+                {choices.length === 0 ? 'No options in your fleet yet.' : 'Nothing matches.'}
+              </p>
+            )}
             {shown.map(c => {
               const chosen = c.value === value
               const blocked = !!c.disabledReason

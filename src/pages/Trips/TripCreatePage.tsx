@@ -186,8 +186,12 @@ export function TripCreatePage() {
   const [loadFailed, setLoadFailed] = useState(false)
 
   useEffect(() => {
-    if (!orgUuid) return
+    if (!orgUuid) {
+      setLoading(false)
+      return
+    }
     let cancelled = false
+    setLoading(true)
 
     Promise.all([
       vehiclesApi.getVehicles(orgUuid).catch(() => { setLoadFailed(true); return { vehicles: [] } }),
@@ -195,9 +199,9 @@ export function TripCreatePage() {
       driversApi.getDrivers(orgUuid).catch(() => []),
     ]).then(([vehiclesRes, fleetDriversRes, orgDriversRes]: [any, any, any]) => {
       if (cancelled) return
-      const vehicles = (vehiclesRes.vehicles || []).map(adaptVehicle)
+      const vehicles = (vehiclesRes?.vehicles || []).map(adaptVehicle)
       
-      const fleetDrivers = (fleetDriversRes.drivers || [])
+      const fleetDrivers = (fleetDriversRes?.drivers || [])
         .map(adaptFleetDriver)
         .filter((d: any) => !d.isPendingInvite && d.status !== 'suspended' && d.status !== 'rejected')
       
@@ -217,6 +221,11 @@ export function TripCreatePage() {
       setVehiclesList(vehicles)
       setDriversList(drivers)
       setLoading(false)
+    }).catch(() => {
+      if (!cancelled) {
+        setLoadFailed(true)
+        setLoading(false)
+      }
     })
 
     return () => { cancelled = true }
@@ -890,11 +899,14 @@ function PickerHint({ loading, failed, total, usable, noun, onFix }: {
   noun: 'vehicle' | 'driver'
   onFix: () => void
 }) {
-  if (loading || usable > 0) return null
+  if (loading) {
+    return <p className="mt-1.5 text-xs text-neutral-400">Loading {noun}s...</p>
+  }
+  if (usable > 0) return null
   const message = failed
     ? `Could not load your ${noun}s. Check your connection and reload the page.`
     : total === 0
-      ? `You have no ${noun}s yet.`
+      ? `You have no ${noun}s in your fleet yet.`
       : noun === 'vehicle'
         ? 'None of your vehicles is verified yet - only verified vehicles can be put on a trip.'
         : "None of your drivers' licences is approved yet - only approved drivers can be assigned."
@@ -902,7 +914,7 @@ function PickerHint({ loading, failed, total, usable, noun, onFix }: {
     <p className="mt-1.5 text-xs text-amber-700">
       {message}{' '}
       {!failed && (
-        <button type="button" onClick={onFix} className="font-semibold underline">
+        <button type="button" onClick={onFix} className="font-semibold underline text-primary-500 hover:underline">
           {total === 0 ? `Add a ${noun}` : `See ${noun}s`}
         </button>
       )}

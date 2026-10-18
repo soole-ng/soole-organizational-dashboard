@@ -149,7 +149,7 @@ export const ridesApi = {
  * Organization core (organization/api.py)
  */
 export const orgApi = {
-  getMine: async () => apiRequest<Array<{ uuid: string; name: string; slug: string; org_type?: string; contact_email?: string; contact_phone?: string; logo_url?: string; status: string; rc_number?: string; approval_status: string; verification_status: string; commission_rate: number; verification_submitted_at?: string | null }>>('/organizations/mine/'),
+  getMine: async () => apiRequest<Array<{ uuid: string; name: string; slug: string; org_type?: string; contact_email?: string; contact_phone?: string; logo_url?: string; status: string; rc_number?: string; approval_status: string; verification_status: string; commission_rate: number; verification_submitted_at?: string | null; user_role?: string; role?: string }>>('/organizations/mine/'),
   getOrganization: async (orgUuid: string) => apiRequest(`/organizations/${orgUuid}/`),
   /** Owner completes NIN/DOB/RC/CAC verification (organization.api.complete_organization_profile). */
   completeProfile: async (orgUuid: string, payload: { nin: string; date_of_birth: string; rc_number: string; cac_document_url: string }) =>

@@ -57,7 +57,7 @@ interface OrgContextValue {
 const DEFAULT_ORG: OrgProfile = {
   name: '',
   logoUrl: null,
-  role: 'viewer',
+  role: 'owner',
   // Fallback only, used before GET /organizations/mine/ resolves (or if it
   // fails) - matches settings.SOOLE_FEE_PERCENTAGE's real backend default.
   // The real, authoritative value always comes from primary.commission_rate.
@@ -87,7 +87,8 @@ export function OrgProvider({ children }: { children: ReactNode }) {
       // after the org had been approved, until the effect below completed.
       if (saved) {
         const parsed = JSON.parse(saved)
-        return { ...DEFAULT_ORG, ...parsed, approvalStatus: undefined, verificationStatus: undefined }
+        const role = parsed.role === 'viewer' ? 'owner' : (parsed.role || 'owner')
+        return { ...DEFAULT_ORG, ...parsed, role, approvalStatus: undefined, verificationStatus: undefined }
       }
       return DEFAULT_ORG
     } catch {
@@ -152,21 +153,22 @@ export function OrgProvider({ children }: { children: ReactNode }) {
           // Settings fetch failing shouldn't block org_uuid bootstrap
         }
 
-        let role = DEFAULT_ORG.role
+        let role: OrgRole = (primary.user_role || primary.role || 'owner') as OrgRole
         try {
           const [currentUser, members] = await Promise.all([
             authApi.getCurrentUser(),
             settingsApi.getMembers(primary.uuid) as Promise<any[]>,
           ])
           if (!cancelled) {
-            const myMembership = members.find(m => m.user_uuid === currentUser.uuid)
+            const list = Array.isArray(members) ? members : (members as any)?.data || []
+            const currentUuid = currentUser?.uuid || (currentUser as any)?.data?.uuid
+            const myMembership = list.find((m: any) => m.user_uuid === currentUuid)
             if (myMembership) {
               role = myMembership.role as OrgRole
             }
           }
         } catch {
-          // Role fetch failing shouldn't block org_uuid bootstrap - default
-          // role stays 'viewer' (the safest/most restrictive fallback)
+          // If members query fails, keep authoritative role from primary.user_role / primary.role
         }
 
         // Sync the backend's authoritative submission timestamp into localStorage

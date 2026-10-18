@@ -122,7 +122,7 @@ export function useLoginPageState() {
         const cachedProfile = {
           name,
           logoUrl,
-          role: 'viewer',
+          role: (primary as any).user_role || (primary as any).role || 'owner',
           commissionPct: typeof primary.commission_rate === 'number' ? primary.commission_rate * 100 : 10,
           approvalStatus,
           verificationStatus,

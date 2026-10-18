@@ -158,8 +158,8 @@ export function ManifestList({ passengers: initial, tripStatus, tripId }: Manife
 
               {/* Action row */}
               <div className="flex items-center gap-2 mt-auto">
-                {/* Call */}
-                {!isRefunded && (
+                {/* Call — not allowed once the trip is completed or refunded */}
+                {!isRefunded && !isCompleted && Boolean(pass.phone) && (
                   <a
                     href={`tel:${pass.phone}`}
                     className="w-9 h-9 flex items-center justify-center rounded-full bg-white border border-neutral-200 text-neutral-300 hover:border-primary-200 hover:text-primary-400 transition-colors"

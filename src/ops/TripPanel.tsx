@@ -50,7 +50,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   )
 }
 
-function Passenger({ p, n }: { p: TripPassenger; n: number }) {
+function Passenger({ p, n, isCompleted }: { p: TripPassenger; n: number; isCompleted?: boolean }) {
   const s = STATUS[p.status]
   return (
     <li className="py-4 border-t border-[#e3e9e5] first:border-t-0">
@@ -64,7 +64,7 @@ function Passenger({ p, n }: { p: TripPassenger; n: number }) {
             <span className={clsx('text-xs font-medium px-2 py-0.5 rounded-full', s.cls)}>{s.label}</span>
             {p.seats && p.seats > 1 && <span className="text-xs text-[#5e7266]">{p.seats} seats</span>}
           </div>
-          {p.phone && (
+          {p.phone && !isCompleted && (
             <a href={`tel:${p.phone}`} className="inline-flex items-center gap-1 text-sm text-[#0e7c86] hover:underline mt-0.5">
               <Phone size={13} /> {p.phone}
             </a>
@@ -207,7 +207,9 @@ export function TripPanel({ trip, loading, error, onClose }: {
               <p className="mt-2 text-sm text-[#5e7266]">Nobody has booked this trip.</p>
             ) : (
               <ul className="mt-1">
-                {trip.passengers.map((p, i) => <Passenger key={i} p={p} n={i + 1} />)}
+                {trip.passengers.map((p, i) => (
+                  <Passenger key={i} p={p} n={i + 1} isCompleted={trip.status === 'completed'} />
+                ))}
               </ul>
             )}
 

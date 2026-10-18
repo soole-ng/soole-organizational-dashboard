@@ -15,10 +15,10 @@ import toast from 'react-hot-toast'
 
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'Verified', value: 'verified' },
-  { label: 'All', value: 'all' },
   { label: 'Pending', value: 'pending' },
   { label: 'Suspended', value: 'suspended' },
   { label: 'Deleted', value: 'deleted' },
+  { label: 'All', value: 'all' },
 ]
 
 

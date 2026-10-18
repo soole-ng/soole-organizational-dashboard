@@ -15,10 +15,10 @@ import { VehicleHistoryModal } from './components/VehicleHistoryModal'
 import { EditVehicleModal } from './components/EditVehicleModal'
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'Verified', value: 'verified' },
-  { label: 'All', value: 'all' },
   { label: 'Pending', value: 'pending' },
   { label: 'Suspended', value: 'suspended' },
   { label: 'Retired', value: 'retired' },
+  { label: 'All', value: 'all' },
 ]
 
 

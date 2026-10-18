@@ -290,6 +290,8 @@ export function ForgotPasswordFlow({
               readOnly={!confirmUnlocked}
               onFocus={() => setConfirmUnlocked(true)}
               onMouseDown={() => setConfirmUnlocked(true)}
+              onClick={() => setConfirmUnlocked(true)}
+              onTouchStart={() => setConfirmUnlocked(true)}
               value={confirmNewPassword} maxLength={128}
               onChange={e => {
                 setConfirmNewPassword(e.target.value)

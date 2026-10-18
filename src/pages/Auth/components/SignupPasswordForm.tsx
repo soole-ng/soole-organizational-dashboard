@@ -157,6 +157,8 @@ export function SignupPasswordForm({
             readOnly={!confirmUnlocked}
             onFocus={() => setConfirmUnlocked(true)}
             onMouseDown={() => setConfirmUnlocked(true)}
+            onClick={() => setConfirmUnlocked(true)}
+            onTouchStart={() => setConfirmUnlocked(true)}
             value={suConfirmPassword} maxLength={128}
             onChange={e => {
               setSuConfirmPassword(e.target.value)

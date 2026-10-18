@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Phone, Shield, Eye, EyeOff } from 'lucide-react'
 import { clsx } from 'clsx'
 import { COUNTRY_CODES, Step } from '../utils/auth'
@@ -58,6 +59,8 @@ export function ForgotPasswordFlow({
   setStep,
   getBorderClass,
 }: ForgotPasswordFlowProps) {
+  const [confirmUnlocked, setConfirmUnlocked] = useState(false)
+
   if (step === 'forgot_password') {
     return (
       <div className="space-y-6">
@@ -172,6 +175,9 @@ export function ForgotPasswordFlow({
           <div className="relative">
             <input
               type={showNewPw ? 'text' : 'password'}
+              name="new_password"
+              id="new_password"
+              autoComplete="new-password"
               value={newPassword} maxLength={128}
               onChange={e => {
                 setNewPassword(e.target.value)
@@ -276,6 +282,14 @@ export function ForgotPasswordFlow({
           <div className="relative">
             <input
               type={showConfirmNewPw ? 'text' : 'password'}
+              name="confirm_password"
+              id="confirm_password"
+              autoComplete="new-password"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              readOnly={!confirmUnlocked}
+              onFocus={() => setConfirmUnlocked(true)}
+              onMouseDown={() => setConfirmUnlocked(true)}
               value={confirmNewPassword} maxLength={128}
               onChange={e => {
                 setConfirmNewPassword(e.target.value)

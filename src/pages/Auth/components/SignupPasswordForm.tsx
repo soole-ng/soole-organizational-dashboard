@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Shield, Eye, EyeOff } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -34,6 +35,7 @@ export function SignupPasswordForm({
   setStep,
   getBorderClass,
 }: SignupPasswordFormProps) {
+  const [confirmUnlocked, setConfirmUnlocked] = useState(false)
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 p-4 bg-primary-75 rounded-2xl border border-primary-100">
@@ -147,6 +149,14 @@ export function SignupPasswordForm({
         <div className="relative">
           <input
             type={showSuConfirmPw ? 'text' : 'password'}
+            name="su_confirm_password"
+            id="su_confirm_password"
+            autoComplete="new-password"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            readOnly={!confirmUnlocked}
+            onFocus={() => setConfirmUnlocked(true)}
+            onMouseDown={() => setConfirmUnlocked(true)}
             value={suConfirmPassword} maxLength={128}
             onChange={e => {
               setSuConfirmPassword(e.target.value)

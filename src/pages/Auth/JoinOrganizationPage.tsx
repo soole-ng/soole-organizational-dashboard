@@ -127,6 +127,7 @@ export function JoinOrganizationPage() {
   const [dob, setDob] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [confirmUnlocked, setConfirmUnlocked] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [secQuestionChoice, setSecQuestionChoice] = useState(PRESET_SECURITY_QUESTIONS[0])
   const [secCustomQuestion, setSecCustomQuestion] = useState('')
@@ -587,6 +588,14 @@ export function JoinOrganizationPage() {
                 <label className="block text-xs font-medium text-black mb-2">Confirm Password *</label>
                 <input
                   type="password"
+                  name="join_confirm_password"
+                  id="join_confirm_password"
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
+                  readOnly={!confirmUnlocked}
+                  onFocus={() => setConfirmUnlocked(true)}
+                  onMouseDown={() => setConfirmUnlocked(true)}
                   value={confirmPassword} maxLength={128}
                   onChange={e => setConfirmPassword(e.target.value)}
                   className="w-full h-[44px] bg-white border border-neutral-100 rounded-xl px-4 text-sm font-normal focus:outline-none"

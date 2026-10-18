@@ -30,6 +30,7 @@ const config: Record<StatusVariant, { label: string; color: string }> = {
   processing:  { label: 'Processing',  color: '#0070FF' },
   reversed:    { label: 'Reversed',    color: '#9CA3AF' },
   abandoned:   { label: 'Abandoned',   color: '#9CA3AF' },
+  deleted:     { label: 'Deleted',     color: '#9CA3AF' },
 }
 
 interface Props {

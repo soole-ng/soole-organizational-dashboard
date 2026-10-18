@@ -103,7 +103,6 @@ const RESOURCE_FETCHERS: { [K in ApiDataKey]: (orgUuid: string) => Promise<Pick<
     const driversRes: any = await fleetApi.getDrivers(orgUuid, { limit: LIST_FETCH_LIMIT }).catch(() => ({ drivers: [] }))
     const drivers = (driversRes.drivers || [])
       .map(adaptFleetDriver)
-      .filter((d: any) => !d.name?.includes('(del Acc)') && !d.phone?.startsWith('del'))
     return { drivers }
   },
   vehicles: async (orgUuid) => {

@@ -13,7 +13,9 @@ function toStatusVariant(status: string | null | undefined): StatusVariant {
     'verified', 'pending', 'rejected', 'suspended', 'active', 'inactive',
     'scheduled', 'boarding', 'in_progress', 'completed', 'cancelled', 'draft',
     'sent', 'received', 'failed', 'retired', 'processing', 'reversed', 'abandoned',
+    'expired', 'deleted',
   ]
+  if (s === 'deleted') return 'deleted'
   if (s === 'initiated') return 'pending'
   if ((known as string[]).includes(s)) return s as StatusVariant
   if (s === 'upcoming' || s === 'available') return 'scheduled'
@@ -76,13 +78,14 @@ export function mergeDriverStats(driver: Driver, stats: any | undefined): Driver
  * fleetApi.resendInvite's expectation).
  */
 export function adaptFleetDriver(raw: any): Driver {
-  const isVerified = raw.status === 'verified' || raw.status === 'active' || raw.is_verified === true || raw.verification_status === 'verified'
+  const isDeleted = raw.status === 'deleted'
+  const isVerified = !isDeleted && (raw.status === 'verified' || raw.status === 'active' || raw.is_verified === true || raw.verification_status === 'verified')
   return {
     id: raw.id,
     name: raw.name,
     phone: raw.phone,
     photo: raw.photo ?? undefined,
-    status: isVerified ? 'verified' : toStatusVariant(raw.status),
+    status: isDeleted ? 'deleted' : isVerified ? 'verified' : toStatusVariant(raw.status),
     vehicleId: raw.vehicle_id ?? undefined,
     vehiclePlate: raw.vehicle_plate ?? undefined,
     tripsCompleted: raw.trips_completed ?? 0,

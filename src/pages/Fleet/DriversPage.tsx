@@ -18,6 +18,7 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
   { label: 'Verified', value: 'verified' },
   { label: 'Pending', value: 'pending' },
   { label: 'Suspended', value: 'suspended' },
+  { label: 'Deleted', value: 'deleted' },
 ]
 
 
@@ -101,12 +102,8 @@ export function DriversPage() {
     })
   }
 
-  // Filter out any deleted account drivers (User XXXX (del Acc) / phone delXXX)
-  const isDeletedDriver = (d: any) =>
-    d.name?.includes('(del Acc)') || d.phone?.startsWith('del') || d.status === 'deleted'
-
   const activeDrivers = useMemo(
-    () => data.drivers.filter(d => !isDeletedDriver(d)),
+    () => data.drivers,
     [data.drivers],
   )
 
@@ -276,7 +273,7 @@ export function DriversPage() {
                     </div>
                   </div>
 
-                  {canChangeDriverStatus && !driver.isPendingInvite && (
+                  {canChangeDriverStatus && !driver.isPendingInvite && driver.status !== 'deleted' && (
                     <div className="pt-1">
                       {driver.status === 'suspended' ? (
                         <button

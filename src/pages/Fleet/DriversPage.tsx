@@ -101,20 +101,26 @@ export function DriversPage() {
     })
   }
 
-  // data.drivers can be up to 500 rows (useApiData's fetch cap) - these
-  // were recomputed on every render (e.g. every keystroke in unrelated
-  // modals) instead of only when drivers/filter actually change.
+  // Filter out any deleted account drivers (User XXXX (del Acc) / phone delXXX)
+  const isDeletedDriver = (d: any) =>
+    d.name?.includes('(del Acc)') || d.phone?.startsWith('del') || d.status === 'deleted'
+
+  const activeDrivers = useMemo(
+    () => data.drivers.filter(d => !isDeletedDriver(d)),
+    [data.drivers],
+  )
+
   const filtered = useMemo(
-    () => data.drivers.filter(d => filter === 'all' || d.status === filter),
-    [data.drivers, filter],
+    () => activeDrivers.filter(d => filter === 'all' || d.status === filter),
+    [activeDrivers, filter],
   )
   const { verified, totalTrips, avgRating } = useMemo(() => {
-    const verified = data.drivers.filter(d => d.status === 'verified').length
-    const totalTrips = data.drivers.reduce((a, d) => a + d.tripsCompleted, 0)
-    const rated = data.drivers.filter(d => (d.avgRating ?? 0) > 0)
+    const verified = activeDrivers.filter(d => d.status === 'verified').length
+    const totalTrips = activeDrivers.reduce((a, d) => a + d.tripsCompleted, 0)
+    const rated = activeDrivers.filter(d => (d.avgRating ?? 0) > 0)
     const avgRating = rated.reduce((a, d, _, arr) => a + (d.avgRating ?? 0) / arr.length, 0)
     return { verified, totalTrips, avgRating }
-  }, [data.drivers])
+  }, [activeDrivers])
 
 
 

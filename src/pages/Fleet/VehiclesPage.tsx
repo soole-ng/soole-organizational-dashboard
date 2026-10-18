@@ -14,8 +14,8 @@ import { VehicleIcon, docStatusIcon } from '../../components/ui/VehicleIcons'
 import { VehicleHistoryModal } from './components/VehicleHistoryModal'
 import { EditVehicleModal } from './components/EditVehicleModal'
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
-  { label: 'All', value: 'all' },
   { label: 'Verified', value: 'verified' },
+  { label: 'All', value: 'all' },
   { label: 'Pending', value: 'pending' },
   { label: 'Suspended', value: 'suspended' },
   { label: 'Retired', value: 'retired' },
@@ -27,7 +27,7 @@ export function VehiclesPage() {
   const { data, loading, refetch } = useApiData()
   const { guardAction, orgUuid, org } = useOrg()
   const navigate = useNavigate()
-  const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
+  const [filter, setFilter] = useState<StatusVariant | 'all'>('verified')
   const [historyVehicle, setHistoryVehicle] = useState<any | null>(null)
   const [editVehicle, setEditVehicle] = useState<any | null>(null)
   const [deletingVehicleId, setDeletingVehicleId] = useState<string | null>(null)

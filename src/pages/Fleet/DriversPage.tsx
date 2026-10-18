@@ -14,8 +14,8 @@ import { DriverDetailModal } from './components/DriverDetailModal'
 import toast from 'react-hot-toast'
 
 const filters: { label: string; value: StatusVariant | 'all' }[] = [
-  { label: 'All', value: 'all' },
   { label: 'Verified', value: 'verified' },
+  { label: 'All', value: 'all' },
   { label: 'Pending', value: 'pending' },
   { label: 'Suspended', value: 'suspended' },
   { label: 'Deleted', value: 'deleted' },
@@ -26,7 +26,7 @@ const filters: { label: string; value: StatusVariant | 'all' }[] = [
 export function DriversPage() {
   const { data, loading, refetch } = useApiData()
   const { guardAction, orgUuid, org } = useOrg()
-  const [filter, setFilter] = useState<StatusVariant | 'all'>('all')
+  const [filter, setFilter] = useState<StatusVariant | 'all'>('verified')
   const [showAddSheet, setShowAddSheet] = useState(false)
   const [selectedDriver, setSelectedDriver] = useState<any | null>(null)
   const [resendingId, setResendingId] = useState<string | null>(null)

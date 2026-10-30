@@ -25,7 +25,7 @@ function scheduleDataRefresh() {
   }, NOTIFY_DEBOUNCE_MS)
 }
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://soole-backend-8cku.onrender.com/api'
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://api.soole.ng/api'
 
 function wsUrl(token: string): string {
   const httpBase = API_BASE_URL.replace(/\/api\/?$/, '')
